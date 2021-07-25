@@ -12,10 +12,20 @@ import std.traits : isFunctionPointer, isDelegate,
     functionAttributes, FunctionAttribute, SetFunctionAttributes, functionLinkage;
 
 
+
+public void autoptr_initialize_mutexes()nothrow @nogc{
+    import autoptr.internal.mutex;
+
+    static if(supportMutex)
+        autoptr_initialize_mutexes_impl();
+
+}
+
 version(D_BetterC)
     package enum bool betterC = true;
 else
     package enum bool betterC = false;
+
 
 
 

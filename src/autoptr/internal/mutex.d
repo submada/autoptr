@@ -11,43 +11,47 @@ version (Windows){
     import core.sys.windows.winbase : CRITICAL_SECTION, DeleteCriticalSection,
         EnterCriticalSection, InitializeCriticalSection, LeaveCriticalSection,
         TryEnterCriticalSection;
+
+    enum supportMutex = true;
 }
 else version (Posix){
     import core.sys.posix.pthread;
+
+    enum supportMutex = true;
 }
-//else static assert(false, "Platform not supported");
-
-
-package(autoptr):
-
-version (Windows)
-    enum supportMutex = true;
-else version (Posix)
-    enum supportMutex = true;
-else
+else{
     enum supportMutex = false;
+}
 
+
+
+
+
+package(autoptr) static auto getMutex(Ptr)(scope ref shared Ptr ptr)nothrow @trusted @nogc
+out(ret; ret !is null){
+
+    static assert(supportMutex, "this platform doesn't support mutexes");
+
+    assert(smartPtrMutexes[$-1].isInitialized, "mutexes are not initialized, call `autoptr_initialize_mutexes` to init mutexes.");
+    auto m = &smartPtrMutexes[(cast(size_t)&ptr) & (smartPtrMutexes.length - 1)];
+    return m;
+}
 
 static if(supportMutex){
 
     //import core.sync.mutex;
-    shared Mutex[16] metaPtrMutexes;
+    private __gshared shared(Mutex)[16] smartPtrMutexes;
 
     shared static this()nothrow @nogc{
-        foreach(ref shared Mutex mx;  metaPtrMutexes[])
+        autoptr_initialize_mutexes_impl();
+    }
+
+    package(autoptr) void autoptr_initialize_mutexes_impl()nothrow @nogc{
+        foreach(ref shared Mutex mx;  smartPtrMutexes[])
             mx.initialize();
     }
 
-
-    static auto getMutex(Ptr)(scope ref shared Ptr ptr)nothrow @trusted @nogc
-    out(ret; ret !is null){
-
-        static assert(supportMutex, "this platform doesn't support mutexes");
-
-        return &metaPtrMutexes[(cast(size_t)&ptr) & (metaPtrMutexes.length - 1)];
-    }
-
-    struct Mutex{
+    private struct Mutex{
 
         public @disable this(ref const typeof(this))pure nothrow @safe @nogc;
 
@@ -62,8 +66,14 @@ static if(supportMutex){
             this.initialize();
         }
 
+        public bool isInitialized(this This)()const pure nothrow @nogc @trusted{
+            return (m_hndl == typeof(m_hndl).init);
+        }
+
         public void initialize(this Q)() @trusted nothrow @nogc
         if(isMutable!Q && supportMutex){
+            //assert(!this.isInitialized, "mutexes are already initialized.");
+
             version (Windows){
                 InitializeCriticalSection(cast(CRITICAL_SECTION*) &m_hndl);
             }
@@ -195,5 +205,4 @@ static if(supportMutex){
         }
         //else static assert(0, "no impl");
     }
-
 }

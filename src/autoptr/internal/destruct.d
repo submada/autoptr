@@ -3,7 +3,6 @@ inspired by: https://raw.githubusercontent.com/atilaneves/automem/master/source/
     module automem.utils;
     date: 2021-01-20
     author: Atila Neves
-
 */
 module autoptr.internal.destruct;
 
