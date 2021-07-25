@@ -10,16 +10,16 @@ This library contains:
 * `_Type` type of managed object.
 * `_DestructorType` type reprezenting attributes of destructor for managed object. 
   * This parameter is inferred from parameter `_Type` like this: `autoptr.common.DestructorType!_Type`.
-* `_ControlType` type reprezenting control block. This parameter specify reference counting for smart pointer. 
+* `_ControlType` type representing control block. This parameter specify reference counting for smart pointer. 
   * Default value for `UniquePtr` is `autoptr.common.ControlBlock!void` which mean that there is no reference counting.
   * Default value for `SharedPtr` and `RefPtr` is `autoptr.common.ControlBlock!(int, int)` which mean that type of reference counter is `int` and  weak reference counter type is `int`. `autoptr.common.ControlBlock!(int, void)` disable weak reference counting.
-  * If control block is `shared` then reference counting is atomic. Qualiffier `shared` is inferred from `_Type` for `_ControlType`. If `_Type` is `shared` then ControlBlock is `shared` too.
+  * If control block is `shared` then reference counting is atomic. Qualiffier `shared` is inferred from `_Type` for `_ControlType`. If `_Type` is `shared` then `_ControlType` is `shared` too.
   
 Smart pointers can be created with static methods `make` and `alloc`.
 * `make` create smart pointer with stateless allocator (default `Mallocator`)
-* `alloc` create smart pointer using allcoator with state. Allcoator is saved in control block.
+* `alloc` create smart pointer using allocator with state. Allocator is saved in control block.
 
-Constructors of smart pointers never allcoate memory, only static methods `make` and `alloc` allcoate.
+Constructors of smart pointers never allocate memory, only static methods `make` and `alloc` allocate.
  
 ## Documentation
 https://submada.github.io/autoptr
