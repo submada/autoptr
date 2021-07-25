@@ -1,0 +1,2 @@
+# autoptr
+SharedPtr, UniquePtr, RcPtr
