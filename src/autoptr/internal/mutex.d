@@ -1,8 +1,4 @@
-/*
-
-    License:   $(HTTP www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
-    Authors:   $(HTTP https://github.com/submada/metaptr, Adam Búš)
-*/
+//
 module autoptr.internal.mutex;   //original source: object.d
 
 import std.traits : isMutable;
@@ -32,7 +28,7 @@ out(ret; ret !is null){
 
     static assert(supportMutex, "this platform doesn't support mutexes");
 
-    assert(smartPtrMutexes[$-1].isInitialized, "mutexes are not initialized, call `autoptr_initialize_mutexes` to init mutexes.");
+    //assert(smartPtrMutexes[$-1].isInitialized, "mutexes are not initialized, call `autoptr_initialize_mutexes` to init mutexes.");
     auto m = &smartPtrMutexes[(cast(size_t)&ptr) & (smartPtrMutexes.length - 1)];
     return m;
 }
@@ -42,11 +38,16 @@ static if(supportMutex){
     //import core.sync.mutex;
     private __gshared shared(Mutex)[16] smartPtrMutexes;
 
-    shared static this()nothrow @nogc{
-        autoptr_initialize_mutexes_impl();
-    }
+    version(D_BetterC)
+        pragma(crt_constructor)extern(C)void shared_static_this()nothrow @nogc{
+            autoptr_initialize_mutexes_impl();
+        }
+    else
+        shared static this()nothrow @nogc{
+            autoptr_initialize_mutexes_impl();
+        }
 
-    package(autoptr) void autoptr_initialize_mutexes_impl()nothrow @nogc{
+    private void autoptr_initialize_mutexes_impl()nothrow @nogc{
         foreach(ref shared Mutex mx;  smartPtrMutexes[])
             mx.initialize();
     }
@@ -66,9 +67,9 @@ static if(supportMutex){
             this.initialize();
         }
 
-        public bool isInitialized(this This)()const pure nothrow @nogc @trusted{
+        /+public bool isInitialized(this This)()const pure nothrow @nogc @trusted{
             return (m_hndl == typeof(m_hndl).init);
-        }
+        }+/
 
         public void initialize(this Q)() @trusted nothrow @nogc
         if(isMutable!Q && supportMutex){

@@ -65,6 +65,7 @@ template UniquePtr(
     _ControlType = shared(DefaultUniqueControlBlock),
 )
 if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
+    static assert(isMutable!_ControlType);
     static assert(is(_ControlType == ControlBlock!(Shared, Weak), Shared, Weak));
 
     static assert(is(DestructorType!void : _DestructorType),

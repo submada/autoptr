@@ -12,21 +12,18 @@ import std.traits : isFunctionPointer, isDelegate,
     functionAttributes, FunctionAttribute, SetFunctionAttributes, functionLinkage;
 
 
-
-public void autoptr_initialize_mutexes()nothrow @nogc{
-    import autoptr.internal.mutex;
-
-    static if(supportMutex)
-        autoptr_initialize_mutexes_impl();
-
-}
-
 version(D_BetterC)
     package enum bool betterC = true;
 else
     package enum bool betterC = false;
 
 
+/**
+    Type used as parameter for function pointer returned from `DestructorType`.
+*/
+public struct Evoid{
+
+}
 
 
 //generate `DestructorTypes` alias
@@ -53,38 +50,38 @@ private string genDestructorTypes(){
 //create all possible DestructorType types, DestructorType can return type with some hidden information and comparsion with it can fail (bug in D compiler).
 //If type is created before calling DestructorType then DestructorType return existing type free of hidden informations and comparsion is ok.
 private alias DestructorTypes = AliasSeq!(
-    void function(void* )pure nothrow @safe @nogc,
-    void function(void* )pure nothrow @safe,
-    void function(void* )pure nothrow @system @nogc,
-    void function(void* )pure nothrow @system,
-    void function(void* )pure @safe @nogc,
-    void function(void* )pure @safe,
-    void function(void* )pure @system @nogc,
-    void function(void* )pure @system,
-    void function(void* )nothrow @safe @nogc,
-    void function(void* )nothrow @safe,
-    void function(void* )nothrow @system @nogc,
-    void function(void* )nothrow @system,
-    void function(void* )@safe @nogc,
-    void function(void* )@safe,
-    void function(void* )@system @nogc,
-    void function(void* )@system,
+    void function(Evoid* )pure nothrow @safe @nogc,
+    void function(Evoid* )pure nothrow @safe,
+    void function(Evoid* )pure nothrow @system @nogc,
+    void function(Evoid* )pure nothrow @system,
+    void function(Evoid* )pure @safe @nogc,
+    void function(Evoid* )pure @safe,
+    void function(Evoid* )pure @system @nogc,
+    void function(Evoid* )pure @system,
+    void function(Evoid* )nothrow @safe @nogc,
+    void function(Evoid* )nothrow @safe,
+    void function(Evoid* )nothrow @system @nogc,
+    void function(Evoid* )nothrow @system,
+    void function(Evoid* )@safe @nogc,
+    void function(Evoid* )@safe,
+    void function(Evoid* )@system @nogc,
+    void function(Evoid* )@system,
 );
 
 
 /**
-    Check if type `Type` is of type destructor type (is(void function(void* )pure nothrow @safe @nogc : Type))
+    Check if type `Type` is of type destructor type (is(void function(Evoid* )pure nothrow @safe @nogc : Type))
 */
 public template isDestructorType(Type){
     import std.traits : Unqual;
 
     enum bool isDestructorType = true
-        && is(void function(void* )pure nothrow @safe @nogc : Type);
+        && is(void function(Evoid* )pure nothrow @safe @nogc : Type);
 }
 
 ///
 unittest{
-    static assert(isDestructorType!(void function(void* )pure));
+    static assert(isDestructorType!(void function(Evoid* )pure));
     static assert(isDestructorType!(DestructorType!long));
     static assert(!isDestructorType!(long));
 }
@@ -92,47 +89,54 @@ unittest{
 
 
 /**
-    Type of destructor of `Type` ( void function(void*)@destructor_attributes ).
+    Destructor type of destructors of types `Types` ( void function(Evoid*)@destructor_attributes ).
 */
 public template DestructorType(Types...){
-
-    import std.traits : Unqual;
+    import std.traits : Unqual, isDynamicArray;
+    import std.range : ElementEncodingType;
 
     alias Get(T) = T;
-    alias DestructorType = Get!(typeof(function void(void*){
+    alias DestructorType = Get!(typeof(function void(Evoid*){
 
         import autoptr.internal.destruct;
         static foreach(alias Type; Types){
             static if(is(Unqual!Type == void)){
+                //nothing
             }
             else static if(is(Type == class)){
-
                 _finalizeType!(Unqual!Type).init(null, true);
+            }
+            else static if(isDynamicArray!Type){
+                /+{
+                    ElementEncodingType!(Unqual!Type) tmp;
+                }+/
+            }
+            else static if(is(void function(Evoid*)pure nothrow @safe @nogc : Unqual!Type)){
+                {
+                    Unqual!Type fn;
+                    fn(null);
+                }
             }
             else{
                 {
                     Unqual!Type tmp;
-
-                    static if(is(Unqual!Type : void function(void*)pure nothrow @safe @nogc))
-                        tmp(null);
                 }
             }
         }
     }));
-
 }
 
 
 ///
 unittest{
-    static assert(is(DestructorType!long == void function(void*)pure nothrow @safe @nogc));
+    static assert(is(DestructorType!long == void function(Evoid*)pure nothrow @safe @nogc));
 
 
     static struct Struct{
         ~this()nothrow @system{
         }
     }
-    static assert(is(DestructorType!Struct == void function(void*)nothrow @system));
+    static assert(is(DestructorType!Struct == void function(Evoid*)nothrow @system));
 
 
     static class Class{
@@ -140,16 +144,76 @@ unittest{
 
         }
     }
-    static assert(is(DestructorType!Class == void function(void*)pure @safe));
+    static assert(is(DestructorType!Class == void function(Evoid*)pure @safe));
 
     //multiple types:
-    static assert(is(DestructorType!(Class, Struct, long) == void function(void*)@system));
+    static assert(is(DestructorType!(Class, Struct, long) == void function(Evoid*)@system));
 
-    /+static assert(is(
+    static assert(is(
         DestructorType!(Class, DestructorType!long, DestructorType!Struct) == DestructorType!(Class, Struct, long)
-    ));+/
+    ));
 }
 
+
+/**
+    Same as `DestructorType` but ignore classes and slices.
+*/
+public template ShallowDestructorType(Types...){
+    import std.traits : Unqual, isDynamicArray;
+    import std.range : ElementEncodingType;
+
+    alias Get(T) = T;
+    alias ShallowDestructorType = Get!(typeof(function void(Evoid*){
+
+        import autoptr.internal.destruct;
+        static foreach(alias Type; Types){
+            static if(is(Unqual!Type == void)){
+                //nothing
+            }
+            else static if(is(Type == class)){
+                //nothing
+            }
+            else static if(isDynamicArray!Type){
+                //nothing
+            }
+            else static if(is(void function(Evoid*)pure nothrow @safe @nogc : Unqual!Type)){
+                {
+                    Unqual!Type fn;
+                    fn(null);
+                }
+            }
+            else{
+                {
+                    Unqual!Type tmp;
+                }
+            }
+        }
+    }));
+}
+
+///
+unittest{
+    static assert(is(ShallowDestructorType!long == void function(Evoid*)pure nothrow @safe @nogc));
+
+
+    static struct Struct{
+        ~this()nothrow @system{
+        }
+    }
+    static assert(is(ShallowDestructorType!Struct == void function(Evoid*)nothrow @system));
+
+
+    static class Class{
+        ~this()pure @trusted{
+
+        }
+    }
+    static assert(is(ShallowDestructorType!Class == void function(Evoid*)pure nothrow @safe @nogc));
+
+    //multiple types:
+    static assert(is(ShallowDestructorType!(Class, Struct, long) == void function(Evoid*)nothrow @system));
+
+}
 
 
 /**
@@ -192,7 +256,7 @@ if(T.length == 1){
     import std.traits : Unqual, isMutable;
 
     enum bool isControlBlock = true
-        && isMutable!(T[0])
+        //&& isMutable!(T[0])
         && is(Unqual!(T[0]) == ControlBlock!Args, Args...)
         ;
 }
@@ -436,9 +500,9 @@ unittest{
 }
 
 
-package template MakeEmplace(_Type, _DestructorType, _ControlType, AllocatorType, bool supportGC){
+package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorType, bool supportGC){
 
-    alias AllocatorWithState = .AllocatorWithState!AllocatorType;
+    alias AllocatorWithState = .AllocatorWithState!_AllocatorType;
 
     enum bool hasStatelessAllocator = (AllocatorWithState.length == 0);
 
@@ -450,11 +514,10 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, AllocatorType
     );
 
     static assert(false
-        || hasStatelessAllocator 
-        || isReferenceType!AllocatorType 
-        || is(.DestructorType!AllocatorType : _DestructorType),
-            "destructor of type '" ~ AllocatorType.stringof ~ 
-            "' doesn't support specified finalizer " ~ _DestructorType.stringof
+        || hasStatelessAllocator
+        || is(.ShallowDestructorType!_AllocatorType : _DestructorType),
+            "allocator destructor type '" ~ .ShallowDestructorType!_AllocatorType.stringof ~
+            "' is not compatible with `_DestructorType`: " ~ _DestructorType.stringof
     );
 
     import core.lifetime : emplace;
@@ -468,7 +531,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, AllocatorType
 
     enum bool allocatorGCRange = supportGC
         && !hasStatelessAllocator
-        && hasIndirections!AllocatorType;
+        && hasIndirections!_AllocatorType;
 
     enum bool dataGCRange = supportGC
         && (false
@@ -486,7 +549,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, AllocatorType
         private void[instanceSize!_Type] data;
 
         static if(!hasStatelessAllocator)
-            private AllocatorType allocator;
+            private _AllocatorType allocator;
 
         static assert(control.offsetof + typeof(control).sizeof == data.offsetof);
 
@@ -551,7 +614,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, AllocatorType
 
 
             static if(hasStatelessAllocator)
-                void[] raw = statelessAllcoator!AllocatorType.allocate(typeof(this).sizeof);
+                void[] raw = statelessAllcoator!_AllocatorType.allocate(typeof(this).sizeof);
             else
                 void[] raw = a[0].allocate(typeof(this).sizeof);
 
@@ -585,7 +648,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, AllocatorType
 
                 gc_add_range(
                     cast(void*)&result.allocator,
-                    AllocatorType.sizeof
+                    _AllocatorType.sizeof
                 );
             }
 
@@ -720,7 +783,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, AllocatorType
 
 
             static if(hasStatelessAllocator)
-                assumePureNoGcNothrow(function(void[] raw)@trusted => statelessAllcoator!AllocatorType.deallocate(raw))(raw);
+                assumePureNoGcNothrow(function(void[] raw)@trusted => statelessAllcoator!_AllocatorType.deallocate(raw))(raw);
             else
                 assumePureNoGcNothrow(function(void[] raw, ref typeof(this.allocator) allo)@trusted => allo.deallocate(raw))(raw, this.allocator);
 
@@ -738,29 +801,27 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, AllocatorType
     }
 }
 
-package template MakeDynamicArray(_Type, _DestructorType, _ControlType, AllocatorType, bool supportGC){
+package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _AllocatorType, bool supportGC){
     static assert(isDynamicArray!_Type);
 
     import std.range : ElementEncodingType;
 
-    alias AllocatorWithState = .AllocatorWithState!AllocatorType;
+    alias AllocatorWithState = .AllocatorWithState!_AllocatorType;
 
     enum bool hasStatelessAllocator = (AllocatorWithState.length == 0);
 
     static assert(false
-        || hasStatelessAllocator 
-        || isReferenceType!AllocatorType 
-        || is(.DestructorType!AllocatorType : _DestructorType),
-            "destructor of type '" ~ AllocatorType.stringof ~ 
-            "' doesn't support specified finalizer " ~ _DestructorType.stringof
+        || hasStatelessAllocator
+        || is(.ShallowDestructorType!_AllocatorType : _DestructorType),
+            "allocator destructor type '" ~ .ShallowDestructorType!_AllocatorType.stringof ~
+            "' is not compatible with `_DestructorType`: " ~ _DestructorType.stringof
     );
 
     static assert(false
-        || isReferenceType!(ElementEncodingType!_Type) 
-        || is(.DestructorType!(ElementEncodingType!_Type) : _DestructorType),
-            "destructor of type '" ~ ElementEncodingType!_Type.stringof ~ 
-            " (" ~ .DestructorType!(ElementEncodingType!_Type).stringof ~ ")" ~ 
-            "' doesn't support specified finalizer " ~ _DestructorType.stringof
+        || is(.ShallowDestructorType!(ElementEncodingType!_Type) : _DestructorType),
+            "array element type '" ~ ElementEncodingType!_Type.stringof ~
+            " has destructor of type `" ~ .DestructorType!(ElementEncodingType!_Type).stringof ~ "`" ~
+            " which is not compatible with `_DestructorType`: `" ~ _DestructorType.stringof ~ "`"
     );
 
     import std.traits: hasIndirections, isAbstractClass, isDynamicArray, Unqual;
@@ -773,7 +834,7 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, Allocato
 
     enum bool allocatorGCRange = supportGC
         && !hasStatelessAllocator
-        && hasIndirections!AllocatorType;
+        && hasIndirections!_AllocatorType;
 
     enum bool dataGCRange = supportGC
         && hasIndirections!(ElementEncodingType!_Type);
@@ -782,7 +843,7 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, Allocato
 
     struct MakeDynamicArray{
         static if(!hasStatelessAllocator)
-            private AllocatorType allocator;
+            private _AllocatorType allocator;
 
         private size_t length;
         private _ControlType control;
@@ -849,7 +910,7 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, Allocato
             const size_t arraySize = (ElementEncodingType!_Type.sizeof * n);
 
             static if(hasStatelessAllocator)
-                void[] raw = statelessAllcoator!AllocatorType.allocate(typeof(this).sizeof + arraySize);
+                void[] raw = statelessAllcoator!_AllocatorType.allocate(typeof(this).sizeof + arraySize);
             else
                 void[] raw = a[0].allocate(typeof(this).sizeof + arraySize);
 
@@ -870,7 +931,7 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, Allocato
                         - typeof(this).allocator.offsetof
                         + arraySize;
                 else
-                    enum size_t gc_range_size = AllocatorType.sizeof;
+                    enum size_t gc_range_size = _AllocatorType.sizeof;
 
                 gc_add_range(
                     cast(void*)&result.allocator,
@@ -970,7 +1031,7 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, Allocato
 
 
             static if(hasStatelessAllocator)
-                assumePureNoGcNothrow(function(void[] raw)@trusted => statelessAllcoator!AllocatorType.deallocate(raw))(raw);
+                assumePureNoGcNothrow(function(void[] raw)@trusted => statelessAllcoator!_AllocatorType.deallocate(raw))(raw);
             else
                 assumePureNoGcNothrow(function(void[] raw, ref typeof(this.allocator) allo)@trusted => allo.deallocate(raw))(raw, this.allocator);
 
@@ -1159,7 +1220,7 @@ if(!is(Type == interface) && isDestructorType!DestructorType){
         template finalizer(F){
             static extern(C) alias finalizer = typeof(function void(void* p, bool det = true) {
                 F fn;
-                fn(p);
+                fn(null);
             });
         }
 

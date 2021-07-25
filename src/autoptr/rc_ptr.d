@@ -82,7 +82,7 @@ public template RcPtr(
     bool _weakPtr = false
 )
 if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
-    static assert(is(_ControlType == ControlBlock!(Shared, Weak), Shared, Weak));
+    static assert(isMutable!_ControlType);
     static assert(_ControlType.hasSharedCounter);
 
 

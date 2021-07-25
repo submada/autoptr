@@ -21,7 +21,7 @@
     "automem" : "~>0.6.4"
   },
   "dflags" : [
-    "-dip1000"
+    ""
   ],
   "copyright" : "Copyright © 2021, Adam Búš",
   "description" : "Mutable @nogc string struct using `std.experimental.allocator` for allocations.",
