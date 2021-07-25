@@ -39,7 +39,7 @@ public alias DefaultUniqueControlBlock = ControlBlock!(void, void);
 
 
 /**
-    `UniquePtr` is a smart pointer that owns and manages another object through a pointer and disposes of that object when the `UniquePtr` goes out of scope.
+    `UniquePtr` is a smart pointer that owns and manages object through a pointer and disposes of that object when the `UniquePtr` goes out of scope.
 
     The object is destroyed and its memory deallocated when either of the following happens:
         

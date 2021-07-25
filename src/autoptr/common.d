@@ -1158,7 +1158,7 @@ if(!is(Type == interface) && isDestructorType!DestructorType){
 
         auto obj = (()@trusted => cast(Unqual!Type)_payload )();
 
-        static assert(is(.DestructorType!(typeof(obj)) : DestructorType));
+        //static assert(is(.DestructorType!(typeof(obj)) : DestructorType));
         /+static assert(is(Get!(_finalizeType!(typeof(obj))) : Get!FinalizeType),
             Get!(_finalizeType!(typeof(obj))).stringof ~ " : " ~ Get!FinalizeType.stringof
         );+/
