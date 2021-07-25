@@ -2089,3 +2089,4 @@ pure nothrow @nogc unittest{
 pure nothrow @safe @nogc unittest{
     UniquePtr!void u = UniquePtr!void.make();
 }
+

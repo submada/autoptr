@@ -139,11 +139,19 @@ unittest{
     static assert(is(DestructorType!Struct == void function(Evoid*)nothrow @system));
 
 
-    static class Class{
-        ~this()pure @trusted{
+    version(D_BetterC)
+        static extern(C)class Class{
+            ~this()pure @trusted{
 
+            }
         }
-    }
+    else
+        static class Class{
+            ~this()pure @trusted{
+
+            }
+        }
+
     static assert(is(DestructorType!Class == void function(Evoid*)pure @safe));
 
     //multiple types:
@@ -203,11 +211,20 @@ unittest{
     static assert(is(ShallowDestructorType!Struct == void function(Evoid*)nothrow @system));
 
 
-    static class Class{
-        ~this()pure @trusted{
 
+    version(D_BetterC)
+        static extern(C)class Class{
+            ~this()pure @trusted{
+
+            }
         }
-    }
+    else
+        static class Class{
+            ~this()pure @trusted{
+
+            }
+        }
+
     static assert(is(ShallowDestructorType!Class == void function(Evoid*)pure nothrow @safe @nogc));
 
     //multiple types:
@@ -1436,77 +1453,83 @@ shared static ~this(){
 
 //same as GC.addRange but `pure nothrow @trusted @nogc` and with debug testing
 package void gc_add_range(const void* data, const size_t length)pure nothrow @trusted @nogc{
-    assumePure(function void(const void* ptr, const size_t len){
-        import core.memory: GC;
-        GC.addRange(ptr, len);
-    })(data, length);
-
-    assert(data !is null);
-    assert(length > 0);
-
-    assumePureNoGc(function void(const void* data, const size_t length)@trusted{
-        version(autoptr_count_gc_ranges){
-            import core.atomic;
-            atomicFetchAdd!(MemoryOrder.raw)(_conter_gc_ranges, 1);
-        }
+    version(D_BetterC){
+    }
+    else{
+        assumePure(function void(const void* ptr, const size_t len){
+            import core.memory: GC;
+            GC.addRange(ptr, len);
+        })(data, length);
 
 
+        assert(data !is null);
+        assert(length > 0);
 
-        version(autoptr_track_gc_ranges){
-            foreach(const void[] gcr; _gc_ranges){
-                if(gcr.length == 0)
-                    continue;
-
-                const void* gcr_end = (gcr.ptr + gcr.length);
-                assert(!(data <= gcr.ptr && gcr.ptr < (data + length)));
-                assert(!(data < gcr_end && gcr_end <= (data + length)));
-                assert(!(gcr.ptr <= data && (data + length) <= gcr_end));
+        assumePureNoGc(function void(const void* data, const size_t length)@trusted{
+            version(autoptr_count_gc_ranges){
+                import core.atomic;
+                atomicFetchAdd!(MemoryOrder.raw)(_conter_gc_ranges, 1);
             }
 
-            foreach(ref const(void)[] gcr; _gc_ranges){
-                if(gcr.length == 0){
-                    gcr = data[0 .. length];
-                    return;
+
+
+            version(autoptr_track_gc_ranges){
+                foreach(const void[] gcr; _gc_ranges){
+                    if(gcr.length == 0)
+                        continue;
+
+                    const void* gcr_end = (gcr.ptr + gcr.length);
+                    assert(!(data <= gcr.ptr && gcr.ptr < (data + length)));
+                    assert(!(data < gcr_end && gcr_end <= (data + length)));
+                    assert(!(gcr.ptr <= data && (data + length) <= gcr_end));
                 }
+
+                foreach(ref const(void)[] gcr; _gc_ranges){
+                    if(gcr.length == 0){
+                        gcr = data[0 .. length];
+                        return;
+                    }
+                }
+
+                _gc_ranges ~= data[0 .. length];
+
             }
 
-            _gc_ranges ~= data[0 .. length];
-
-        }
-
-    })(data, length);
-
-
-
+        })(data, length);
+    }
 }
 
 //same as GC.removeRange but `pure nothrow @trusted @nogc` and with debug testing
 package void gc_remove_range(const void* data)pure nothrow @trusted @nogc{
-    assumePure(function void(const void* ptr){
-        import core.memory: GC;
-        GC.removeRange(ptr);
-    })(data);
+    version(D_BetterC){
+    }
+    else{
 
-    assert(data !is null);
+        assumePure(function void(const void* ptr){
+            import core.memory: GC;
+            GC.removeRange(ptr);
+        })(data);
 
-    assumePure(function void(const void* data)@trusted{
-        version(autoptr_count_gc_ranges){
-            import core.atomic;
-            atomicFetchSub!(MemoryOrder.raw)(_conter_gc_ranges, 1);
-        }
+        assert(data !is null);
 
-        version(autoptr_track_gc_ranges){
-            foreach(ref const(void)[] gcr; _gc_ranges){
-                if(gcr.ptr is data){
-                    gcr = null;
-                    return;
-                }
-                const void* gcr_end = (gcr.ptr + gcr.length);
-                assert(!(gcr.ptr <= data && data < gcr_end));
+        assumePure(function void(const void* data)@trusted{
+            version(autoptr_count_gc_ranges){
+                import core.atomic;
+                atomicFetchSub!(MemoryOrder.raw)(_conter_gc_ranges, 1);
             }
 
-            assert(0, "missing gc range");
-        }
-    })(data);
+            version(autoptr_track_gc_ranges){
+                foreach(ref const(void)[] gcr; _gc_ranges){
+                    if(gcr.ptr is data){
+                        gcr = null;
+                        return;
+                    }
+                    const void* gcr_end = (gcr.ptr + gcr.length);
+                    assert(!(gcr.ptr <= data && data < gcr_end));
+                }
 
+                assert(0, "missing gc range");
+            }
+        })(data);
+    }
 }
