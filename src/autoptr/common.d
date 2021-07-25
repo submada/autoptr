@@ -1298,12 +1298,25 @@ version(autoptr_track_smart_ptr_lifecycle){
     public __gshared long _conter_allocations = 0;
 
     shared static ~this(){
-        import std.conv;
-        if(_conter_allocations != 0)
-            assert(0, "_conter_allocations: " ~ _conter_allocations.to!string);
+        if(_conter_allocations != 0){
+            version(D_BetterC){
+                assert(0, "_conter_allocations != 0");
+            }
+            else{
+                import std.conv;
+                assert(0, "_conter_allocations: " ~ _conter_allocations.to!string);
+            }
+        }
 
-        if(_conter_constructs != 0)
-            assert(0, "_conter_constructs: " ~ _conter_constructs.to!string);
+        if(_conter_constructs != 0){
+            version(D_BetterC){
+                assert(0, "_conter_constructs != 0");
+            }
+            else{
+                import std.conv;
+                assert(0, "_conter_constructs: " ~ _conter_constructs.to!string);
+            }
+        }
 
 
     }
@@ -1427,29 +1440,32 @@ unittest{
     assert(result1 == result2);
 }
 
-version(autoptr_count_gc_ranges)
-    public __gshared long _conter_gc_ranges = 0;
-
-
-version(autoptr_track_gc_ranges)
-    package __gshared const(void)[][] _gc_ranges = null;
-
-
-shared static ~this(){
-    version(autoptr_count_gc_ranges){
-        import std.conv;
-        if(_conter_gc_ranges != 0)
-            assert(0, "_conter_gc_ranges: " ~ _conter_gc_ranges.to!string);
-    }
-
-
-    version(autoptr_track_gc_ranges){
-        foreach(const(void)[] gcr; _gc_ranges)
-            assert(gcr.length == 0);
-    }
-
+version(D_BetterC){
 }
+else{
+    version(autoptr_count_gc_ranges)
+        public __gshared long _conter_gc_ranges = 0;
 
+
+    version(autoptr_track_gc_ranges)
+        package __gshared const(void)[][] _gc_ranges = null;
+
+
+
+    shared static ~this(){
+        version(autoptr_count_gc_ranges){
+            import std.conv;
+            if(_conter_gc_ranges != 0)
+                assert(0, "_conter_gc_ranges: " ~ _conter_gc_ranges.to!string);
+        }
+
+
+        version(autoptr_track_gc_ranges){
+            foreach(const(void)[] gcr; _gc_ranges)
+                assert(gcr.length == 0);
+        }
+    }
+}
 
 //same as GC.addRange but `pure nothrow @trusted @nogc` and with debug testing
 package void gc_add_range(const void* data, const size_t length)pure nothrow @trusted @nogc{
