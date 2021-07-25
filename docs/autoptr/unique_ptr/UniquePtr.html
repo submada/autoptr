@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8"/>
+		<title>Struct UniquePtr</title>
+		<link rel="stylesheet" type="text/css" href="../../styles/ddox.css"/>
+		<link rel="stylesheet" href="../../prettify/prettify.css" type="text/css"/>
+		<script type="text/javascript" src="../../scripts/jquery.js">/**/</script><script type="text/javascript" src="../../scripts/ddox.js">/**/</script>
+	</head>
+	<body onload="setupDdox();">
+		<nav id="main-nav">
+			<noscript>
+				<p style="color: red">The search functionality needs JavaScript enabled</p>
+			</noscript>
+			<div id="symbolSearchPane" style="display: none">
+				<form action="#" method="GET">
+					<input id="symbolSearch" type="text" name="q" placeholder="Search for symbols" autocomplete="off" onchange="performSymbolSearch(40);" onkeypress="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();"/>
+				</form>
+				<ul id="symbolSearchResults" class="symbolList" style="display: none"></ul><script type="application/javascript" src="../../symbols.js"></script><script type="application/javascript">var symbolSearchRootDir = "../../";
+$('#symbolSearchPane').show();</script>
+			</div>
+			<ul class="tree-view">
+				<li class="tree-view ">
+					<div class="package ">autoptr
+					</div>
+			<ul class="tree-view">
+				<li>
+					<div class="module ">
+						<a href="../../autoptr/common.html">common</a>
+					</div>
+				</li>
+				<li>
+					<div class="module ">
+						<a href="../../autoptr/rc_ptr.html">rc_ptr</a>
+					</div>
+				</li>
+				<li>
+					<div class="module ">
+						<a href="../../autoptr/shared_ptr.html">shared_ptr</a>
+					</div>
+				</li>
+				<li>
+					<div class="module selected">
+						<a href="../../autoptr/unique_ptr.html">unique_ptr</a>
+					</div>
+				</li>
+			</ul>
+				</li>
+			</ul>
+		</nav>
+		<div id="main-contents">
+			<h1>Struct UniquePtr</h1><p><code class="lang-d"><span class="typ">UniquePtr</span></code> is a smart pointer that owns and manages another object through a pointer and disposes of that object when the <code class="lang-d"><span class="typ">UniquePtr</span></code> goes out of scope.
+</p>
+			<div class="prototype">
+				<code class="lang-d">
+					<div class="single-prototype">
+			<span class="kwd">struct</span> <span class="typ">UniquePtr</span>(_Type, _DestructorType, _ControlType)
+			<br/>
+			&nbsp;&nbsp;
+			<br/>
+			<span class="kwd">if</span> <span class="pun">(</span><span class="pln">isControlBlock</span><span class="pun">!</span><span class="pln">_ControlType </span><span class="pun">&amp;&amp; </span><span class="pln">isDestructorType</span><span class="pun">!</span><span class="pln">_DestructorType</span><span class="pun">);</span>
+					</div>
+					<div class="single-prototype">
+			<span class="kwd">alias</span> <span class="pln">UniquePtr</span>(_Type, _ControlType, _DestructorType)
+			 <span class="pun">=</span> <a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a>!(_Type,_DestructorType,_ControlType)<span class="pun">;</span>
+					</div>
+				</code>
+			</div>
+			<section><p>The object is destroyed and its memory deallocated when either of the following happens:
+</p>
+
+<p>        1. the managing <code class="lang-d"><span class="typ">UniquePtr</span></code> object is destroyed
+</p>
+
+<p>        2. the managing <code class="lang-d"><span class="typ">UniquePtr</span></code> object is assigned another pointer via various methods like <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.opAssign.html"><span class="pln">opAssign</span></a></code> and <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.store.html"><span class="pln">store</span></a></code>.
+</p>
+
+<p>    The object is destroyed using delete-expression or a custom deleter that is supplied to <code class="lang-d"><span class="typ">UniquePtr</span></code> during construction.
+</p>
+
+<p>    A <code class="lang-d"><span class="typ">UniquePtr</span></code> may alternatively own no object, in which case it is called empty.
+</p>
+
+<p>    Template parameters:
+</p>
+
+<p>        <code class="lang-d"><span class="pln">_Type</span></code> type of managed object
+</p>
+
+<p>        <code class="lang-d"><span class="pln">_DestructorType</span></code> function pointer with attributes of destructor, to get attributes of destructor from type use <code class="lang-d"><a href="../../autoptr/common/DestructorType.html" title="autoptr.common.DestructorType"><span class="typ">DestructorType</span></a><span class="pun">!</span><span class="pln">T</span></code>. Destructor of type <code class="lang-d"><span class="pln">_Type</span></code> must be compatible with <code class="lang-d"><span class="pln">_DestructorType</span></code>
+</p>
+
+<p>        <code class="lang-d"><span class="pln">_ControlType</span></code> represent type of counter, must by of type <code class="lang-d"><a href="../../autoptr/common/ControlBlock.html" title="autoptr.common.ControlBlock"><span class="typ">ControlBlock</span></a></code>.
+</p>
+</section>
+<h2>Struct UniquePtr</h2>
+			<section><h3>Constructors</h3>
+				<table>
+					<col class="caption"/>
+					<tr>
+						<th>Name</th><th>Description</th>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.this.html" class="public">
+								<code>this</code>
+							</a>
+							<span class="tableEntryAnnotation">(nil)</span>
+						</td>
+						<td>Constructs a <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code> without managed object. Same as <code class="lang-d"><span class="typ">UniquePtr<wbr/></span><span class="pun">.</span><span class="pln">init</span></code>
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.this.html" class="public">
+								<code>this</code>
+							</a>
+							<span class="tableEntryAnnotation">(rhs)</span>
+						</td>
+						<td>Move constructor.
+</td>
+					</tr>
+				</table>
+			</section>
+			<section><h3>Properties</h3>
+				<table>
+					<col class="caption"/>
+					<tr>
+						<th>Name</th><th>Type</th><th>Description</th>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.element.html" class="public property"><code>element</code></a><span class="tableEntryAnnotation">[get]</span>
+						</td>
+						<td class="typecol"><code class="prettyprint lang-d"><span class="typ">ElementReferenceTypeImpl</span>!(inout(ElementType))</code></td><td>Get pointer to managed object of <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a></code> or reference if <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a></code> is reference type (class or interface)
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.get.html" class="public property"><code>get</code></a><span class="tableEntryAnnotation">[get]</span>
+						</td>
+						<td class="typecol"><code class="prettyprint lang-d"><span class="kwd">inout</span><span class="pun">(</span><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">UniquePtr<wbr/></span><span class="pun">.<wbr/></span><span class="typ">ElementType</span></a><span class="pun">)</span></code></td><td>Get reference to managed object of <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a></code>, same as <code class="lang-d"><span class="pln">operator</span><span class="pun">*</span></code>`
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.length.html" class="public property"><code>length</code></a><span class="tableEntryAnnotation">[get]</span>
+						</td>
+						<td class="typecol"><code class="prettyprint lang-d"><span class="pln">size_t</span></code></td><td>Returns length of dynamic array (isDynamicArray!ElementType == true).
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.toHash.html" class="public property"><code>toHash</code></a><span class="tableEntryAnnotation">[get]</span>
+						</td>
+						<td class="typecol"><code class="prettyprint lang-d"><span class="pln">size_t</span></code></td><td>Generate hash
+</td>
+					</tr>
+				</table>
+			</section>
+			<section><h3>Methods</h3>
+				<table>
+					<col class="caption"/>
+					<tr>
+						<th>Name</th><th>Description</th>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.alloc.html" class="public">
+								<code>alloc</code>
+							</a>
+							<span class="tableEntryAnnotation">(a, args)</span>
+						</td>
+						<td>Constructs an object of type <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a></code> and wraps it in a <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code> using args as the parameter list for the constructor of <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a></code>.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.alloc.html" class="public">
+								<code>alloc</code>
+							</a>
+							<span class="tableEntryAnnotation">(a, n, args)</span>
+						</td>
+						<td>Constructs an object of array type <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a></code> including its array elements and wraps it in a <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code>.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.exchange.html" class="public">
+								<code>exchange</code>
+							</a>
+							<span class="tableEntryAnnotation">(ptr)</span>
+						</td>
+						<td>Stores the non <code class="lang-d"><span class="kwd">shared</span></code> rvalue <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code> parameter <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.exchange.html#ptr"><span class="pln">ptr</span></a></code> to <code class="lang-d"><span class="kwd">this</span></code> and returns the value formerly pointed-to by this.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.make.html" class="public">
+								<code>make</code>
+							</a>
+							<span class="tableEntryAnnotation">(args)</span>
+						</td>
+						<td>Constructs an object of type <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a></code> and wraps it in a <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code> using args as the parameter list for the constructor of <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a></code>.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.make.html" class="public">
+								<code>make</code>
+							</a>
+							<span class="tableEntryAnnotation">(n, args)</span>
+						</td>
+						<td>Constructs an object of array type <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a></code> including its array elements and wraps it in a <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code>.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.move.html" class="public">
+								<code>move</code>
+							</a>
+							<span class="tableEntryAnnotation">()</span>
+						</td>
+						<td>Move <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code>
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.opAssign.html" class="public">
+								<code>opAssign</code>
+							</a>
+							<span class="tableEntryAnnotation">(nil)</span>
+						</td>
+						<td>Releases the ownership of the managed object, if any.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.opAssign.html" class="public">
+								<code>opAssign</code>
+							</a>
+							<span class="tableEntryAnnotation">(rhs)</span>
+						</td>
+						<td>Move ownership of the object managed by <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.opAssign.html#rhs"><span class="pln">rhs</span></a></code>.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.opCast.html" class="public">
+								<code>opCast</code>
+							</a>
+							<span class="tableEntryAnnotation">()</span>
+						</td>
+						<td>Checks if <code class="lang-d"><span class="kwd">this</span></code> stores a non-null pointer, i.e. whether <code class="lang-d"><span class="kwd">this </span><span class="pun">!= </span><span class="kwd">null</span></code>.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.opCmp.html" class="public">
+								<code>opCmp</code>
+							</a>
+							<span class="tableEntryAnnotation">(nil)</span>
+						</td>
+						<td>Operators &lt;, &lt;=, &gt;, &gt;= for <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code>.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.opEquals.html" class="public">
+								<code>opEquals</code>
+							</a>
+							<span class="tableEntryAnnotation">(nil)</span>
+						</td>
+						<td>Operator == and != .
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.proxySwap.html" class="public">
+								<code>proxySwap</code>
+							</a>
+							<span class="tableEntryAnnotation">(rhs)</span>
+						</td>
+						<td>Swap <code class="lang-d"><span class="kwd">this</span></code> with <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.proxySwap.html#rhs"><span class="pln">rhs</span></a></code>
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.store.html" class="public">
+								<code>store</code>
+							</a>
+							<span class="tableEntryAnnotation">(desired)</span>
+						</td>
+						<td>Stores the non <code class="lang-d"><span class="kwd">shared</span></code> rvalue <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code> parameter <code class="lang-d"><span class="pln">ptr</span></code> to <code class="lang-d"><span class="kwd">this</span></code>.
+</td>
+					</tr>
+				</table>
+			</section>
+			<section><h3>Aliases</h3>
+				<table>
+					<col class="caption"/>
+					<tr>
+						<th>Name</th><th>Description</th>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.ControlType.html" class="public">
+								<code>ControlType</code>
+							</a>
+						</td>
+						<td>Type of control block.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.DestructorType.html" class="public">
+								<code>DestructorType</code>
+							</a>
+						</td>
+						<td>Type of destructor (<code class="lang-d"><span class="typ">void </span><span class="kwd">function</span><span class="pun">(</span><span class="typ">void</span><span class="pun">*)@</span><span class="pln">attributes</span></code>).
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.ElementReferenceType.html" class="public">
+								<code>ElementReferenceType</code>
+							</a>
+						</td>
+						<td>Same as <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a><span class="pun">*</span></code> or <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a></code> if is class/interface/slice.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html" class="public">
+								<code>ElementType</code>
+							</a>
+						</td>
+						<td>Type of element managed by <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code>.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.isLockFree.html" class="public">
+								<code>isLockFree</code>
+							</a>
+						</td>
+						<td><code class="lang-d"><span class="kwd">true</span></code> if shared <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code> has lock free operations <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.store.html"><span class="pln">store</span></a></code> and <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.exchange.html"><span class="pln">exchange</span></a></code>, otherwise 'false'
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.opUnary.html" class="public">
+								<code>opUnary</code>
+							</a>
+						</td>
+						<td>Operator *
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/unique_ptr/UniquePtr.ThreadLocal.html" class="public">
+								<code>ThreadLocal</code>
+							</a>
+						</td>
+						<td>Return thhread local <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code> if specified:
+</td>
+					</tr>
+				</table>
+			</section><h2>Alias UniquePtr</h2>
+			
+			<footer>
+				<table class="license-info">
+					<tr>
+						<th>Authors</th>
+						<td>
+							<p>github.com/submada/basic_string, Adam Búš
+</p>
+
+						</td>
+					</tr>
+					<tr>
+						<th>Copyright</th>
+						<td>
+							
+						</td>
+					</tr>
+					<tr>
+						<th>License</th>
+						<td>
+							<p>www.boost.org/LICENSE_1_0.txt, Boost License 1.0.
+</p>
+
+						</td>
+					</tr>
+				</table>
+				<p class="faint">Generated using the DDOX documentation generator</p>
+			</footer>
+		</div>
+	</body>
+</html>

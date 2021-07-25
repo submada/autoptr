@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8"/>
+		<title>Module autoptr.rc_ptr</title>
+		<link rel="stylesheet" type="text/css" href="../styles/ddox.css"/>
+		<link rel="stylesheet" href="../prettify/prettify.css" type="text/css"/>
+		<script type="text/javascript" src="../scripts/jquery.js">/**/</script><script type="text/javascript" src="../scripts/ddox.js">/**/</script>
+	</head>
+	<body onload="setupDdox();">
+		<nav id="main-nav">
+			<noscript>
+				<p style="color: red">The search functionality needs JavaScript enabled</p>
+			</noscript>
+			<div id="symbolSearchPane" style="display: none">
+				<form action="#" method="GET">
+					<input id="symbolSearch" type="text" name="q" placeholder="Search for symbols" autocomplete="off" onchange="performSymbolSearch(40);" onkeypress="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();"/>
+				</form>
+				<ul id="symbolSearchResults" class="symbolList" style="display: none"></ul><script type="application/javascript" src="../symbols.js"></script><script type="application/javascript">var symbolSearchRootDir = "../";
+$('#symbolSearchPane').show();</script>
+			</div>
+			<ul class="tree-view">
+				<li class="tree-view ">
+					<div class="package ">autoptr
+					</div>
+			<ul class="tree-view">
+				<li>
+					<div class="module ">
+						<a href="../autoptr/common.html">common</a>
+					</div>
+				</li>
+				<li>
+					<div class="module selected">
+						<a href="../autoptr/rc_ptr.html">rc_ptr</a>
+					</div>
+				</li>
+				<li>
+					<div class="module ">
+						<a href="../autoptr/shared_ptr.html">shared_ptr</a>
+					</div>
+				</li>
+				<li>
+					<div class="module ">
+						<a href="../autoptr/unique_ptr.html">unique_ptr</a>
+					</div>
+				</li>
+			</ul>
+				</li>
+			</ul>
+		</nav>
+		<div id="main-contents">
+			<h1>Module autoptr.rc_ptr</h1><p>Implementation of reference counted pointer <code class="lang-d"><a href="../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a></code> (similar to <code class="lang-d"><span class="typ">SharedPtr</span></code>).
+</p><section></section>
+
+			<section></section>
+			<section>
+				<h2>Functions</h2>
+				<table>
+					<col class="caption"/>
+					<tr>
+						<th>Name</th><th>Description</th>
+					</tr>
+					<tr>
+						<td>
+							<code>
+								<a id="dynCast" class="public" href="../autoptr/rc_ptr/dynCast.html">dynCast</a><span class="tableEntryAnnotation">(ptr)</span>
+							</code>
+						</td>
+						<td>Dynamic cast for shared pointers if <code class="lang-d"><span class="typ">ElementType</span></code> is class with D linkage.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<code>
+								<a id="share" class="public" href="../autoptr/rc_ptr/share.html">share</a><span class="tableEntryAnnotation">(ptr)</span>
+							</code>
+						</td>
+						<td>Return <code class="lang-d"><span class="kwd">shared <a href="../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a></code> pointing to same managed object like parameter <code class="lang-d"><a href="../autoptr/rc_ptr/share.html#ptr"><span class="pln">ptr</span></a></code>.
+</td>
+					</tr>
+				</table>
+			</section>
+			<section>
+				<h2>Structs</h2>
+				<table>
+					<col class="caption"/>
+					<tr>
+						<th>Name</th><th>Description</th>
+					</tr>
+					<tr>
+						<td>
+							<code>
+								<a id="RcPtr" class="public" href="../autoptr/rc_ptr/RcPtr.html">RcPtr</a>
+							</code>
+						</td>
+						<td><code class="lang-d"><span class="typ">RcPtr</span></code> is a smart pointer that retains shared ownership of an object through a pointer.
+</td>
+					</tr>
+				</table>
+			</section>
+			<section>
+				<h2>Manifest constants</h2>
+				<table>
+					<col class="caption"/>
+					<tr>
+						<th>Name</th><th>Type</th><th>Description</th>
+					</tr>
+					<tr>
+						<td>
+							<a id="isRcPtr" class="public" href="../autoptr/rc_ptr/isRcPtr.html">
+								<code>isRcPtr</code>
+							</a>
+						</td>
+						<td>
+						</td>
+						<td>Check if type <code class="lang-d"><span class="pln">T</span></code> is of type <code class="lang-d"><a href="../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a><span class="pun">!(...)</span></code>.
+</td>
+					</tr>
+				</table>
+			</section>
+			<section>
+				<h2>Aliases</h2>
+				<table>
+					<col class="caption"/>
+					<tr>
+						<th>Name</th><th>Type</th><th>Description</th>
+					</tr>
+					<tr>
+						<td>
+							<a id="DefaultRcControlBlock" class="public" href="../autoptr/rc_ptr/DefaultRcControlBlock.html">
+								<code>DefaultRcControlBlock</code>
+							</a>
+						</td>
+						<td>
+							<code class="prettyprint lang-d"><a href="../autoptr/common/ControlBlock.html"><span class="typ">ControlBlock</span></a>!(int,int)</code>
+						</td>
+						<td>Default <code class="lang-d"><span class="typ">ControlBlock</span></code> for <code class="lang-d"><a href="../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a></code>.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a id="RcPtr" class="public" href="../autoptr/rc_ptr/RcPtr.html">
+								<code>RcPtr</code>
+							</a>
+						</td>
+						<td>
+							<code class="prettyprint lang-d"><a href="../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a>!(_Type,_DestructorType,_ControlType,false)</code>
+						</td>
+						<td><code class="lang-d"><span class="typ">RcPtr</span></code> is a smart pointer that retains shared ownership of an object through a pointer.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a id="WeakRcPtr" class="public" href="../autoptr/rc_ptr/WeakRcPtr.html">
+								<code>WeakRcPtr</code>
+							</a>
+						</td>
+						<td>
+							<code class="prettyprint lang-d"><a href="../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a>!(_Type,_DestructorType,_ControlType,true)</code>
+						</td>
+						<td>Weak pointer
+</td>
+					</tr>
+				</table>
+			</section>
+			<footer>
+				<table class="license-info">
+					<tr>
+						<th>Authors</th>
+						<td>
+							<p>github.com/submada/basic_string, Adam Búš
+</p>
+
+						</td>
+					</tr>
+					<tr>
+						<th>Copyright</th>
+						<td>
+							
+						</td>
+					</tr>
+					<tr>
+						<th>License</th>
+						<td>
+							<p>www.boost.org/LICENSE_1_0.txt, Boost License 1.0.
+</p>
+
+						</td>
+					</tr>
+				</table>
+				<p class="faint">Generated using the DDOX documentation generator</p>
+			</footer>
+		</div>
+	</body>
+</html>
