@@ -1,2 +1,0 @@
-# autoptr
-SharedPtr, UniquePtr, RcPtr
