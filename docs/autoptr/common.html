@@ -69,6 +69,15 @@ $('#symbolSearchPane').show();</script>
 						<td>Control block for <code class="lang-d"><span class="typ">SharedPtr</span></code> and <code class="lang-d"><span class="typ">UniquePtr</span></code>.
 </td>
 					</tr>
+					<tr>
+						<td>
+							<code>
+								<a id="Evoid" class="public" href="../autoptr/common/Evoid.html">Evoid</a>
+							</code>
+						</td>
+						<td>Type used as parameter for function pointer returned from <code class="lang-d"><a href="../autoptr/common/DestructorType.html"><span class="typ">DestructorType</span></a></code>.
+</td>
+					</tr>
 				</table>
 			</section>
 			<section>
@@ -97,7 +106,7 @@ $('#symbolSearchPane').show();</script>
 						</td>
 						<td>
 						</td>
-						<td>Check if type <code class="lang-d"><span class="typ">Type</span></code> is of type destructor type (is(void function(void* )pure nothrow @safe @nogc : Type))
+						<td>Check if type <code class="lang-d"><span class="typ">Type</span></code> is of type destructor type (is(void function(Evoid* )pure nothrow @safe @nogc : Type))
 </td>
 					</tr>
 				</table>
@@ -140,9 +149,21 @@ $('#symbolSearchPane').show();</script>
 							</a>
 						</td>
 						<td>
-							<code class="prettyprint lang-d"><span class="typ">Get</span>!(typeof(functionvoid(void*){importautoptr.destruct;staticforeach(aliasType;Types){staticif(is(Unqual!Type==void)){}else{staticif(is(Type==class)){_finalizeType!(Unqual!Type).init(null,true);}else{{Unqual!Typetmp;staticif(is(Unqual!Type:voidfunction(void*)purenothrow@nogc@safe)){tmp(null);}}}}}}))</code>
+							<code class="prettyprint lang-d"><span class="typ">Get</span>!(typeof(functionvoid(Evoid*){importautoptr.internal.destruct;staticforeach(aliasType;Types){staticif(is(Unqual!Type==void)){}else{staticif(is(Type==class)){_finalizeType!(Unqual!Type).init(null,true);}else{staticif(isDynamicArray!Type){}else{staticif(is(voidfunction(Evoid*)purenothrow@nogc@safe:Unqual!Type)){{Unqual!Typefn;fn(null);}}else{{Unqual!Typetmp;}}}}}}}))</code>
 						</td>
-						<td>Type of destructor of <code class="lang-d"><span class="typ">Type</span></code> ( void function(void*)@destructor_attributes ).
+						<td>Destructor type of destructors of types <code class="lang-d"><span class="typ">Types</span></code> ( void function(Evoid*)@destructor_attributes ).
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a id="ShallowDestructorType" class="public" href="../autoptr/common/ShallowDestructorType.html">
+								<code>ShallowDestructorType</code>
+							</a>
+						</td>
+						<td>
+							<code class="prettyprint lang-d"><span class="typ">Get</span>!(typeof(functionvoid(Evoid*){importautoptr.internal.destruct;staticforeach(aliasType;Types){staticif(is(Unqual!Type==void)){}else{staticif(is(Type==class)){}else{staticif(isDynamicArray!Type){}else{staticif(is(voidfunction(Evoid*)purenothrow@nogc@safe:Unqual!Type)){{Unqual!Typefn;fn(null);}}else{{Unqual!Typetmp;}}}}}}}))</code>
+						</td>
+						<td>Same as <code class="lang-d"><a href="../autoptr/common/DestructorType.html"><span class="typ">DestructorType</span></a></code> but ignore classes and slices.
 </td>
 					</tr>
 				</table>

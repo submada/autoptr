@@ -10,8 +10,10 @@
 <url><loc>http://127.0.0.1/autoptr/common/ControlTypeDeduction.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/DefaultAllocator.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/DestructorType.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/common/Evoid.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/isControlBlock.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/isDestructorType.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/common/ShallowDestructorType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/DefaultRcControlBlock.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/dynCast.html</loc></url>
