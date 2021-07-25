@@ -726,7 +726,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         }
 
         /// ditto
-        public auto exchange(MemoryOrder order = MemoryOrder.seq, Ptr, this This)(Ptr ptr)scope
+        public auto exchange(MemoryOrder order = MemoryOrder.seq, Ptr, this This)(scope Ptr ptr)scope
         if(true
             && isUniquePtr!Ptr
             && !is(Ptr == shared)
@@ -1222,7 +1222,7 @@ pure nothrow @nogc unittest{
 
     Type of parameter `ptr` must be `SharedPtr` with `shared(ControlType)` and `shared`/`immutable` `ElementType` .
 */
-public shared(Ptr) share(Ptr)(Ptr ptr)
+public shared(Ptr) share(Ptr)(scope Ptr ptr)
 if(isUniquePtr!Ptr){
     mixin validateUniquePtr!Ptr;
 
@@ -1302,7 +1302,7 @@ if(isReferenceType!Elm || isPointer!Elm || isDynamicArray!Elm){
 /**
     TODO
 */
-public auto first(Ptr)(Ptr ptr)@trusted
+public auto first(Ptr)(scope Ptr ptr)@trusted
 if(isUniquePtr!Ptr && is(Ptr.ElementType : T[], T)){
     import std.traits : isDynamicArray, isStaticArray;
     import std.range : ElementEncodingType;

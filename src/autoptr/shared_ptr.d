@@ -1498,7 +1498,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         }
 
         /// ditto
-        public auto exchange(MemoryOrder order = MemoryOrder.seq, Ptr, this This)(Ptr ptr)scope
+        public auto exchange(MemoryOrder order = MemoryOrder.seq, Ptr, this This)(scope Ptr ptr)scope
         if(isSharedPtr!Ptr && !is(Ptr == shared) && isAssignable!(Ptr, This)){
             mixin validateSharedPtr!(Ptr, This);
 
@@ -2836,7 +2836,7 @@ unittest{
 
     Type of parameter `ptr` must be `SharedPtr` with `shared(ControlType)` and `shared`/`immutable` `ElementType` .
 */
-public shared(Ptr) share(Ptr)(auto ref Ptr ptr)
+public shared(Ptr) share(Ptr)(auto ref scope Ptr ptr)
 if(isSharedPtr!Ptr){
     mixin validateSharedPtr!Ptr;
 

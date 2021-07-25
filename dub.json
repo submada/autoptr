@@ -1,22 +1,29 @@
 {
-	"name" : "autoptr",
-  	"authors" : [
-    		"Adam Búš"
-  	],
-
-	"buildTypes" : {
-		"unittest" : {
-			"versions" : [
-				"autoptr_count_gc_ranges",
-				"autoptr_track_gc_ranges",
-				"autoptr_track_smart_ptr_lifecycle"
-			]
-		}
-	},
-	"dflags" : [
-		""
-	],
-	"copyright" : "Copyright © 2021, Adam Búš",
-	"description" : "Smart pointers like C++ std::smart_ptr and  std::unique_ptr.",
-	"license" : "Boost Software License - Version 1.0"
+  "name" : "autoptr",
+  "authors" : [
+    "Adam Búš"
+  ],
+  "buildTypes" : {
+    "unittestBasicString" : {
+      "buildOptions" : [
+        "debugMode",
+        "debugInfo",
+        "unittests"
+      ],
+      "versions" : [
+        "basic_string_unittest"
+      ]
+    }
+  },
+  "dependencies" : {
+    "mir-core" : "~>1.1.60",
+    "mir-algorithm" : "~>3.10.18",
+    "automem" : "~>0.6.4"
+  },
+  "dflags" : [
+    "-dip1000"
+  ],
+  "copyright" : "Copyright © 2021, Adam Búš",
+  "description" : "Mutable @nogc string struct using `std.experimental.allocator` for allocations.",
+  "license" : "Boost Software License - Version 1.0"
 }

@@ -1380,7 +1380,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         }
 
         /// ditto
-        public auto exchange(MemoryOrder order = MemoryOrder.seq, Ptr, this This)(Ptr ptr)scope
+        public auto exchange(MemoryOrder order = MemoryOrder.seq, Ptr, this This)(scope Ptr ptr)scope
         if(isRcPtr!Ptr && !is(Ptr == shared) && isAssignable!(Ptr, This)){
             mixin validateRcPtr!(Ptr, This);
 
@@ -2433,7 +2433,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
     Type of parameter `ptr` must be `RcPtr` with `shared(ControlType)` and `shared`/`immutable` `ElementType` .
 */
-public shared(Ptr) share(Ptr)(auto ref Ptr ptr)
+public shared(Ptr) share(Ptr)(auto ref scope Ptr ptr)
 if(isRcPtr!Ptr){
     mixin validateRcPtr!Ptr;
 
