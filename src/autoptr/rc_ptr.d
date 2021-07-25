@@ -3435,9 +3435,6 @@ version(unittest){
                 }
             }
 
-
-            debug assert(_conter_gc_ranges == 0);
-
             {
 
 
@@ -3445,9 +3442,6 @@ version(unittest){
                 assert(x.useCount == 1);
                 //assert(x.dynTo!Class.get.i == 3);
             }
-
-            debug assert(_conter_gc_ranges == 0);
-
         }
     }
 

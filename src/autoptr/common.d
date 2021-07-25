@@ -548,7 +548,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, AllocatorType
             if(raw.length == 0)
                 return null;
 
-            debug _log_ptr_allocate();
+            _log_ptr_allocate();
 
             MakeEmplace* result = (()@trusted => cast(MakeEmplace*)raw.ptr)();
 
@@ -645,7 +645,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, AllocatorType
                 );
             }
 
-            debug _log_ptr_construct();
+            _log_ptr_construct();
         }
 
 
@@ -698,7 +698,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, AllocatorType
                 // nothing
             }
 
-            debug _log_ptr_destruct();
+            _log_ptr_destruct();
         }
 
         private void deallocate()pure nothrow @trusted @nogc{
@@ -722,7 +722,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, AllocatorType
                     gc_remove_range(&this.allocator);
             }
 
-            debug _log_ptr_deallocate();
+            _log_ptr_deallocate();
         }
 
     }
@@ -846,7 +846,7 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, Allocato
             if(raw.length == 0)
                 return null;
 
-            debug _log_ptr_allocate();
+            _log_ptr_allocate();
 
             MakeDynamicArray* result = (()@trusted => cast(MakeDynamicArray*)raw.ptr)();
 
@@ -902,7 +902,7 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, Allocato
             foreach(ref d; this.data[])
                 emplace((()@trusted => &d)(), args);
 
-            debug _log_ptr_construct();
+            _log_ptr_construct();
         }
 
 
@@ -945,7 +945,7 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, Allocato
                 gc_remove_range(this.data.ptr);
             }
 
-            debug _log_ptr_destruct();
+            _log_ptr_destruct();
         }
 
         private void deallocate()pure nothrow @trusted @nogc{
@@ -969,7 +969,7 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, Allocato
                 gc_remove_range(&this.allocator);
             }
 
-            debug _log_ptr_deallocate();
+            _log_ptr_deallocate();
         }
 
     }
@@ -1205,39 +1205,9 @@ if(!is(Type == interface) && isDestructorType!DestructorType){
 }
 
 
-debug{
-    package __gshared long _conter_constructs = 0;
-    package __gshared long _conter_allocations = 0;
-
-    package void _log_ptr_allocate()pure nothrow @safe @nogc{
-        import core.atomic;
-
-        assumePure(function void()@trusted{
-            atomicFetchAdd!(MemoryOrder.raw)(_conter_allocations, 1);
-        })();
-    }
-    package void _log_ptr_construct()pure nothrow @safe @nogc{
-        import core.atomic;
-
-        assumePure(function void()@trusted{
-            atomicFetchAdd!(MemoryOrder.raw)(_conter_constructs, 1);
-        })();
-
-    }
-    package void _log_ptr_deallocate()pure nothrow @safe @nogc{
-        import core.atomic;
-
-        assumePure(function void()@trusted{
-            atomicFetchSub!(MemoryOrder.raw)(_conter_allocations, 1);
-        })();
-    }
-    package void _log_ptr_destruct()pure nothrow @safe @nogc{
-        import core.atomic;
-
-        assumePure(function void()@trusted{
-            atomicFetchSub!(MemoryOrder.raw)(_conter_constructs, 1);
-        })();
-    }
+version(autoptr_track_smart_ptr_lifecycle){
+    public __gshared long _conter_constructs = 0;
+    public __gshared long _conter_allocations = 0;
 
     shared static ~this(){
         import std.conv;
@@ -1250,6 +1220,44 @@ debug{
 
     }
 }
+
+package void _log_ptr_allocate()pure nothrow @safe @nogc{
+    version(autoptr_track_smart_ptr_lifecycle){
+        import core.atomic;
+
+        assumePure(function void()@trusted{
+            atomicFetchAdd!(MemoryOrder.raw)(_conter_allocations, 1);
+        })();
+    }
+}
+package void _log_ptr_construct()pure nothrow @safe @nogc{
+    version(autoptr_track_smart_ptr_lifecycle){
+        import core.atomic;
+
+        assumePure(function void()@trusted{
+            atomicFetchAdd!(MemoryOrder.raw)(_conter_constructs, 1);
+        })();
+    }
+}
+package void _log_ptr_deallocate()pure nothrow @safe @nogc{
+    version(autoptr_track_smart_ptr_lifecycle){
+        import core.atomic;
+
+        assumePure(function void()@trusted{
+            atomicFetchSub!(MemoryOrder.raw)(_conter_allocations, 1);
+        })();
+    }
+}
+package void _log_ptr_destruct()pure nothrow @safe @nogc{
+    version(autoptr_track_smart_ptr_lifecycle){
+        import core.atomic;
+
+        assumePure(function void()@trusted{
+            atomicFetchSub!(MemoryOrder.raw)(_conter_constructs, 1);
+        })();
+    }
+}
+
 
 //increment counter and return new value, if counter is shared then atomic increment is used.
 private static T rc_increment(bool atomic, T)(ref T counter){
@@ -1331,25 +1339,29 @@ unittest{
     assert(result1 == result2);
 }
 
+version(autoptr_count_gc_ranges)
+    public __gshared long _conter_gc_ranges = 0;
 
-debug{
-    package __gshared long _conter_gc_ranges = 0;
 
-    version(D_BetterC){}else
+version(autoptr_track_gc_ranges)
     package __gshared const(void)[][] _gc_ranges = null;
 
-    shared static ~this(){
+
+shared static ~this(){
+    version(autoptr_count_gc_ranges){
         import std.conv;
         if(_conter_gc_ranges != 0)
             assert(0, "_conter_gc_ranges: " ~ _conter_gc_ranges.to!string);
-
-
-        version(D_BetterC){}else
-            foreach(const(void)[] gcr; _gc_ranges){
-                assert(gcr.length == 0);
-            }
     }
+
+
+    version(autoptr_track_gc_ranges){
+        foreach(const(void)[] gcr; _gc_ranges)
+            assert(gcr.length == 0);
+    }
+
 }
+
 
 //same as GC.addRange but `pure nothrow @trusted @nogc` and with debug testing
 package void gc_add_range(const void* data, const size_t length)pure nothrow @trusted @nogc{
@@ -1361,38 +1373,39 @@ package void gc_add_range(const void* data, const size_t length)pure nothrow @tr
     assert(data !is null);
     assert(length > 0);
 
-    debug{
-        assumePureNoGc(function void(const void* data, const size_t length)@trusted{
+    assumePureNoGc(function void(const void* data, const size_t length)@trusted{
+        version(autoptr_count_gc_ranges){
             import core.atomic;
             atomicFetchAdd!(MemoryOrder.raw)(_conter_gc_ranges, 1);
+        }
 
 
 
-            version(D_BetterC){}else{
-                foreach(const void[] gcr; _gc_ranges){
-                    if(gcr.length == 0)
-                        continue;
+        version(autoptr_track_gc_ranges){
+            foreach(const void[] gcr; _gc_ranges){
+                if(gcr.length == 0)
+                    continue;
 
-                    const void* gcr_end = (gcr.ptr + gcr.length);
-                    assert(!(data <= gcr.ptr && gcr.ptr < (data + length)));
-                    assert(!(data < gcr_end && gcr_end <= (data + length)));
-                    assert(!(gcr.ptr <= data && (data + length) <= gcr_end));
-                }
-
-                foreach(ref const(void)[] gcr; _gc_ranges){
-                    if(gcr.length == 0){
-                        gcr = data[0 .. length];
-                        return;
-                    }
-                }
-
-                _gc_ranges ~= data[0 .. length];
-
+                const void* gcr_end = (gcr.ptr + gcr.length);
+                assert(!(data <= gcr.ptr && gcr.ptr < (data + length)));
+                assert(!(data < gcr_end && gcr_end <= (data + length)));
+                assert(!(gcr.ptr <= data && (data + length) <= gcr_end));
             }
 
-        })(data, length);
+            foreach(ref const(void)[] gcr; _gc_ranges){
+                if(gcr.length == 0){
+                    gcr = data[0 .. length];
+                    return;
+                }
+            }
 
-    }
+            _gc_ranges ~= data[0 .. length];
+
+        }
+
+    })(data, length);
+
+
 
 }
 
@@ -1405,13 +1418,13 @@ package void gc_remove_range(const void* data)pure nothrow @trusted @nogc{
 
     assert(data !is null);
 
-    debug{
-        assumePure(function void()@trusted{
+    assumePure(function void(const void* data)@trusted{
+        version(autoptr_count_gc_ranges){
             import core.atomic;
             atomicFetchSub!(MemoryOrder.raw)(_conter_gc_ranges, 1);
-        })();
+        }
 
-        version(D_BetterC){}else{
+        version(autoptr_track_gc_ranges){
             foreach(ref const(void)[] gcr; _gc_ranges){
                 if(gcr.ptr is data){
                     gcr = null;
@@ -1423,7 +1436,6 @@ package void gc_remove_range(const void* data)pure nothrow @trusted @nogc{
 
             assert(0, "missing gc range");
         }
-
-    }
+    })(data);
 
 }

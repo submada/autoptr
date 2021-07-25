@@ -2464,7 +2464,7 @@ private template SharedPtrMakeDeleter(_Type, _DestructorType, _ControlType, Dele
                 return null;
 
 
-            debug _log_ptr_allocate();
+            _log_ptr_allocate();
 
             SharedPtrMakeDeleter* result = (()@trusted => cast(SharedPtrMakeDeleter*)raw.ptr)();
 
@@ -2524,7 +2524,7 @@ private template SharedPtrMakeDeleter(_Type, _DestructorType, _ControlType, Dele
         public this(Args...)(DeleterType deleter, AllocatorWithState[0 .. $] a, ElementReferenceType data){
             import core.lifetime : forward, emplace;
 
-            debug _log_ptr_construct();
+            _log_ptr_construct();
 
             version(D_BetterC){
                 if(!vtable.initialized())
@@ -2585,7 +2585,7 @@ private template SharedPtrMakeDeleter(_Type, _DestructorType, _ControlType, Dele
                 gc_remove_range(&this.data);
             }
 
-            debug _log_ptr_destruct();
+            _log_ptr_destruct();
         }
 
         private void deallocate()pure nothrow @trusted @nogc{
@@ -2615,7 +2615,7 @@ private template SharedPtrMakeDeleter(_Type, _DestructorType, _ControlType, Dele
                 gc_remove_range(&this.deleter);
             }
 
-            debug _log_ptr_deallocate();
+            _log_ptr_deallocate();
         }
     }
 }
@@ -3856,9 +3856,6 @@ version(unittest){
                 }
             }
 
-
-            debug assert(_conter_gc_ranges == 0);
-
             {
 
 
@@ -3866,8 +3863,6 @@ version(unittest){
                 assert(x.useCount == 1);
                 //assert(x.dynTo!Class.get.i == 3);
             }
-
-            debug assert(_conter_gc_ranges == 0);
 
         }
     }

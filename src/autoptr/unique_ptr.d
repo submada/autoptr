@@ -1155,7 +1155,6 @@ if(isUniquePtr!Ptr && Ptr.ControlType.hasSharedCounter){
     if(ptr == null)
         return ResultPtr.init;
 
-    pragma(msg, ResultPtr);
     auto result = ResultPtr(ptr._control, ptr.element);
     ptr._const_reset();
 
@@ -1312,8 +1311,7 @@ if(isUniquePtr!Ptr && is(Ptr.ElementType : T[], T)){
         Ptr,
         ElementEncodingType!(Ptr.ElementType)
     );
-    pragma(msg, Ptr);
-    pragma(msg, Result);
+
     if(ptr == null)
         return Result.init;
 
