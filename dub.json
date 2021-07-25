@@ -18,6 +18,6 @@
 		""
 	],
 	"copyright" : "Copyright © 2021, Adam Búš",
-	"description" : "Smart pointers like C++ std::smart_ptr and  std::unique_ptr.",
+	"description" : "Smart pointers.",
 	"license" : "Boost Software License - Version 1.0"
 }
