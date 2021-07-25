@@ -1,8 +1,8 @@
-module autoptr.mallocator;
+module autoptr.internal.mallocator;
 
 //mallocator:
 version(D_BetterC){
-    package struct Mallocator{
+    package(autoptr) struct Mallocator{
         import std.experimental.allocator.common : platformAlignment;
 
         enum uint alignment = platformAlignment;
@@ -40,5 +40,5 @@ version(D_BetterC){
     }
 }
 else{
-    package import std.experimental.allocator.mallocator : Mallocator;
+    package(autoptr) import std.experimental.allocator.mallocator : Mallocator;
 }

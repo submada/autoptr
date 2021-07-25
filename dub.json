@@ -4,11 +4,24 @@
     "Adam Búš"
   ],
   "buildTypes" : {
-
+    "unittestBasicString" : {
+      "buildOptions" : [
+        "debugMode",
+        "debugInfo",
+        "unittests"
+      ],
+      "versions" : [
+        "basic_string_unittest"
+      ]
+    }
   },
   "dependencies" : {
+    "mir-core" : "~>1.1.60",
+    "mir-algorithm" : "~>3.10.18",
+    "automem" : "~>0.6.4"
   },
   "dflags" : [
+    ""
   ],
   "copyright" : "Copyright © 2021, Adam Búš",
   "description" : "Mutable @nogc string struct using `std.experimental.allocator` for allocations.",

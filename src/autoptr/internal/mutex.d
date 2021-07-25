@@ -3,7 +3,7 @@
     License:   $(HTTP www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
     Authors:   $(HTTP https://github.com/submada/metaptr, Adam Búš)
 */
-module autoptr.mutex;   //original source: object.d
+module autoptr.internal.mutex;   //original source: object.d
 
 import std.traits : isMutable;
 
@@ -18,7 +18,7 @@ else version (Posix){
 //else static assert(false, "Platform not supported");
 
 
-package:
+package(autoptr):
 
 version (Windows)
     enum supportMutex = true;

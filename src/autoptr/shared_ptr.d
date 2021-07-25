@@ -9,8 +9,8 @@ module autoptr.shared_ptr;
 import std.stdio : writeln;
 import std.conv : to;
 
-import autoptr.mallocator : Mallocator;
-import autoptr.destruct : destruct;
+import autoptr.internal.mallocator : Mallocator;
+import autoptr.internal.destruct : destruct;
 
 import autoptr.common;
 import autoptr.unique_ptr : isUniquePtr, UniquePtr;
@@ -1641,7 +1641,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             mixin validateSharedPtr!(E, D, This);
 
             static if(is(This == shared)){
-                import autoptr.mutex : getMutex;
+                import autoptr.internal.mutex : getMutex;
 
                 shared mutex = getMutex(this);
 
@@ -2575,7 +2575,7 @@ private template SharedPtrMakeDeleter(_Type, _DestructorType, _ControlType, Dele
         }
 
         private void destruct()pure nothrow @trusted @nogc{
-            assumePureNoGC((ref DeleterType deleter, ElementReferenceType data){
+            assumePureNoGcNothrow((ref DeleterType deleter, ElementReferenceType data){
                 deleter(data);
             })(this.deleter, this.data);
 
@@ -2589,18 +2589,19 @@ private template SharedPtrMakeDeleter(_Type, _DestructorType, _ControlType, Dele
         }
 
         private void deallocate()pure nothrow @trusted @nogc{
-            static if(hasStatelessAllocator)
-                alias allo = statelessAllcoator!AllocatorType;
-            else
-                auto allo = this.allocator;
-
-
             void* self = cast(void*)&this;
             _destruct!(typeof(this), DestructorType!void)(self);
 
 
             void[] raw = self[0 .. typeof(this).sizeof];
-            assumePureNoGC((void[] raw) => allo.deallocate(raw))(raw);
+
+
+            static if(hasStatelessAllocator)
+                assumePureNoGcNothrow(function(void[] raw)@trusted => statelessAllcoator!AllocatorType.deallocate(raw))(raw);
+            else
+                assumePureNoGcNothrow(function(void[] raw, ref typeof(this.allocator) allo)@trusted => allo.deallocate(raw))(raw, this.allocator);
+
+
 
             static if(allocatorGCRange){
                 static assert(supportGC);
@@ -2983,7 +2984,7 @@ private static auto lockSharedPtr
 {
     import std.traits : CopyConstness, CopyTypeQualifiers, Unqual;
     import core.lifetime : forward;
-    import autoptr.mutex : getMutex;
+    import autoptr.internal.mutex : getMutex;
 
 
     //static assert(!Ptr.threadLocal);
@@ -3367,7 +3368,7 @@ version(unittest){
             assert(x == null);
         }
 
-        import autoptr.mutex : supportMutex;
+        import autoptr.internal.mutex : supportMutex;
         static if(supportMutex){
             shared SharedPtr!(long).ThreadLocal!false x = SharedPtr!(shared long).ThreadLocal!false.make(1);
 
@@ -3461,7 +3462,7 @@ version(unittest){
 
         shared SharedPtr!(long).ThreadLocal!false x = SharedPtr!(shared long).ThreadLocal!false.make(123);
 
-        import autoptr.mutex : supportMutex;
+        import autoptr.internal.mutex : supportMutex;
         static if(supportMutex){
             SharedPtr!(shared long) y = x.load();
             assert(y.useCount == 2);

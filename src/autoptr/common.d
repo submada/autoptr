@@ -91,7 +91,7 @@ public template DestructorType(Types...){
     alias Get(T) = T;
     alias DestructorType = Get!(typeof(function void(void*){
 
-        import autoptr.destruct;
+        import autoptr.internal.destruct;
         static foreach(alias Type; Types){
             static if(is(Unqual!Type == void)){
             }
@@ -702,26 +702,17 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, AllocatorType
         }
 
         private void deallocate()pure nothrow @trusted @nogc{
-            static if(hasStatelessAllocator)
-                alias allo = statelessAllcoator!AllocatorType;
-            else
-                auto allo = this.allocator;
-
-
             void* self = cast(void*)&this;
             _destruct!(typeof(this), DestructorType!void)(self);
 
 
             void[] raw = self[0 .. typeof(this).sizeof];
 
+
             static if(hasStatelessAllocator)
-                assumePureNoGC((void[] raw){
-                    allo.deallocate(raw);
-                })(raw);
+                assumePureNoGcNothrow(function(void[] raw)@trusted => statelessAllcoator!AllocatorType.deallocate(raw))(raw);
             else
-                assumePureNoGC((ref typeof(allo) allo, void[] raw){
-                    allo.deallocate(raw);
-                })(allo, raw);
+                assumePureNoGcNothrow(function(void[] raw, ref typeof(this.allocator) allo)@trusted => allo.deallocate(raw))(raw, this.allocator);
 
 
             static if(allocatorGCRange){
@@ -909,7 +900,7 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, Allocato
             import core.lifetime : emplace;
 
             foreach(ref d; this.data[])
-                emplace(&d, args);
+                emplace((()@trusted => &d)(), args);
 
             debug _log_ptr_construct();
         }
@@ -958,11 +949,6 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, Allocato
         }
 
         private void deallocate()pure nothrow @trusted @nogc{
-            static if(hasStatelessAllocator)
-                alias allo = statelessAllcoator!AllocatorType;
-            else
-                auto allo = this.allocator;
-
             const size_t data_length = ElementEncodingType!_Type.sizeof * this.data.length;
 
             void* self = cast(void*)&this;
@@ -972,14 +958,11 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, Allocato
             void[] raw = self[0 .. typeof(this).sizeof + data_length];
 
 
+
             static if(hasStatelessAllocator)
-                assumePureNoGC((void[] raw){
-                    allo.deallocate(raw);
-                })(raw);
+                assumePureNoGcNothrow(function(void[] raw)@trusted => statelessAllcoator!AllocatorType.deallocate(raw))(raw);
             else
-                assumePureNoGC((ref typeof(allo) allo, void[] raw){
-                    allo.deallocate(raw);
-                })(allo, raw);
+                assumePureNoGcNothrow(function(void[] raw, ref typeof(this.allocator) allo)@trusted => allo.deallocate(raw))(raw, this.allocator);
 
 
             static if(allocatorGCRange){
@@ -1022,7 +1005,7 @@ else{
 }
 
 
-import autoptr.mallocator;
+import autoptr.internal.mallocator;
 
 /**
     Default allcoator for `SharedPtr.make` and `UniquePtr.make`.
@@ -1045,11 +1028,19 @@ in(isFunctionPointer!T || isDelegate!T){
     return cast(SetFunctionAttributes!(T, functionLinkage!T, attrs)) t;
 }
 
-package auto assumePureNoGC(T)(T t)@trusted
+package auto assumePureNoGc(T)(T t)@trusted
 in(isFunctionPointer!T || isDelegate!T){
     import std.traits;
 
     enum attrs = functionAttributes!T | FunctionAttribute.pure_ | FunctionAttribute.nogc;
+    return cast(SetFunctionAttributes!(T, functionLinkage!T, attrs)) t;
+}
+
+package auto assumePureNoGcNothrow(T)(T t)@trusted
+in(isFunctionPointer!T || isDelegate!T){
+    import std.traits;
+
+    enum attrs = functionAttributes!T | FunctionAttribute.pure_ | FunctionAttribute.nogc | FunctionAttribute.nothrow_;
     return cast(SetFunctionAttributes!(T, functionLinkage!T, attrs)) t;
 }
 
@@ -1150,7 +1141,7 @@ package template instanceSize(T){
 package void _destruct(Type, DestructorType)(void* _payload)
 if(!is(Type == interface) && isDestructorType!DestructorType){
     import std.traits : Unqual;
-    import autoptr.destruct;
+    import autoptr.internal.destruct;
 
     alias Get(T) = T;
 
@@ -1205,7 +1196,7 @@ if(!is(Type == interface) && isDestructorType!DestructorType){
             DestructorType f;
             f(null);
         }
-        assumePureNoGC((typeof(obj) o)@trusted{
+        assumePureNoGcNothrow((typeof(obj) o)@trusted{
             destruct(*o);
         })(obj);
 
@@ -1371,7 +1362,7 @@ package void gc_add_range(const void* data, const size_t length)pure nothrow @tr
     assert(length > 0);
 
     debug{
-        assumePureNoGC(function void(const void* data, const size_t length)@trusted{
+        assumePureNoGc(function void(const void* data, const size_t length)@trusted{
             import core.atomic;
             atomicFetchAdd!(MemoryOrder.raw)(_conter_gc_ranges, 1);
 

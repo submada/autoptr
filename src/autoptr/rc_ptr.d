@@ -6,8 +6,9 @@
 */
 module autoptr.rc_ptr;
 
-import autoptr.mallocator : Mallocator;
-import autoptr.destruct : destruct;
+import autoptr.internal.mallocator : Mallocator;
+import autoptr.internal.destruct : destruct;
+
 import autoptr.common;
 import autoptr.unique_ptr : isUniquePtr, UniquePtr;
 
@@ -2596,7 +2597,7 @@ private static auto lockRcPtr
 {
     import std.traits : CopyConstness, CopyTypeQualifiers, Unqual;
     import core.lifetime : forward;
-    import autoptr.mutex : getMutex;
+    import autoptr.internal.mutex : getMutex;
 
 
     //static assert(!Ptr.threadLocal);
@@ -2946,7 +2947,7 @@ version(unittest){
             assert(x == null);
         }
 
-        import autoptr.mutex : supportMutex;
+        import autoptr.internal.mutex : supportMutex;
         static if(supportMutex){
             shared RcPtr!(long).ThreadLocal!false x = RcPtr!(shared long).ThreadLocal!false.make(1);
 
@@ -3040,7 +3041,7 @@ version(unittest){
 
         shared RcPtr!(long).ThreadLocal!false x = RcPtr!(shared long).ThreadLocal!false.make(123);
 
-        import autoptr.mutex : supportMutex;
+        import autoptr.internal.mutex : supportMutex;
         static if(supportMutex){
             RcPtr!(shared long) y = x.load();
             assert(y.useCount == 2);

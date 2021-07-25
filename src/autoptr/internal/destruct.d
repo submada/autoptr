@@ -5,14 +5,14 @@ inspired by: https://raw.githubusercontent.com/atilaneves/automem/master/source/
     author: Atila Neves
 
 */
-module autoptr.destruct;
+module autoptr.internal.destruct;
 
 import std.traits : isStaticArray;
 
 // This is a destroy() copied and modified from
 // druntime, to allow for destruction attribute inference
 
-package:
+package(autoptr):
 
 void destruct(T)(T obj)
 if(is(T == class)){
