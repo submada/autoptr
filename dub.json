@@ -1,0 +1,16 @@
+{
+  "name" : "autoptr",
+  "authors" : [
+    "Adam Búš"
+  ],
+  "buildTypes" : {
+
+  },
+  "dependencies" : {
+  },
+  "dflags" : [
+  ],
+  "copyright" : "Copyright © 2021, Adam Búš",
+  "description" : "Mutable @nogc string struct using `std.experimental.allocator` for allocations.",
+  "license" : "Boost Software License - Version 1.0"
+}
