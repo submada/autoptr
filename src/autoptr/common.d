@@ -1609,7 +1609,7 @@ package template instanceSize(T){
 
 
 //class destructor
-extern(C) void rt_finalize2(void* p, bool det = true, bool resetMemory = false)nothrow @safe @nogc pure;
+private extern(C) void rt_finalize2(void* p, bool det = true, bool resetMemory = false)nothrow @safe @nogc pure;
 
 //Destruct _payload as if is type of `Type` and destructor has type qualifiers as `DestructorType`
 package void _destruct(Type, DestructorType)(void* _payload)
@@ -1618,7 +1618,7 @@ if(isDestructorType!DestructorType){
 
     alias Get(T) = T;
 
-
+    ///interface:
     static assert(!is(Type == interface));
 
     ///class:
@@ -1690,6 +1690,7 @@ if(isDestructorType!DestructorType){
 
         }
     }
+    ///else:
     else{
         ///nothing
     }
