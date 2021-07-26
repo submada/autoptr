@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="UTF-8"/>
-		<title>Alias hasIntrusiveBase</title>
+		<title>Enum member RcPtr.intrusive</title>
 		<link rel="stylesheet" type="text/css" href="../../styles/ddox.css"/>
 		<link rel="stylesheet" href="../../prettify/prettify.css" type="text/css"/>
 		<script type="text/javascript" src="../../scripts/jquery.js">/**/</script><script type="text/javascript" src="../../scripts/ddox.js">/**/</script>
@@ -25,12 +25,12 @@ $('#symbolSearchPane').show();</script>
 					</div>
 			<ul class="tree-view">
 				<li>
-					<div class="module selected">
+					<div class="module ">
 						<a href="../../autoptr/common.html">common</a>
 					</div>
 				</li>
 				<li>
-					<div class="module ">
+					<div class="module selected">
 						<a href="../../autoptr/rc_ptr.html">rc_ptr</a>
 					</div>
 				</li>
@@ -49,13 +49,25 @@ $('#symbolSearchPane').show();</script>
 			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>Alias hasIntrusiveBase</h1><p>Check if type <code class="lang-d"><span class="pln">T</span></code> is class and has base class: (isIntrusive!Base || hasIntrusiveBase!Base)  `.
+			<h1>Enum member RcPtr.intrusive</h1><p><code class="lang-d"><span class="kwd">true</span></code> if <code class="lang-d"><a href="../../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a></code> has intrusive <code class="lang-d"><a href="../../autoptr/rc_ptr/RcPtr.ElementType.html"><span class="typ">ElementType</span></a></code>.
 </p>
 			<div class="prototype">
 				<code class="lang-d">
 					<div class="single-prototype">
-			<span class="kwd">alias</span> <span class="pln">hasIntrusiveBase</span>(T...)
-			 <span class="pun">=</span> <span class="pln">impl</span><span class="pun">;</span>
+			<span class="kwd">struct</span> <a href="../../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a>
+			<br/>
+			<span class="pun">
+				{
+				<br/>
+			</span>
+			&nbsp;&nbsp;<span class="com">// ...</span>
+			<br/>
+			&nbsp;&nbsp;<span class="kwd">enum</span> <span class="pln">intrusive</span>
+			 <span class="pun">=</span> <span class="pln">intrusiveElements </span><span class="pun">== </span><span class="lit">1</span><span class="pun">;</span>
+			<br/>
+			&nbsp;&nbsp;<span class="com">// ...</span>
+			<br/>
+			<span class="pun">}</span>
 					</div>
 				</code>
 			</div>

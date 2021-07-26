@@ -97,11 +97,18 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
     enum bool referenceElementType = isReferenceType!_Type || isDynamicArray!_Type;
 
-    enum bool intrusiveElement = isIntrusive!_Type || hasIntrusiveBase!_Type;
+    enum size_t intrusiveElements = isIntrusive!_Type;
+
+    static assert(intrusiveElements <= 1);
+
+    static if(intrusiveElements)
+    static assert(is(IntrusivControlBlock!_Type == _ControlType),
+        "control type of intrusive element is incompatible with control type of UniquePtr " ~
+        IntrusivControlBlock!_Type.stringof ~ " != " ~ _ControlType.stringof
+    );
 
 
-    static assert(!intrusiveElement, "UniquePtr doesn't support intrusive `_Type`");
-
+    static assert(intrusiveElements == 0, "UniquePtr doesn't support intrusive _Type");
 
 
     alias MakeEmplace(AllocatorType, bool supportGC) = .MakeEmplace!(
@@ -1075,8 +1082,9 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
         package inout(ControlType)* _control()inout pure nothrow @trusted @nogc
         in(this._element !is null){
-            static if(intrusiveElement){
-                return &(cast(IntrusiveBase!ElementType)this._element)._autoptr_intrusive_control;
+            static if(intrusiveElements){
+                static assert(0, "no impl");
+                //return &(cast(IntrusiveBase!ElementType)this._element)._autoptr_intrusive_control;
             }
             else static if(isDynamicArray!ElementType){
                 return cast(inout(ControlType)*)((cast(void*)this._element.ptr) - ControlType.sizeof);

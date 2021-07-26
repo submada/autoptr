@@ -530,18 +530,204 @@ unittest{
 }
 
 
+
+
+private size_t isIntrusiveClass(Type, bool ignoreBase)()pure nothrow @trusted @nogc
+if(is(Type == class)){
+    import std.traits : BaseClassesTuple;
+
+    Type ty = void;
+
+    size_t result = 0;
+
+    static foreach(alias T; typeof(ty.tupleof)){
+        static if(!isReferenceType!T && is(T == struct))
+            result += isIntrusive!T;
+    }
+
+    static if(!ignoreBase)
+    static foreach(alias T; BaseClassesTuple!Type){
+        result += isIntrusive!T;
+    }
+
+    return result;
+
+}
+
+/**
+    Return number of ControlBlocks in type `Type`.
+*/
+public size_t isIntrusive(Type)()pure nothrow @trusted @nogc{
+    static if(is(Type == struct)){
+        static if(isControlBlock!Type){
+            return 1;
+        }
+        else{
+            Type ty = void;
+
+            size_t result = 0;
+
+            static foreach(alias T; typeof(ty.tupleof)){
+                static if(!isReferenceType!T && is(T == struct))
+                    result += isIntrusive!T;
+            }
+
+            return result;
+        }
+    }
+    else static if(is(Type == class)){
+        return isIntrusiveClass!(Type, false);
+    }
+    else return 0;
+
+}
+
+///
+unittest{
+    static assert(isIntrusive!long == 0);
+    static assert(isIntrusive!(ControlBlock!int) == 1);
+
+    static class Foo{
+        long x;
+        ControlBlock!int control;
+    }
+
+    static assert(isIntrusive!Foo == 1);
+
+    static struct Struct{
+        long x;
+        ControlBlock!int control;
+        Foo foo;
+    }
+    static assert(isIntrusive!Struct == 1);
+
+
+    static class Bar : Foo{
+        const ControlBlock!int control2;
+        Struct s;
+
+    }
+    static assert(isIntrusive!Bar == 3);
+
+
+    static class Zee{
+        long l;
+        double x;
+        Struct str;
+    }
+    static assert(isIntrusive!Zee == 1);
+
+}
+
+
+package template IntrusivControlBlock(Type){
+    alias IntrusivControlBlock = typeof(()@trusted{
+        Type elm = void;
+        return intrusivControlBlock(elm);
+    }());
+}
+
+
+package ref auto intrusivControlBlock(Type)(auto ref Type elm)pure nothrow @trusted @nogc{
+    static assert(isIntrusive!Type == 1);
+
+    static if(is(Type == struct)){
+        static if(isControlBlock!Type){
+            return elm;
+        }
+        else{
+            foreach(ref x; elm.tupleof){
+                alias T = typeof(x);
+
+                static if(!isReferenceType!T && isIntrusive!T)
+                    return intrusivControlBlock(x);
+            }
+        }
+    }
+    else static if(is(Type == class)){
+        import std.traits : BaseClassesTuple, Unqual;
+        import std.meta : AliasSeq;
+
+        static foreach(alias T; AliasSeq!(Unqual!Type, BaseClassesTuple!Type)){
+            static if(isIntrusiveClass!(T, true)){
+                foreach(ref x; (cast(T)elm).tupleof){
+                    alias T = typeof(x);
+
+                    static if(!isReferenceType!T && isIntrusive!T)
+                        return intrusivControlBlock(x);
+                }
+
+            }
+        }
+    }
+    else static assert(0, "no impl");
+
+}
+
+
+unittest{
+    static assert(isIntrusive!long == 0);
+    static assert(isIntrusive!(ControlBlock!int) == 1);
+
+    static class Foo{
+        long x;
+        ControlBlock!int control;
+    }
+
+
+    {
+        Foo foo;
+        auto control = &intrusivControlBlock(foo);
+    }
+    static assert(isIntrusive!Foo == 1);
+
+    static struct Struct{
+        long x;
+        ControlBlock!int control;
+        Foo foo;
+    }
+
+    static assert(isIntrusive!Struct == 1);
+
+
+    static class Bar : Foo{
+        ControlBlock!int control2;
+        Struct s;
+
+    }
+
+    static assert(isIntrusive!Bar == 3);
+
+
+    static class Zee{
+        long l;
+        double x;
+        Struct str;
+    }
+    static assert(isIntrusive!Zee == 1);
+
+
+    {
+        Zee zee;
+        auto control = &intrusivControlBlock(zee);
+    }
+
+}
+
+
+
 /**
     Check if type `T` is of type `Intrusive!(...)`.
 */
-public template isIntrusive(T...)
+/+public template isIntrusive(T...)
 if(T.length == 1){
     import std.traits : Unqual, isMutable;
 
     enum bool isIntrusive = true
         && is(Unqual!(T[0]) == Intrusive!Args, Args...)
         ;
-}
-
+}+/
+/+
 /**
     Check if type `T` is class and has base class: (isIntrusive!Base || hasIntrusiveBase!Base)  `.
 */
@@ -581,7 +767,7 @@ if(T.length == 1){
     else{
         alias IntrusiveBase = void;
     }
-}
+}+/
 
 
 /**
@@ -596,7 +782,7 @@ if(isControlBlock!_ControlType){
         static assert(isReferenceType!B);
         static if(is(B == class)){
 
-            static assert(!isIntrusive!B && !hasIntrusiveBase!B);
+            static assert(!isIntrusive!B);
         }
     }
 
@@ -647,6 +833,17 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
             "' is not compatible with `_DestructorType`: " ~ _DestructorType.stringof
     );
 
+
+    enum size_t intrusiveElements = isIntrusive!_Type;
+
+    static assert(intrusiveElements <= 1);
+
+    static if(intrusiveElements)
+    static assert(is(IntrusivControlBlock!_Type == _ControlType),
+        "control type of intrusive element is incompatible with control type of smart ptr. " ~
+        IntrusivControlBlock!_Type.stringof ~ " != " ~ _ControlType.stringof
+    );
+
     import core.lifetime : emplace;
     import std.traits: hasIndirections, isAbstractClass, Select, isMutable, CopyTypeQualifiers, Unqual;
 
@@ -669,21 +866,11 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
 
     alias Vtable = _ControlType.Vtable;
 
-    enum bool intrusiveElement = false
-        || isIntrusive!(Unqual!_Type)
-        || hasIntrusiveBase!(Unqual!_Type);
-
-    static if(intrusiveElement)
-    static assert(is(typeof(Unqual!_Type._autoptr_intrusive_control) == _ControlType),
-        typeof(Unqual!_Type._autoptr_intrusive_control).stringof ~ " != " ~
-        _ControlType.stringof
-    );
-
 
     struct MakeEmplace{
         private static immutable Vtable vtable;
 
-        static if(!intrusiveElement)
+        static if(!intrusiveElements)
             private _ControlType control;
         else
             private @property ref _ControlType control()pure nothrow @trusted @nogc{
@@ -695,7 +882,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
         static if(!hasStatelessAllocator)
             private _AllocatorType allocator;
 
-        static if(!intrusiveElement)
+        static if(!intrusiveElements)
         static assert(control.offsetof + typeof(control).sizeof == data.offsetof);
 
         version(D_BetterC)
@@ -898,7 +1085,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
 
         private static inout(MakeEmplace)* get_offset_this(inout(Unqual!_ControlType)* control)pure nothrow @trusted @nogc{
             assert(control !is null);
-            static if(intrusiveElement){
+            static if(intrusiveElements){
                 const size_t offset = (data.offsetof + _Type._autoptr_intrusive_control.offsetof);
                 return cast(typeof(return))((cast(void*)control) - offset);
             }

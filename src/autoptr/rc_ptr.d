@@ -120,13 +120,14 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
     enum bool referenceElementType = isReferenceType!_Type || isDynamicArray!_Type;
 
-    enum bool intrusiveElement = isIntrusive!_Type || hasIntrusiveBase!_Type;
+    enum size_t intrusiveElements = isIntrusive!_Type;
 
-    static if(intrusiveElement)
-    static assert(is(typeof(IntrusiveBase!_Type._autoptr_intrusive_control) == _ControlType),
+    static assert(intrusiveElements <= 1);
+
+    static if(intrusiveElements)
+    static assert(is(IntrusivControlBlock!_Type == _ControlType),
         "control type of intrusive element is incompatible with control type of RcPtr " ~
-        typeof(IntrusiveBase!_Type._autoptr_intrusive_control).stringof ~ " != " ~
-        _ControlType.stringof
+        IntrusivControlBlock!_Type.stringof ~ " != " ~ _ControlType.stringof
     );
 
     alias MakeEmplace(AllocatorType, bool supportGC) = .MakeEmplace!(
@@ -171,6 +172,12 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             `true` if `RcPtr` is weak ptr.
         */
         public enum bool weakPtr = _weakPtr;
+
+
+        /**
+            `true` if `RcPtr` has intrusive `ElementType`.
+        */
+        public enum bool intrusive = (intrusiveElements == 1);
 
 
         /**
@@ -2081,8 +2088,9 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
         package ControlType* _control(this This)()pure nothrow @trusted @nogc
         in(this._element !is null){
-            static if(intrusiveElement){
-                return &(cast(IntrusiveBase!ElementType)this._element)._autoptr_intrusive_control;
+            static if(intrusiveElements){
+                return &intrusivControlBlock(cast(Unqual!ElementType)this._element);
+                //return &(cast(IntrusiveBase!ElementType)this._element)._autoptr_intrusive_control;
             }
             else static if(isDynamicArray!ElementType){
                 return cast(ControlType*)((cast(void*)this._element.ptr) - ControlType.sizeof);

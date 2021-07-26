@@ -54,6 +54,24 @@ $('#symbolSearchPane').show();</script>
 
 			<section></section>
 			<section>
+				<h2>Functions</h2>
+				<table>
+					<col class="caption"/>
+					<tr>
+						<th>Name</th><th>Description</th>
+					</tr>
+					<tr>
+						<td>
+							<code>
+								<a id="isIntrusive" class="public" href="../autoptr/common/isIntrusive.html">isIntrusive</a><span class="tableEntryAnnotation">()</span>
+							</code>
+						</td>
+						<td>Return number of ControlBlocks in type <code class="lang-d"><span class="typ">Type</span></code>.
+</td>
+					</tr>
+				</table>
+			</section>
+			<section>
 				<h2>Classes</h2>
 				<table>
 					<col class="caption"/>
@@ -66,7 +84,7 @@ $('#symbolSearchPane').show();</script>
 								<a id="Intrusive" class="public" href="../autoptr/common/Intrusive.html">Intrusive</a>
 							</code>
 						</td>
-						<td>TODO
+						<td>Check if type <code class="lang-d"><span class="pln">T</span></code> is of type <code class="lang-d"><span class="typ">Intrusive</span><span class="pun">!(...)</span></code>.
 </td>
 					</tr>
 				</table>
@@ -127,17 +145,6 @@ $('#symbolSearchPane').show();</script>
 						<td>Check if type <code class="lang-d"><span class="typ">Type</span></code> is of type destructor type (is(void function(Evoid* )pure nothrow @safe @nogc : Type))
 </td>
 					</tr>
-					<tr>
-						<td>
-							<a id="isIntrusive" class="public" href="../autoptr/common/isIntrusive.html">
-								<code>isIntrusive</code>
-							</a>
-						</td>
-						<td>
-						</td>
-						<td>Check if type <code class="lang-d"><span class="pln">T</span></code> is of type <code class="lang-d"><a href="../autoptr/common/Intrusive.html"><span class="typ">Intrusive</span></a><span class="pun">!(...)</span></code>.
-</td>
-					</tr>
 				</table>
 			</section>
 			<section>
@@ -181,18 +188,6 @@ $('#symbolSearchPane').show();</script>
 							<code class="prettyprint lang-d"><span class="typ">Get</span>!(typeof(functionvoid(Evoid*){staticforeach(aliasType;Types){staticif(is(Unqual!Type==void)){}else{staticif(is(Type==class)){foreach(B;AliasSeq!(Type,BaseClassesTuple!Type)){staticif(__traits(hasMember,B,"__dtor")){(){Bobj;obj.__dtor;}();}staticif(__traits(hasMember,B,"__xdtor")){(){Bobj;obj.__xdtor;}();}}}else{staticif(isDynamicArray!Type){{ElementEncodingType!(Unqual!Type)tmp;}}else{staticif(is(voidfunction(Evoid*)purenothrow@nogc@safe:Unqual!Type)){{Unqual!Typefn;fn(null);}}else{{Unqual!Typetmp;}}}}}}}))</code>
 						</td>
 						<td>Destructor type of destructors of types <code class="lang-d"><span class="typ">Types</span></code> ( void function(Evoid*)@destructor_attributes ).
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a id="hasIntrusiveBase" class="public" href="../autoptr/common/hasIntrusiveBase.html">
-								<code>hasIntrusiveBase</code>
-							</a>
-						</td>
-						<td>
-							<code class="prettyprint lang-d"><span class="pln">impl</span></code>
-						</td>
-						<td>Check if type <code class="lang-d"><span class="pln">T</span></code> is class and has base class: (isIntrusive!Base || hasIntrusiveBase!Base)  `.
 </td>
 					</tr>
 					<tr>
