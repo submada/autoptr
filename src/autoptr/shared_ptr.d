@@ -10,7 +10,7 @@ import std.stdio : writeln;
 import std.conv : to;
 
 import autoptr.internal.mallocator : Mallocator;
-import autoptr.internal.destruct : destruct;
+//import autoptr.internal.destruct : destruct;
 
 import autoptr.common;
 import autoptr.unique_ptr : isUniquePtr, UniquePtr;

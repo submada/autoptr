@@ -92,24 +92,33 @@ unittest{
     Destructor type of destructors of types `Types` ( void function(Evoid*)@destructor_attributes ).
 */
 public template DestructorType(Types...){
-    import std.traits : Unqual, isDynamicArray;
+    import std.traits : Unqual, isDynamicArray, BaseClassesTuple;
     import std.range : ElementEncodingType;
+    import std.meta : AliasSeq;
 
     alias Get(T) = T;
     alias DestructorType = Get!(typeof(function void(Evoid*){
 
-        import autoptr.internal.destruct;
         static foreach(alias Type; Types){
             static if(is(Unqual!Type == void)){
                 //nothing
             }
             else static if(is(Type == class)){
-                _finalizeType!(Unqual!Type).init(null, true);
+                // generate a body that calls all the destructors in the chain,
+                // compiler should infer the intersection of attributes
+                foreach (B; AliasSeq!(Type, BaseClassesTuple!Type)) {
+                    // __dtor, i.e. B.~this
+                    static if (__traits(hasMember, B, "__dtor"))
+                        () { B obj; obj.__dtor; } ();
+                    // __xdtor, i.e. dtors for all RAII members
+                    static if (__traits(hasMember, B, "__xdtor"))
+                        () { B obj; obj.__xdtor; } ();
+                }
             }
             else static if(isDynamicArray!Type){
-                /+{
+                {
                     ElementEncodingType!(Unqual!Type) tmp;
-                }+/
+                }
             }
             else static if(is(void function(Evoid*)pure nothrow @safe @nogc : Unqual!Type)){
                 {
@@ -173,7 +182,6 @@ public template ShallowDestructorType(Types...){
     alias Get(T) = T;
     alias ShallowDestructorType = Get!(typeof(function void(Evoid*){
 
-        import autoptr.internal.destruct;
         static foreach(alias Type; Types){
             static if(is(Unqual!Type == void)){
                 //nothing
@@ -362,7 +370,9 @@ public template ControlBlock(_Shared, _Weak = void){
             }
         }
 
-        private immutable Vtable* vptr;
+        private immutable(Vtable)* vptr;
+
+
 
         static if(hasSharedCounter)
             private Shared shared_count = 0;
@@ -447,7 +457,10 @@ public template ControlBlock(_Shared, _Weak = void){
             else{
                 static if(hasSharedCounter){
                     if(rc_decrement!atomic(this.shared_count) == -1){
+                        //auto tmp = &this;
+                        //auto self = &this;
                         this.on_zero_shared();
+
                         this.release!true;
                     }
                 }
@@ -517,6 +530,86 @@ unittest{
 }
 
 
+/**
+    Check if type `T` is of type `Intrusive!(...)`.
+*/
+public template isIntrusive(T...)
+if(T.length == 1){
+    import std.traits : Unqual, isMutable;
+
+    enum bool isIntrusive = true
+        && is(Unqual!(T[0]) == Intrusive!Args, Args...)
+        ;
+}
+
+/**
+    Check if type `T` is class and has base class: (isIntrusive!Base || hasIntrusiveBase!Base)  `.
+*/
+public template hasIntrusiveBase(T...)
+if(T.length == 1){
+    import std.traits : Unqual, isMutable, BaseClassesTuple;
+
+    static if(is(T[0] == class)){
+        enum bool impl = function bool(){
+            bool result = false;
+
+            static foreach(alias T; BaseClassesTuple!(T[0]))
+            static if(isIntrusive!T)
+                result = true;
+
+            return result;
+        }();
+    }
+    else{
+        enum bool impl = false;
+    }
+
+    alias hasIntrusiveBase = impl;
+}
+
+/**
+    TODO
+*/
+public template Intrusive(_ControlType, Base...)
+if(isControlBlock!_ControlType){
+
+    import std.traits : BaseClassesTuple;
+
+    static foreach(alias B; Base){
+        static assert(isReferenceType!B);
+        static if(is(B == class)){
+
+            static assert(!isIntrusive!B && !hasIntrusiveBase!B);
+        }
+    }
+
+    abstract class Intrusive : Base{
+        public _ControlType _autoptr_intrusive_control;
+
+        this(this This, Args...)(auto ref Args args){
+            import core.lifetime : forward;
+            static if(__traits(compiles, super(forward!args)))
+                super(forward!args);
+        }
+    }
+}
+
+unittest{
+    static class Foo{
+        this(int i){}
+    }
+
+    static class Bar : Intrusive!(ControlBlock!int, Foo){
+
+        this(int i){
+            super(i);
+        }
+
+    }
+
+}
+
+
 package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorType, bool supportGC){
 
     alias AllocatorWithState = .AllocatorWithState!_AllocatorType;
@@ -559,15 +652,33 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
 
     alias Vtable = _ControlType.Vtable;
 
+    enum bool intrusiveElement = false
+        || isIntrusive!(Unqual!_Type)
+        || hasIntrusiveBase!(Unqual!_Type);
+
+    static if(intrusiveElement)
+    static assert(is(typeof(Unqual!_Type._autoptr_intrusive_control) == _ControlType),
+        typeof(Unqual!_Type._autoptr_intrusive_control).stringof ~ " != " ~
+        _ControlType.stringof
+    );
+
 
     struct MakeEmplace{
         private static immutable Vtable vtable;
-        private _ControlType control;
+
+        static if(!intrusiveElement)
+            private _ControlType control;
+        else
+            private @property ref _ControlType control()pure nothrow @trusted @nogc{
+                return (cast(Unqual!_Type)this.data.ptr)._autoptr_intrusive_control;
+            }
+
         private void[instanceSize!_Type] data;
 
         static if(!hasStatelessAllocator)
             private _AllocatorType allocator;
 
+        static if(!intrusiveElement)
         static assert(control.offsetof + typeof(control).sizeof == data.offsetof);
 
         version(D_BetterC)
@@ -606,9 +717,12 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
             }
 
 
-        public @property _ControlType* base()pure nothrow @safe @nogc{
-            static assert(this.control.offsetof == 0);
-            return &this.control;
+        public @property _ControlType* base()pure nothrow @trusted @nogc{
+            //static assert(this.control.offsetof == 0);
+            return function _ControlType*(ref _ControlType ct)@trusted{
+                return &ct;
+            }(this.control);
+            //return &this.control;
         }
 
         public @property PtrOrRef!_Type get()pure nothrow @trusted @nogc{
@@ -682,6 +796,273 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
             else
                 assert(vtable.initialized());
 
+            import core.lifetime : forward, emplace;
+
+            static if(!hasStatelessAllocator)
+                this.allocator = forward!(a[0]);
+
+            import std.traits : isStaticArray;
+            import std.range : ElementEncodingType;
+
+            static if(is(Unqual!_Type == void)){
+                //nothing
+            }
+            else static if(isStaticArray!_Type){
+                static if(args.length == 1 && is(Args[0] : _Type)){
+                    //cast(void)emplace!(_Type)(this.data, forward!args);
+                    cast(void)emplace(
+                        ((ref data)@trusted => cast(_Type*)data.ptr)(this.data),
+                        forward!args
+                    );
+                }
+                else{
+                    _Type* data = cast(_Type*)this.data.ptr;
+
+                    foreach(ref ElementEncodingType!_Type d; (*data)[]){
+
+                        static if(isReferenceType!(ElementEncodingType!_Type)){
+                            static if(args.length == 0)
+                                d = null;
+                            else static if(args.length == 1)
+                                d = args[0];
+                            else static assert(0, "no impl");
+
+                        }
+                        else{
+                            cast(void)emplace(&d, args);
+                        }
+                    }
+                }
+            }
+            else{
+                static if(isReferenceType!_Type)
+                    auto data = ((ref data)@trusted => cast(_Type)data.ptr)(this.data);
+                else
+                    auto data = ((ref data)@trusted => cast(_Type*)data.ptr)(this.data);
+
+                cast(void)emplace(
+                    data,
+                    forward!args
+                );
+            }
+
+            this.control = _ControlType(&vtable);
+            assert(vtable.valid, "vtables are not initialized");
+
+            _log_ptr_construct();
+        }
+
+
+
+        static if(hasSharedCounter){
+            public static void virtual_on_zero_shared(Unqual!_ControlType* control)pure nothrow @nogc @safe{
+                auto self = get_offset_this(control);
+                self.destruct();
+
+                static if(!hasWeakCounter)
+                    self.deallocate();
+            }
+        }
+
+        static if(hasWeakCounter){
+            public static void virtual_on_zero_weak(Unqual!_ControlType* control)pure nothrow @nogc @safe{
+                auto self = get_offset_this(control);
+                self.deallocate();
+            }
+        }
+
+        public static void virtual_manual_destroy(Unqual!_ControlType* control, bool dealocate)pure nothrow @nogc @safe{
+            auto self = get_offset_this(control);
+            self.destruct();
+            if(dealocate)
+                self.deallocate();
+
+        }
+
+        private static inout(MakeEmplace)* get_offset_this(inout(Unqual!_ControlType)* control)pure nothrow @trusted @nogc{
+            assert(control !is null);
+            static if(intrusiveElement){
+                const size_t offset = (data.offsetof + _Type._autoptr_intrusive_control.offsetof);
+                return cast(typeof(return))((cast(void*)control) - offset);
+            }
+            else{
+                return cast(typeof(return))((cast(void*)control) - MakeEmplace.control.offsetof);
+            }
+        }
+
+
+        private void destruct()pure nothrow @trusted @nogc{
+
+            static if(is(_Type == struct) || is(_Type == class)){
+                void* data_ptr = this.data.ptr;
+                _destruct!(_Type, DestructorType!void)(data_ptr);
+
+                static if(!allocatorGCRange && dataGCRange){
+                    gc_remove_range(data_ptr);
+                }
+
+            }
+            else static if(is(_Type == interface)){
+                assert(0, "no impl");
+            }
+            else{
+                // nothing
+            }
+
+            _log_ptr_destruct();
+        }
+
+        private void deallocate()pure nothrow @trusted @nogc{
+            void* self = cast(void*)&this;
+            _destruct!(typeof(this), DestructorType!void)(self);
+
+
+            void[] raw = self[0 .. typeof(this).sizeof];
+
+
+            static if(hasStatelessAllocator)
+                assumePureNoGcNothrow(function(void[] raw)@trusted => statelessAllcoator!_AllocatorType.deallocate(raw))(raw);
+            else
+                assumePureNoGcNothrow(function(void[] raw, ref typeof(this.allocator) allo)@trusted => allo.deallocate(raw))(raw, this.allocator);
+
+
+            static if(allocatorGCRange){
+                static if(dataGCRange)
+                    gc_remove_range(this.data.ptr);
+                else
+                    gc_remove_range(&this.allocator);
+            }
+
+            _log_ptr_deallocate();
+        }
+
+    }
+
+    /+
+    static if(isIntrusive!(Unqual!_Type) || hasIntrusiveBase!(Unqual!_Type))
+    struct MakeEmplace{
+        private static immutable Vtable vtable;
+        private void[instanceSize!_Type] data;
+
+        static if(!hasStatelessAllocator)
+            private _AllocatorType allocator;
+
+        static assert(control.offsetof + typeof(control).sizeof == data.offsetof);
+
+        version(D_BetterC)
+            private static void shared_static_this()pure nothrow @trusted @nogc{
+                assumePure((){
+                    Vtable* vptr = cast(Vtable*)&vtable;
+
+                    static if(hasSharedCounter)
+                        vptr.on_zero_shared = &virtual_on_zero_shared;
+
+                    static if(hasWeakCounter)
+                        vptr.on_zero_weak = &virtual_on_zero_weak;
+
+                    vptr.manual_destroy = &virtual_manual_destroy;
+                })();
+
+            }
+        else
+            shared static this(){
+                static if(hasWeakCounter){
+                    vtable = Vtable(
+                        &virtual_on_zero_shared,
+                        &virtual_on_zero_weak,
+                        &virtual_manual_destroy
+                    );
+                }
+                else static if(hasSharedCounter){
+                    vtable = Vtable(
+                        &virtual_on_zero_shared,
+                        &virtual_manual_destroy
+                    );
+                }
+                else vtable = Vtable(
+                    &virtual_manual_destroy
+                );
+            }
+
+
+        private @property ref inout(_ControlType) control()inout pure nothrow @safe @nogc{
+            return this.get._autoptr_intrusive_control;
+        }
+
+        package @property _ControlType* base()pure nothrow @safe @nogc{
+            static assert(this.control.offsetof == 0);
+            return &this.control;
+        }
+
+        package @property PtrOrRef!_Type get()pure nothrow @trusted @nogc{
+            return cast(PtrOrRef!_Type)this.data.ptr;
+        }
+
+
+        package static MakeEmplace* make(Args...)(AllocatorWithState[0 .. $] a, auto ref Args args){
+            import std.traits: hasIndirections;
+            import core.lifetime : forward, emplace;
+
+            static assert(!isAbstractClass!_Type,
+                "cannot create object of abstract class" ~ Unqual!_Type.stringof
+            );
+            static assert(!is(_Type == interface),
+                "cannot create object of interface type " ~ Unqual!_Type.stringof
+            );
+
+
+            static if(hasStatelessAllocator)
+                void[] raw = statelessAllcoator!_AllocatorType.allocate(typeof(this).sizeof);
+            else
+                void[] raw = a[0].allocate(typeof(this).sizeof);
+
+            if(raw.length == 0)
+                return null;
+
+            _log_ptr_allocate();
+
+            MakeEmplace* result = (()@trusted => cast(MakeEmplace*)raw.ptr)();
+
+            static if(dataGCRange){
+                static assert(supportGC);
+                static if(!hasStatelessAllocator)
+                static assert(typeof(this).data.offsetof < typeof(this).allocator.offsetof);
+
+                static if(allocatorGCRange)
+                    enum size_t gc_range_size = typeof(this).allocator.offsetof
+                        - typeof(this).data.offsetof
+                        + typeof(this.allocator).sizeof;
+                else
+                    enum size_t gc_range_size = data.length;
+
+                gc_add_range(
+                    (()@trusted => cast(void*)result.data.ptr)(),
+                    gc_range_size
+                );
+            }
+            else static if(allocatorGCRange){
+                static assert(supportGC);
+                static assert(!dataGCRange);
+
+                gc_add_range(
+                    cast(void*)&result.allocator,
+                    _AllocatorType.sizeof
+                );
+            }
+
+            return emplace(result, forward!(a, args));
+        }
+
+
+        public this(this This, Args...)(AllocatorWithState[0 .. $] a, auto ref Args args)
+        if(isMutable!This){
+            version(D_BetterC){
+                if(!vtable.initialized())
+                    shared_static_this();
+            }
+            else
+                assert(vtable.initialized());
+
             this.control = _ControlType(&vtable);
             assert(vtable.valid, "vtables are not initialized");
 
@@ -740,24 +1121,24 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
 
 
 
-        static if(hasSharedCounter){
-            public static void virtual_on_zero_shared(Unqual!_ControlType* control)pure nothrow @nogc @safe{
-                auto self = get_offset_this(control);
-                self.destruct();
+        static if(hasSharedCounter)
+        private static void virtual_on_zero_shared(Unqual!_ControlType* control)pure nothrow @nogc @safe{
+            auto self = get_offset_this(control);
+            self.destruct();
 
-                static if(!hasWeakCounter)
-                    self.deallocate();
-            }
-        }
-
-        static if(hasWeakCounter){
-            public static void virtual_on_zero_weak(Unqual!_ControlType* control)pure nothrow @nogc @safe{
-                auto self = get_offset_this(control);
+            static if(!hasWeakCounter)
                 self.deallocate();
-            }
         }
 
-        public static void virtual_manual_destroy(Unqual!_ControlType* control, bool dealocate)pure nothrow @nogc @safe{
+
+        static if(hasWeakCounter)
+        private static void virtual_on_zero_weak(Unqual!_ControlType* control)pure nothrow @nogc @safe{
+            auto self = get_offset_this(control);
+            self.deallocate();
+        }
+
+
+        private static void virtual_manual_destroy(Unqual!_ControlType* control, bool dealocate)pure nothrow @nogc @safe{
             auto self = get_offset_this(control);
             self.destruct();
             if(dealocate)
@@ -814,8 +1195,9 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
 
             _log_ptr_deallocate();
         }
-
     }
+
+    +/
 }
 
 package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _AllocatorType, bool supportGC){
@@ -1225,17 +1607,24 @@ package template instanceSize(T){
 
 }
 
+
+//class destructor
+extern(C) void rt_finalize2(void* p, bool det = true, bool resetMemory = false)nothrow @safe @nogc pure;
+
 //Destruct _payload as if is type of `Type` and destructor has type qualifiers as `DestructorType`
 package void _destruct(Type, DestructorType)(void* _payload)
-if(!is(Type == interface) && isDestructorType!DestructorType){
-    import std.traits : Unqual;
-    import autoptr.internal.destruct;
+if(isDestructorType!DestructorType){
+    import std.traits : Unqual, isStaticArray;
 
     alias Get(T) = T;
 
+
+    static assert(!is(Type == interface));
+
+    ///class:
     static if(is(Type == class)){
         template finalizer(F){
-            static extern(C) alias finalizer = typeof(function void(void* p, bool det = true) {
+            static extern(C) alias finalizer = typeof(function void(void* p, bool det = true, bool resetMemory = true ) {
                 F fn;
                 fn(null);
             });
@@ -1246,49 +1635,63 @@ if(!is(Type == interface) && isDestructorType!DestructorType){
 
         auto obj = (()@trusted => cast(Unqual!Type)_payload )();
 
-        //static assert(is(.DestructorType!(typeof(obj)) : DestructorType));
-        /+static assert(is(Get!(_finalizeType!(typeof(obj))) : Get!FinalizeType),
-            Get!(_finalizeType!(typeof(obj))).stringof ~ " : " ~ Get!FinalizeType.stringof
-        );+/
-
+        ///D class
         static if(__traits(getLinkage, Type) == "D"){
-            //destruct(obj);
             FinalizeType finalize = ()@trusted{
-                return cast(FinalizeType) &rt_finalize;
+                return cast(FinalizeType) &rt_finalize2;
             }();
 
-            finalize(() @trusted { return cast(void*) obj; }(), true);
+            //resetMemory must be false because intrusiv pointers can contains control block with weak references.
+            finalize(() @trusted { return cast(void*) obj; }(), true, false);
         }
+        ///C++ class
         else static if (__traits(getLinkage, Type) == "C++"){
             static if (__traits(hasMember, Type, "__xdtor")){
-                obj.__xdtor();
-                if(obj is null){
-                    FinalizeType f;
+                if(false){
+                    DestructorType f;
                     f(null);
                 }
+                assumePureNoGcNothrow((Unqual!Type* o)@trusted{
+                    o.__xdtor();
+                })(obj);
             }
-
-            /+static if (initialize)
-            {
-                enum classSize = __traits(classInstanceSize, T);
-                (cast(void*)obj)[0 .. classSize] = typeid(T).initializer[];
-            }+/
         }
         else static assert(0, "no impl");
     }
+    ///struct:
+    else static if(is(Type == struct)){
+        Unqual!Type* obj = (()@trusted => cast(Unqual!Type*)_payload)();
 
-    else{
-        auto obj = (()@trusted => cast(Unqual!Type*)_payload )();
-
-        if(false){
-            DestructorType f;
-            f(null);
+        static if(true
+            && __traits(hasMember, Type, "__xdtor")
+            && __traits(isSame, Type, __traits(parent, obj.__xdtor))
+        ){
+            if(false){
+                DestructorType f;
+                f(null);
+            }
+            assumePureNoGcNothrow((Unqual!Type* o)@trusted{
+                o.__xdtor;
+            })(obj);
         }
-        assumePureNoGcNothrow((typeof(obj) o)@trusted{
-            destruct(*o);
-        })(obj);
+    }
+    ///static array:
+    else static if(isStaticArray!Type){
+        import std.range : ElementEncodingType;
 
-        //destruct(*obj);
+        alias ElementType = Unqual!(ElementEncodingType!Type);
+
+        static if(!isReferenceType!ElementType){
+            auto obj = (()@trusted => cast(Unqual!Type*)_payload)();
+            foreach_reverse (ref ElementType elm; (*obj)[]){
+                void* elm_ptr = (()@trusted => cast(void*)&elm)();
+                ._destruct!(ElementType, DestructorType)(elm_ptr);
+            }
+
+        }
+    }
+    else{
+        ///nothing
     }
 }
 

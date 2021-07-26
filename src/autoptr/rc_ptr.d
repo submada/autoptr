@@ -7,7 +7,7 @@
 module autoptr.rc_ptr;
 
 import autoptr.internal.mallocator : Mallocator;
-import autoptr.internal.destruct : destruct;
+//import autoptr.internal.destruct : destruct;
 
 import autoptr.common;
 import autoptr.unique_ptr : isUniquePtr, UniquePtr;
