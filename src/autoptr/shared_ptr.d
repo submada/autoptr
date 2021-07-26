@@ -507,200 +507,202 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
 
-        //copy ctors:
-        //mutable:
-        static if(is(Unqual!ElementType == ElementType)){
-            //mutable rhs:
-			this(ref scope typeof(this) rhs)@trusted{this(rhs, rhs._element);}
-			this(ref scope typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
-			@disable this(ref scope typeof(this) rhs)immutable @safe;
-            @disable this(ref scope typeof(this) rhs)shared @safe;
-			@disable this(ref scope typeof(this) rhs)const shared @safe;
+        
 
-            //const rhs:
-			@disable this(ref scope const typeof(this) rhs)@safe;
-            this(ref scope const typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
-			@disable this(ref scope const typeof(this) rhs)immutable @safe;
-            @disable this(ref scope const typeof(this) rhs)shared @safe;
+	//copy ctors:
+	//mutable:
+	static if(is(Unqual!ElementType == ElementType)){
+		//mutable rhs:
+		this(ref scope typeof(this) rhs)@trusted{this(rhs, rhs._element);}
+		this(ref scope typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
+		@disable this(ref scope typeof(this) rhs)immutable @safe;
+		@disable this(ref scope typeof(this) rhs)shared @safe;
+		@disable this(ref scope typeof(this) rhs)const shared @safe;
+
+		//const rhs:
+		@disable this(ref scope const typeof(this) rhs)@safe;
+		this(ref scope const typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
+		@disable this(ref scope const typeof(this) rhs)immutable @safe;
+		@disable this(ref scope const typeof(this) rhs)shared @safe;
+		@disable this(ref scope const typeof(this) rhs)const shared @safe;
+
+		//immutable(Ptr) iptr;
+		@disable this(ref scope immutable typeof(this) rhs)@safe;
+		this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
+		this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, rhs._element);}
+		@disable this(ref scope immutable typeof(this) rhs)shared @safe;
+		static if(is(ControlType == shared))
+			this(ref scope immutable typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
+		else
+			@disable this(ref scope immutable typeof(this) rhs)const shared @safe;
+
+	}
+	//const:
+	else static if(is(const Unqual!ElementType == ElementType)){
+		//mutable rhs:
+		this(ref scope typeof(this) rhs)@trusted{this(rhs, rhs._element);}
+		this(ref scope typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
+		@disable this(ref scope typeof(this) rhs)immutable @safe;
+		@disable this(ref scope typeof(this) rhs)shared @safe;
+		@disable this(ref scope typeof(this) rhs)const shared @safe;
+
+		//const rhs:
+		this(ref scope const typeof(this) rhs)@trusted{this(rhs, rhs._element);}
+		this(ref scope const typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
+		@disable this(ref scope const typeof(this) rhs)immutable @safe;
+		@disable this(ref scope const typeof(this) rhs)shared @safe;
+		@disable this(ref scope const typeof(this) rhs)const shared @safe;
+
+		//immutable rhs:
+		this(ref scope immutable typeof(this) rhs)@trusted{this(rhs, rhs._element);}
+		this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
+		this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, rhs._element);}
+		static if(is(ControlType == shared)){
+			this(ref scope immutable typeof(this) rhs)shared @trusted{this(rhs, rhs._element);}
+			this(ref scope immutable typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
+		}
+		else{
+			@disable this(ref scope immutable typeof(this) rhs)shared @safe;
+			@disable this(ref scope immutable typeof(this) rhs)const shared @safe;
+		}
+	}
+	//immutable:
+	else static if(is(immutable Unqual!ElementType == ElementType)){
+		//mutable rhs:
+		this(ref scope typeof(this) rhs)@trusted{this(rhs, rhs._element);}
+		this(ref scope typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
+		this(ref scope typeof(this) rhs)immutable @trusted{this(rhs, rhs._element);}
+		static if(is(ControlType == shared)){
+			this(ref scope typeof(this) rhs)shared @trusted{this(rhs, rhs._element);}
+			this(ref scope typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
+		}
+		else{
+			@disable this(ref scope typeof(this) rhs)shared @safe;
+			@disable this(ref scope typeof(this) rhs)const shared @safe;
+		}
+
+		//const rhs:
+		this(ref scope const typeof(this) rhs)@trusted{this(rhs, rhs._element);}
+		this(ref scope const typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
+		this(ref scope const typeof(this) rhs)immutable @trusted{this(rhs, rhs._element);}	//??
+		static if(is(ControlType == shared)){
+			this(ref scope const typeof(this) rhs)shared @trusted{this(rhs, rhs._element);}
+			this(ref scope const typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
+		}
+		else{
+			@disable this(ref scope const typeof(this) rhs)shared @safe;
+			@disable this(ref scope const typeof(this) rhs)const shared @safe;
+		}
+
+		//immutable rhs:
+		this(ref scope immutable typeof(this) rhs)@trusted{this(rhs, rhs._element);}	//??
+		this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
+		this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, rhs._element);}
+		static if(is(ControlType == shared)){
+			this(ref scope immutable typeof(this) rhs)shared @trusted{this(rhs, rhs._element);}
+			this(ref scope immutable typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
+		}
+		else{
+			@disable this(ref scope immutable typeof(this) rhs)shared @safe;
+			@disable this(ref scope immutable typeof(this) rhs)const shared @safe;
+		}
+	}
+	//shared:
+	else static if(is(shared Unqual!ElementType == ElementType)){
+		//static assert(!threadLocal);
+
+		//mutable rhs:
+		this(ref scope typeof(this) rhs)@trusted{this(rhs, rhs._element);}
+		this(ref scope typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
+		@disable this(ref scope typeof(this) rhs)immutable @safe;
+		static if(is(ControlType == shared)){
+			this(ref scope typeof(this) rhs)shared @trusted{this(rhs, rhs._element);}
+			this(ref scope typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
+		}
+		else{
+			@disable this(ref scope typeof(this) rhs)shared @safe;
+			@disable this(ref scope typeof(this) rhs)const shared @safe;
+		}
+
+		//const rhs:
+		@disable this(ref scope const typeof(this) rhs)@safe;
+		this(ref scope const typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
+		@disable this(ref scope const typeof(this) rhs)immutable @safe;
+		@disable this(ref scope const typeof(this) rhs)shared @safe;
+		static if(is(ControlType == shared))
+			this(ref scope const typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
+		else
 			@disable this(ref scope const typeof(this) rhs)const shared @safe;
 
-            //immutable(Ptr) iptr;
-            @disable this(ref scope immutable typeof(this) rhs)@safe;
-            this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
-            this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, rhs._element);}
-            @disable this(ref scope immutable typeof(this) rhs)shared @safe;
-            static if(is(ControlType == shared))
-                this(ref scope immutable typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
-            else
-                @disable this(ref scope immutable typeof(this) rhs)const shared @safe;
+		//immutable rhs:
+		@disable this(ref scope immutable typeof(this) rhs)@safe;
+		this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
+		this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, rhs._element);}
+		@disable this(ref scope immutable typeof(this) rhs)shared @safe;
+		static if(is(ControlType == shared))
+			this(ref scope immutable typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
+		else
+			@disable this(ref scope immutable typeof(this) rhs)const shared @safe;
+	}
+	//shared const:
+	else static if(is(const shared Unqual!ElementType == ElementType)){
+		//static assert(!threadLocal);
 
-        }
-        //const:
-        else static if(is(const Unqual!ElementType == ElementType)){
-            //mutable rhs:
-			this(ref scope typeof(this) rhs)@trusted{this(rhs, rhs._element);}
-			this(ref scope typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
-			@disable this(ref scope typeof(this) rhs)immutable @safe;
-            @disable this(ref scope typeof(this) rhs)shared @safe;
+		//mutable rhs:
+		this(ref scope typeof(this) rhs)@trusted{this(rhs, rhs._element);}
+		this(ref scope typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
+		@disable this(ref scope typeof(this) rhs)immutable @safe;
+		static if(is(ControlType == shared)){
+			this(ref scope typeof(this) rhs)shared @trusted{this(rhs, rhs._element);}
+			this(ref scope typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
+		}
+		else{
+			@disable this(ref scope typeof(this) rhs)shared @safe;
 			@disable this(ref scope typeof(this) rhs)const shared @safe;
+		}
 
-			//const rhs:
-			this(ref scope const typeof(this) rhs)@trusted{this(rhs, rhs._element);}
-            this(ref scope const typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
-			@disable this(ref scope const typeof(this) rhs)immutable @safe;
-            @disable this(ref scope const typeof(this) rhs)shared @safe;
+		//const rhs:
+		this(ref scope const typeof(this) rhs)@trusted{this(rhs, rhs._element);}
+		this(ref scope const typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
+		@disable this(ref scope const typeof(this) rhs)immutable @safe;
+		static if(is(ControlType == shared)){
+			this(ref scope const typeof(this) rhs)shared @trusted{this(rhs, rhs._element);}
+			this(ref scope const typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
+		}
+		else{
+			@disable this(ref scope const typeof(this) rhs)shared @safe;
 			@disable this(ref scope const typeof(this) rhs)const shared @safe;
+		}
 
-            //immutable rhs:
-            this(ref scope immutable typeof(this) rhs)@trusted{this(rhs, rhs._element);}
-            this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
-            this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, rhs._element);}
-            static if(is(ControlType == shared)){
-                this(ref scope immutable typeof(this) rhs)shared @trusted{this(rhs, rhs._element);}
-                this(ref scope immutable typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
-            }
-            else{
-                @disable this(ref scope immutable typeof(this) rhs)shared @safe;
-                @disable this(ref scope immutable typeof(this) rhs)const shared @safe;
-            }
-        }
-        //immutable:
-        else static if(is(immutable Unqual!ElementType == ElementType)){
-			//mutable rhs:
-			this(ref scope typeof(this) rhs)@trusted{this(rhs, rhs._element);}
-			this(ref scope typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
-			this(ref scope typeof(this) rhs)immutable @trusted{this(rhs, rhs._element);}
-            static if(is(ControlType == shared)){
-                this(ref scope typeof(this) rhs)shared @trusted{this(rhs, rhs._element);}
-                this(ref scope typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
-            }
-            else{
-                @disable this(ref scope typeof(this) rhs)shared @safe;
-                @disable this(ref scope typeof(this) rhs)const shared @safe;
-            }
+		//immutable rhs:
+		this(ref scope immutable typeof(this) rhs)@trusted{this(rhs, rhs._element);}	//??
+		this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
+		this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, rhs._element);}
+		static if(is(ControlType == shared)){
+			this(ref scope immutable typeof(this) rhs)shared @trusted{this(rhs, rhs._element);}
+			this(ref scope immutable typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
+		}
+		else{
+			@disable this(ref scope immutable typeof(this) rhs)shared @safe;
+			@disable this(ref scope immutable typeof(this) rhs)const shared @safe;
+		}
 
-            //const rhs:
-			this(ref scope const typeof(this) rhs)@trusted{this(rhs, rhs._element);}
-			this(ref scope const typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
-			this(ref scope const typeof(this) rhs)immutable @trusted{this(rhs, rhs._element);}	//??
-            static if(is(ControlType == shared)){
-                this(ref scope const typeof(this) rhs)shared @trusted{this(rhs, rhs._element);}
-                this(ref scope const typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
-            }
-            else{
-                @disable this(ref scope const typeof(this) rhs)shared @safe;
-                @disable this(ref scope const typeof(this) rhs)const shared @safe;
-            }
+	}
+	else static assert(0, "no impl");
 
-			//immutable rhs:
-			this(ref scope immutable typeof(this) rhs)@trusted{this(rhs, rhs._element);}	//??
-			this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
-			this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, rhs._element);}
-            static if(is(ControlType == shared)){
-                this(ref scope immutable typeof(this) rhs)shared @trusted{this(rhs, rhs._element);}
-                this(ref scope immutable typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
-            }
-            else{
-                @disable this(ref scope immutable typeof(this) rhs)shared @safe;
-                @disable this(ref scope immutable typeof(this) rhs)const shared @safe;
-            }
-        }
-        //shared:
-        else static if(is(shared Unqual!ElementType == ElementType)){
-            //static assert(!threadLocal);
+	//shared rhs:
+	@disable this(ref scope shared typeof(this) rhs)@safe;
+	@disable this(ref scope shared typeof(this) rhs)const @safe;
+	@disable this(ref scope shared typeof(this) rhs)immutable @safe;
+	@disable this(ref scope shared typeof(this) rhs)shared @safe;
+	@disable this(ref scope shared typeof(this) rhs)const shared @safe;
 
-			//mutable rhs:
-			this(ref scope typeof(this) rhs)@trusted{this(rhs, rhs._element);}
-			this(ref scope typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
-			@disable this(ref scope typeof(this) rhs)immutable @safe;
-            static if(is(ControlType == shared)){
-                this(ref scope typeof(this) rhs)shared @trusted{this(rhs, rhs._element);}
-			    this(ref scope typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
-            }
-            else{
-                @disable this(ref scope typeof(this) rhs)shared @safe;
-                @disable this(ref scope typeof(this) rhs)const shared @safe;
-            }
-			
-            //const rhs:
-			@disable this(ref scope const typeof(this) rhs)@safe;
-			this(ref scope const typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
-			@disable this(ref scope const typeof(this) rhs)immutable @safe;
-            @disable this(ref scope const typeof(this) rhs)shared @safe;
-            static if(is(ControlType == shared))
-                this(ref scope const typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
-            else
-                @disable this(ref scope const typeof(this) rhs)const shared @safe;
-			
-			//immutable rhs:
-			@disable this(ref scope immutable typeof(this) rhs)@safe;
-			this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
-			this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, rhs._element);}
-            @disable this(ref scope immutable typeof(this) rhs)shared @safe;
-            static if(is(ControlType == shared))
-			    this(ref scope immutable typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
-            else
-                @disable this(ref scope immutable typeof(this) rhs)const shared @safe;
-        }
-		//shared const:
-        else static if(is(const shared Unqual!ElementType == ElementType)){
-            //static assert(!threadLocal);
-
-			//mutable rhs:
-			this(ref scope typeof(this) rhs)@trusted{this(rhs, rhs._element);}
-			this(ref scope typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
-			@disable this(ref scope typeof(this) rhs)immutable @safe;
-            static if(is(ControlType == shared)){
-                this(ref scope typeof(this) rhs)shared @trusted{this(rhs, rhs._element);}
-			    this(ref scope typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
-            }
-            else{
-                @disable this(ref scope typeof(this) rhs)shared @safe;
-                @disable this(ref scope typeof(this) rhs)const shared @safe;
-            }
-
-            //const rhs:
-			this(ref scope const typeof(this) rhs)@trusted{this(rhs, rhs._element);}
-			this(ref scope const typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
-			@disable this(ref scope const typeof(this) rhs)immutable @safe;
-            static if(is(ControlType == shared)){
-                this(ref scope const typeof(this) rhs)shared @trusted{this(rhs, rhs._element);}
-			    this(ref scope const typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
-            }
-            else{
-                @disable this(ref scope const typeof(this) rhs)shared @safe;
-                @disable this(ref scope const typeof(this) rhs)const shared @safe;
-            }
-			
-			//immutable rhs:
-			this(ref scope immutable typeof(this) rhs)@trusted{this(rhs, rhs._element);}	//??
-			this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, rhs._element);}
-			this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, rhs._element);}
-            static if(is(ControlType == shared)){
-                this(ref scope immutable typeof(this) rhs)shared @trusted{this(rhs, rhs._element);}
-			    this(ref scope immutable typeof(this) rhs)const shared @trusted{this(rhs, rhs._element);}
-            }
-            else{
-                @disable this(ref scope immutable typeof(this) rhs)shared @safe;
-                @disable this(ref scope immutable typeof(this) rhs)const shared @safe;
-            }
-
-        }
-		else static assert(0, "no impl");
-
-        //shared rhs:
-        @disable this(ref scope shared typeof(this) rhs)@safe;
-        @disable this(ref scope shared typeof(this) rhs)const @safe;
-        @disable this(ref scope shared typeof(this) rhs)immutable @safe;
-        @disable this(ref scope shared typeof(this) rhs)shared @safe;
-        @disable this(ref scope shared typeof(this) rhs)const shared @safe;
-
-        //const shared rhs:
-        @disable this(ref scope const shared typeof(this) rhs)@safe;
-        @disable this(ref scope const shared typeof(this) rhs)const @safe;
-        @disable this(ref scope const shared typeof(this) rhs)immutable @safe;
-        @disable this(ref scope const shared typeof(this) rhs)shared @safe;
-        @disable this(ref scope const shared typeof(this) rhs)const shared @safe;
+	//const shared rhs:
+	@disable this(ref scope const shared typeof(this) rhs)@safe;
+	@disable this(ref scope const shared typeof(this) rhs)const @safe;
+	@disable this(ref scope const shared typeof(this) rhs)immutable @safe;
+	@disable this(ref scope const shared typeof(this) rhs)shared @safe;
+	@disable this(ref scope const shared typeof(this) rhs)const shared @safe;
 
 
 
