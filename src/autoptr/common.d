@@ -339,6 +339,16 @@ public template ControlBlock(_Shared, _Weak = void){
         public enum bool hasWeakCounter = !is(Weak == void);
         
 
+        @disable void opAssign(scope ref const typeof(this) )scope pure nothrow @safe @nogc;
+
+        package void initialize(immutable Vtable* vptr)scope pure nothrow @trusted @nogc{
+            this.vptr = vptr;
+        }
+
+        package void initialize(immutable Vtable* vptr)shared scope pure nothrow @trusted @nogc{
+            this.vptr = vptr;
+        }
+
         static assert(hasSharedCounter >= hasWeakCounter);
 
         package static struct Vtable{
@@ -1050,7 +1060,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
                 );
             }
 
-            this.control = _ControlType(&vtable);
+            this.control.initialize(&vtable);
             assert(vtable.valid, "vtables are not initialized");
 
             _log_ptr_construct();
