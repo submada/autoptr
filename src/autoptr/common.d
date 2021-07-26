@@ -674,6 +674,37 @@ package ref auto intrusivControlBlock(Type)(auto ref Type elm)pure nothrow @trus
 
 }
 
+package size_t intrusivControlBlockOffset(Type)(){
+
+    static assert(isIntrusive!Type == 1);
+
+    static if(is(Type == struct)){
+        static if(isControlBlock!Type){
+            return 0;
+        }
+        else{
+            static foreach(alias var; Type.tupleof){
+                static if(!isReferenceType!(typeof(var)) && isIntrusive!(typeof(var)))
+                    return var.offsetof + intrusivControlBlockOffset!(typeof(var))();
+            }
+        }
+    }
+    else static if(is(Type == class)){
+        import std.traits : BaseClassesTuple, Unqual;
+        import std.meta : AliasSeq;
+
+        static foreach(alias T; AliasSeq!(Unqual!Type, BaseClassesTuple!Type)){
+            static if(isIntrusiveClass!(T, true)){
+                static foreach(alias var; T.tupleof){
+                    static if(!isReferenceType!(typeof(var)) && isIntrusive!(typeof(var)))
+                        return var.offsetof + intrusivControlBlockOffset!(typeof(var))();
+                }
+
+            }
+        }
+    }
+    else static assert(0, "no impl");
+}
 
 unittest{
     static assert(isIntrusive!long == 0);
@@ -689,7 +720,10 @@ unittest{
         Foo foo;
         auto control = &intrusivControlBlock(foo);
     }
+
+
     static assert(isIntrusive!Foo == 1);
+    static assert(Foo.control.offsetof == intrusivControlBlockOffset!Foo());
 
     static struct Struct{
         long x;
@@ -698,6 +732,7 @@ unittest{
     }
 
     static assert(isIntrusive!Struct == 1);
+    static assert(Struct.control.offsetof == intrusivControlBlockOffset!Struct());
 
 
     static class Bar : Foo{
@@ -715,6 +750,7 @@ unittest{
         Struct str;
     }
     static assert(isIntrusive!Zee == 1);
+    static assert(Zee.str.offsetof + Struct.control.offsetof == intrusivControlBlockOffset!Zee());
 
 
     {
@@ -884,7 +920,8 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
             private _ControlType control;
         else
             private @property ref _ControlType control()pure nothrow @trusted @nogc{
-                return (cast(Unqual!_Type)this.data.ptr)._autoptr_intrusive_control;
+                return (cast(Unqual!_Type)this.data.ptr).intrusivControlBlock();
+                //return (cast(Unqual!_Type)this.data.ptr)._autoptr_intrusive_control;
             }
 
         private void[instanceSize!_Type] data;
@@ -1096,7 +1133,8 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
         private static inout(MakeEmplace)* get_offset_this(inout(Unqual!_ControlType)* control)pure nothrow @trusted @nogc{
             assert(control !is null);
             static if(intrusiveElements){
-                const size_t offset = (data.offsetof + _Type._autoptr_intrusive_control.offsetof);
+                //const size_t offset = (data.offsetof + _Type._autoptr_intrusive_control.offsetof);
+                enum size_t offset = data.offsetof + intrusivControlBlockOffset!_Type;
                 return cast(typeof(return))((cast(void*)control) - offset);
             }
             else{
@@ -1151,267 +1189,6 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
         }
 
     }
-
-    /+
-    static if(isIntrusive!(Unqual!_Type) || hasIntrusiveBase!(Unqual!_Type))
-    struct MakeEmplace{
-        private static immutable Vtable vtable;
-        private void[instanceSize!_Type] data;
-
-        static if(!hasStatelessAllocator)
-            private _AllocatorType allocator;
-
-        static assert(control.offsetof + typeof(control).sizeof == data.offsetof);
-
-        version(D_BetterC)
-            private static void shared_static_this()pure nothrow @trusted @nogc{
-                assumePure((){
-                    Vtable* vptr = cast(Vtable*)&vtable;
-
-                    static if(hasSharedCounter)
-                        vptr.on_zero_shared = &virtual_on_zero_shared;
-
-                    static if(hasWeakCounter)
-                        vptr.on_zero_weak = &virtual_on_zero_weak;
-
-                    vptr.manual_destroy = &virtual_manual_destroy;
-                })();
-
-            }
-        else
-            shared static this(){
-                static if(hasWeakCounter){
-                    vtable = Vtable(
-                        &virtual_on_zero_shared,
-                        &virtual_on_zero_weak,
-                        &virtual_manual_destroy
-                    );
-                }
-                else static if(hasSharedCounter){
-                    vtable = Vtable(
-                        &virtual_on_zero_shared,
-                        &virtual_manual_destroy
-                    );
-                }
-                else vtable = Vtable(
-                    &virtual_manual_destroy
-                );
-            }
-
-
-        private @property ref inout(_ControlType) control()inout pure nothrow @safe @nogc{
-            return this.get._autoptr_intrusive_control;
-        }
-
-        package @property _ControlType* base()pure nothrow @safe @nogc{
-            static assert(this.control.offsetof == 0);
-            return &this.control;
-        }
-
-        package @property PtrOrRef!_Type get()pure nothrow @trusted @nogc{
-            return cast(PtrOrRef!_Type)this.data.ptr;
-        }
-
-
-        package static MakeEmplace* make(Args...)(AllocatorWithState[0 .. $] a, auto ref Args args){
-            import std.traits: hasIndirections;
-            import core.lifetime : forward, emplace;
-
-            static assert(!isAbstractClass!_Type,
-                "cannot create object of abstract class" ~ Unqual!_Type.stringof
-            );
-            static assert(!is(_Type == interface),
-                "cannot create object of interface type " ~ Unqual!_Type.stringof
-            );
-
-
-            static if(hasStatelessAllocator)
-                void[] raw = statelessAllcoator!_AllocatorType.allocate(typeof(this).sizeof);
-            else
-                void[] raw = a[0].allocate(typeof(this).sizeof);
-
-            if(raw.length == 0)
-                return null;
-
-            _log_ptr_allocate();
-
-            MakeEmplace* result = (()@trusted => cast(MakeEmplace*)raw.ptr)();
-
-            static if(dataGCRange){
-                static assert(supportGC);
-                static if(!hasStatelessAllocator)
-                static assert(typeof(this).data.offsetof < typeof(this).allocator.offsetof);
-
-                static if(allocatorGCRange)
-                    enum size_t gc_range_size = typeof(this).allocator.offsetof
-                        - typeof(this).data.offsetof
-                        + typeof(this.allocator).sizeof;
-                else
-                    enum size_t gc_range_size = data.length;
-
-                gc_add_range(
-                    (()@trusted => cast(void*)result.data.ptr)(),
-                    gc_range_size
-                );
-            }
-            else static if(allocatorGCRange){
-                static assert(supportGC);
-                static assert(!dataGCRange);
-
-                gc_add_range(
-                    cast(void*)&result.allocator,
-                    _AllocatorType.sizeof
-                );
-            }
-
-            return emplace(result, forward!(a, args));
-        }
-
-
-        public this(this This, Args...)(AllocatorWithState[0 .. $] a, auto ref Args args)
-        if(isMutable!This){
-            version(D_BetterC){
-                if(!vtable.initialized())
-                    shared_static_this();
-            }
-            else
-                assert(vtable.initialized());
-
-            this.control = _ControlType(&vtable);
-            assert(vtable.valid, "vtables are not initialized");
-
-            import core.lifetime : forward, emplace;
-
-            static if(!hasStatelessAllocator)
-                this.allocator = forward!(a[0]);
-
-            import std.traits : isStaticArray;
-            import std.range : ElementEncodingType;
-
-            static if(is(Unqual!_Type == void)){
-                //nothing
-            }
-            else static if(isStaticArray!_Type){
-                static if(args.length == 1 && is(Args[0] : _Type)){
-                    //cast(void)emplace!(_Type)(this.data, forward!args);
-                    cast(void)emplace(
-                        ((ref data)@trusted => cast(_Type*)data.ptr)(this.data),
-                        forward!args
-                    );
-                }
-                else{
-                    _Type* data = cast(_Type*)this.data.ptr;
-
-                    foreach(ref ElementEncodingType!_Type d; (*data)[]){
-
-                        static if(isReferenceType!(ElementEncodingType!_Type)){
-                            static if(args.length == 0)
-                                d = null;
-                            else static if(args.length == 1)
-                                d = args[0];
-                            else static assert(0, "no impl");
-
-                        }
-                        else{
-                            cast(void)emplace(&d, args);
-                        }
-                    }
-                }
-            }
-            else{
-                static if(isReferenceType!_Type)
-                    auto data = ((ref data)@trusted => cast(_Type)data.ptr)(this.data);
-                else
-                    auto data = ((ref data)@trusted => cast(_Type*)data.ptr)(this.data);
-
-                cast(void)emplace(
-                    data,
-                    forward!args
-                );
-            }
-
-            _log_ptr_construct();
-        }
-
-
-
-        static if(hasSharedCounter)
-        private static void virtual_on_zero_shared(Unqual!_ControlType* control)pure nothrow @nogc @safe{
-            auto self = get_offset_this(control);
-            self.destruct();
-
-            static if(!hasWeakCounter)
-                self.deallocate();
-        }
-
-
-        static if(hasWeakCounter)
-        private static void virtual_on_zero_weak(Unqual!_ControlType* control)pure nothrow @nogc @safe{
-            auto self = get_offset_this(control);
-            self.deallocate();
-        }
-
-
-        private static void virtual_manual_destroy(Unqual!_ControlType* control, bool dealocate)pure nothrow @nogc @safe{
-            auto self = get_offset_this(control);
-            self.destruct();
-            if(dealocate)
-                self.deallocate();
-
-        }
-
-        private static inout(MakeEmplace)* get_offset_this(inout(Unqual!_ControlType)* control)pure nothrow @trusted @nogc{
-            assert(control !is null);
-            return cast(typeof(return))((cast(void*)control) - MakeEmplace.control.offsetof);
-        }
-
-
-        private void destruct()pure nothrow @trusted @nogc{
-
-            static if(is(_Type == struct) || is(_Type == class)){
-                _destruct!(_Type, DestructorType!void)(this.data.ptr);
-
-                static if(!allocatorGCRange && dataGCRange){
-                    gc_remove_range(this.data.ptr);
-                }
-
-            }
-            else static if(is(_Type == interface)){
-                assert(0, "no impl");
-            }
-            else{
-                // nothing
-            }
-
-            _log_ptr_destruct();
-        }
-
-        private void deallocate()pure nothrow @trusted @nogc{
-            void* self = cast(void*)&this;
-            _destruct!(typeof(this), DestructorType!void)(self);
-
-
-            void[] raw = self[0 .. typeof(this).sizeof];
-
-
-            static if(hasStatelessAllocator)
-                assumePureNoGcNothrow(function(void[] raw)@trusted => statelessAllcoator!_AllocatorType.deallocate(raw))(raw);
-            else
-                assumePureNoGcNothrow(function(void[] raw, ref typeof(this.allocator) allo)@trusted => allo.deallocate(raw))(raw, this.allocator);
-
-
-            static if(allocatorGCRange){
-                static if(dataGCRange)
-                    gc_remove_range(this.data.ptr);
-                else
-                    gc_remove_range(&this.allocator);
-            }
-
-            _log_ptr_deallocate();
-        }
-    }
-
-    +/
 }
 
 package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _AllocatorType, bool supportGC){
