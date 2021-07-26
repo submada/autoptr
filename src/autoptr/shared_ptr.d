@@ -125,6 +125,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
     enum bool referenceElementType = isReferenceType!_Type || isDynamicArray!_Type;
 
+    enum bool intrusiveElement = isIntrusive!_Type || hasIntrusiveBase!_Type;
 
     alias MakeEmplace(AllocatorType, bool supportGC) = .MakeEmplace!(
         _Type, 

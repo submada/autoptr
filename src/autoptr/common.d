@@ -553,8 +553,8 @@ if(T.length == 1){
         enum bool impl = function bool(){
             bool result = false;
 
-            static foreach(alias T; BaseClassesTuple!(T[0]))
-            static if(isIntrusive!T)
+            static foreach(alias U; BaseClassesTuple!(T[0]))
+            static if(isIntrusive!U)
                 result = true;
 
             return result;
