@@ -568,6 +568,23 @@ if(T.length == 1){
 }
 
 /**
+*/
+public template IntrusiveBase(T...)
+if(T.length == 1){
+    import std.traits : Unqual, isMutable, BaseClassesTuple;
+
+    static if(hasIntrusiveBase!T){
+        static foreach(alias U; BaseClassesTuple!(T[0]))
+        static if(isIntrusive!U)
+            alias IntrusiveBase = U;
+    }
+    else{
+        alias IntrusiveBase = void;
+    }
+}
+
+
+/**
     TODO
 */
 public template Intrusive(_ControlType, Base...)

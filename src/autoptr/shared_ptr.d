@@ -127,6 +127,13 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
     enum bool intrusiveElement = isIntrusive!_Type || hasIntrusiveBase!_Type;
 
+    static if(intrusiveElement)
+    static assert(is(typeof(IntrusiveBase!_Type._autoptr_intrusive_control) == _ControlType),
+        "control type of intrusive element is incompatible with control type of SharedPtr " ~
+        typeof(IntrusiveBase!_Type._autoptr_intrusive_control).stringof ~ " != " ~
+        _ControlType.stringof
+    );
+
     alias MakeEmplace(AllocatorType, bool supportGC) = .MakeEmplace!(
         _Type, 
         _DestructorType, 
