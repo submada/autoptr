@@ -54,6 +54,24 @@ $('#symbolSearchPane').show();</script>
 
 			<section></section>
 			<section>
+				<h2>Classes</h2>
+				<table>
+					<col class="caption"/>
+					<tr>
+						<th>Name</th><th>Description</th>
+					</tr>
+					<tr>
+						<td>
+							<code>
+								<a id="Intrusive" class="public" href="../autoptr/common/Intrusive.html">Intrusive</a>
+							</code>
+						</td>
+						<td>TODO
+</td>
+					</tr>
+				</table>
+			</section>
+			<section>
 				<h2>Structs</h2>
 				<table>
 					<col class="caption"/>
@@ -109,6 +127,17 @@ $('#symbolSearchPane').show();</script>
 						<td>Check if type <code class="lang-d"><span class="typ">Type</span></code> is of type destructor type (is(void function(Evoid* )pure nothrow @safe @nogc : Type))
 </td>
 					</tr>
+					<tr>
+						<td>
+							<a id="isIntrusive" class="public" href="../autoptr/common/isIntrusive.html">
+								<code>isIntrusive</code>
+							</a>
+						</td>
+						<td>
+						</td>
+						<td>Check if type <code class="lang-d"><span class="pln">T</span></code> is of type <code class="lang-d"><a href="../autoptr/common/Intrusive.html"><span class="typ">Intrusive</span></a><span class="pun">!(...)</span></code>.
+</td>
+					</tr>
 				</table>
 			</section>
 			<section>
@@ -149,9 +178,21 @@ $('#symbolSearchPane').show();</script>
 							</a>
 						</td>
 						<td>
-							<code class="prettyprint lang-d"><span class="typ">Get</span>!(typeof(functionvoid(Evoid*){importautoptr.internal.destruct;staticforeach(aliasType;Types){staticif(is(Unqual!Type==void)){}else{staticif(is(Type==class)){_finalizeType!(Unqual!Type).init(null,true);}else{staticif(isDynamicArray!Type){}else{staticif(is(voidfunction(Evoid*)purenothrow@nogc@safe:Unqual!Type)){{Unqual!Typefn;fn(null);}}else{{Unqual!Typetmp;}}}}}}}))</code>
+							<code class="prettyprint lang-d"><span class="typ">Get</span>!(typeof(functionvoid(Evoid*){staticforeach(aliasType;Types){staticif(is(Unqual!Type==void)){}else{staticif(is(Type==class)){foreach(B;AliasSeq!(Type,BaseClassesTuple!Type)){staticif(__traits(hasMember,B,"__dtor")){(){Bobj;obj.__dtor;}();}staticif(__traits(hasMember,B,"__xdtor")){(){Bobj;obj.__xdtor;}();}}}else{staticif(isDynamicArray!Type){{ElementEncodingType!(Unqual!Type)tmp;}}else{staticif(is(voidfunction(Evoid*)purenothrow@nogc@safe:Unqual!Type)){{Unqual!Typefn;fn(null);}}else{{Unqual!Typetmp;}}}}}}}))</code>
 						</td>
 						<td>Destructor type of destructors of types <code class="lang-d"><span class="typ">Types</span></code> ( void function(Evoid*)@destructor_attributes ).
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a id="hasIntrusiveBase" class="public" href="../autoptr/common/hasIntrusiveBase.html">
+								<code>hasIntrusiveBase</code>
+							</a>
+						</td>
+						<td>
+							<code class="prettyprint lang-d"><span class="pln">impl</span></code>
+						</td>
+						<td>Check if type <code class="lang-d"><span class="pln">T</span></code> is class and has base class: (isIntrusive!Base || hasIntrusiveBase!Base)  `.
 </td>
 					</tr>
 					<tr>
@@ -161,7 +202,7 @@ $('#symbolSearchPane').show();</script>
 							</a>
 						</td>
 						<td>
-							<code class="prettyprint lang-d"><span class="typ">Get</span>!(typeof(functionvoid(Evoid*){importautoptr.internal.destruct;staticforeach(aliasType;Types){staticif(is(Unqual!Type==void)){}else{staticif(is(Type==class)){}else{staticif(isDynamicArray!Type){}else{staticif(is(voidfunction(Evoid*)purenothrow@nogc@safe:Unqual!Type)){{Unqual!Typefn;fn(null);}}else{{Unqual!Typetmp;}}}}}}}))</code>
+							<code class="prettyprint lang-d"><span class="typ">Get</span>!(typeof(functionvoid(Evoid*){staticforeach(aliasType;Types){staticif(is(Unqual!Type==void)){}else{staticif(is(Type==class)){}else{staticif(isDynamicArray!Type){}else{staticif(is(voidfunction(Evoid*)purenothrow@nogc@safe:Unqual!Type)){{Unqual!Typefn;fn(null);}}else{{Unqual!Typetmp;}}}}}}}))</code>
 						</td>
 						<td>Same as <code class="lang-d"><a href="../autoptr/common/DestructorType.html"><span class="typ">DestructorType</span></a></code> but ignore classes and slices.
 </td>
