@@ -638,6 +638,9 @@ package template IntrusivControlBlock(Type){
 }
 
 
+import std.traits : BaseClassesTuple, Unqual, CopyTypeQualifiers;
+import std.meta : AliasSeq;
+
 package ref auto intrusivControlBlock(Type)(auto ref Type elm)pure nothrow @trusted @nogc{
     static assert(isIntrusive!Type == 1);
 
@@ -647,23 +650,23 @@ package ref auto intrusivControlBlock(Type)(auto ref Type elm)pure nothrow @trus
         }
         else{
             foreach(ref x; elm.tupleof){
-                alias T = typeof(x);
-
-                static if(!isReferenceType!T && isIntrusive!T)
+                static if(is(typeof(x) == struct) && isIntrusive!(typeof(x)))
                     return intrusivControlBlock(x);
             }
         }
     }
     else static if(is(Type == class)){
-        import std.traits : BaseClassesTuple, Unqual;
-        import std.meta : AliasSeq;
+        static if(isIntrusiveClass!(Type, true)){
+            foreach(ref x; elm.tupleof){
+                static if(is(typeof(x) == struct) && isIntrusive!(typeof(x)))
+                    return intrusivControlBlock(x);
+            }
 
-        static foreach(alias T; AliasSeq!(Unqual!Type, BaseClassesTuple!Type)){
+        }
+        else static foreach(alias T; BaseClassesTuple!Type){
             static if(isIntrusiveClass!(T, true)){
-                foreach(ref x; (cast(T)elm).tupleof){
-                    alias T = typeof(x);
-
-                    static if(!isReferenceType!T && isIntrusive!T)
+                foreach(ref x; (cast(CopyTypeQualifiers!(Type, T))elm).tupleof){
+                    static if(is(typeof(x) == struct) && isIntrusive!(typeof(x)))
                         return intrusivControlBlock(x);
                 }
 
@@ -675,31 +678,31 @@ package ref auto intrusivControlBlock(Type)(auto ref Type elm)pure nothrow @trus
 }
 
 package size_t intrusivControlBlockOffset(Type)(){
-
     static assert(isIntrusive!Type == 1);
-
     static if(is(Type == struct)){
         static if(isControlBlock!Type){
             return 0;
         }
         else{
             static foreach(alias var; Type.tupleof){
-                static if(!isReferenceType!(typeof(var)) && isIntrusive!(typeof(var)))
+                static if(is(typeof(var) == struct) && isIntrusive!(typeof(var)))
                     return var.offsetof + intrusivControlBlockOffset!(typeof(var))();
             }
         }
     }
     else static if(is(Type == class)){
-        import std.traits : BaseClassesTuple, Unqual;
-        import std.meta : AliasSeq;
-
-        static foreach(alias T; AliasSeq!(Unqual!Type, BaseClassesTuple!Type)){
+        static if(isIntrusiveClass!(Type, true)){
+            static foreach(alias var; Type.tupleof){
+                static if(is(typeof(var) == struct) && isIntrusive!(typeof(var)))
+                    return var.offsetof + intrusivControlBlockOffset!(typeof(var))();
+            }
+        }
+        else static foreach(alias T; BaseClassesTuple!Type){
             static if(isIntrusiveClass!(T, true)){
                 static foreach(alias var; T.tupleof){
-                    static if(!isReferenceType!(typeof(var)) && isIntrusive!(typeof(var)))
+                    static if(is(typeof(var) == struct) && isIntrusive!(typeof(var)))
                         return var.offsetof + intrusivControlBlockOffset!(typeof(var))();
                 }
-
             }
         }
     }
@@ -815,41 +818,19 @@ if(T.length == 1){
     }
 }+/
 
-
-/**
-    TODO
-*/
-public template Intrusive(_ControlType, Base...)
-if(isControlBlock!_ControlType){
-
-    import std.traits : BaseClassesTuple;
-
-    static foreach(alias B; Base){
-        static assert(isReferenceType!B);
-        static if(is(B == class)){
-
-            static assert(!isIntrusive!B);
-        }
-    }
-
-    abstract class Intrusive : Base{
-        public _ControlType _autoptr_intrusive_control;
-
-        this(this This, Args...)(auto ref Args args){
-            import core.lifetime : forward;
-            static if(__traits(compiles, super(forward!args)))
-                super(forward!args);
-        }
-    }
-}
+/+
+public template Intrusive(_ControlType)
+if(isControlBlock!_ControlType && isMutable!_ControlType){
+    package _ControlType __autoptr_control;
+}+/
 
 unittest{
     static class Foo{
         this(int i){}
     }
 
-    static class Bar : Intrusive!(ControlBlock!int, Foo){
-
+    static class Bar : Foo{
+        ControlBlock!int intrusive;
         this(int i){
             super(i);
         }
@@ -885,13 +866,13 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
     static assert(intrusiveElements <= 1);
 
     static if(intrusiveElements)
-    static assert(is(IntrusivControlBlock!_Type == _ControlType),
+    static assert(is(Unqual!(IntrusivControlBlock!_Type) == _ControlType),
         "control type of intrusive element is incompatible with control type of smart ptr. " ~
         IntrusivControlBlock!_Type.stringof ~ " != " ~ _ControlType.stringof
     );
 
     import core.lifetime : emplace;
-    import std.traits: hasIndirections, isAbstractClass, Select, isMutable, CopyTypeQualifiers, Unqual;
+    import std.traits: hasIndirections, isAbstractClass, Select, isMutable, CopyTypeQualifiers, Unqual, Unconst;
 
     enum bool hasWeakCounter = _ControlType.hasWeakCounter;
 
@@ -920,8 +901,13 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
             private _ControlType control;
         else
             private @property ref _ControlType control()pure nothrow @trusted @nogc{
-                return (cast(Unqual!_Type)this.data.ptr).intrusivControlBlock();
-                //return (cast(Unqual!_Type)this.data.ptr)._autoptr_intrusive_control;
+                static if(isReferenceType!_Type)
+                    auto control = &intrusivControlBlock(cast(Unqual!_Type)this.data.ptr);
+                else 
+                    auto control = &intrusivControlBlock(*cast(Unqual!_Type*)this.data.ptr);
+                    
+                static assert(!is(typeof(*control) == immutable), "intrusive control block cannot be immutable");
+                return *cast(Unconst!(typeof(*control))*)control;
             }
 
         private void[instanceSize!_Type] data;
