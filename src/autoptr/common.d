@@ -865,14 +865,21 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
 
     static assert(intrusiveElements <= 1);
 
-    static if(intrusiveElements)
-    static assert(is(Unqual!(IntrusivControlBlock!_Type) == _ControlType),
-        "control type of intrusive element is incompatible with control type of smart ptr. " ~
-        IntrusivControlBlock!_Type.stringof ~ " != " ~ _ControlType.stringof
-    );
+    static if(intrusiveElements){
+        alias IntrusivControlBlockType = IntrusivControlBlock!_Type;
+
+        static assert(!is(IntrusivControlBlockType == immutable));
+
+        static assert(is(Unconst!IntrusivControlBlockType == _ControlType),
+            "control type of intrusive element is incompatible with control type of smart ptr. " ~
+            Unconst!IntrusivControlBlockType.stringof ~ " != " ~ _ControlType.stringof
+        );
+    }
 
     import core.lifetime : emplace;
-    import std.traits: hasIndirections, isAbstractClass, Select, isMutable, CopyTypeQualifiers, Unqual, Unconst;
+    import std.traits: hasIndirections, isAbstractClass, isMutable,
+        Select, CopyTypeQualifiers,
+        Unqual, Unconst;
 
     enum bool hasWeakCounter = _ControlType.hasWeakCounter;
 
@@ -902,9 +909,9 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
         else
             private @property ref _ControlType control()pure nothrow @trusted @nogc{
                 static if(isReferenceType!_Type)
-                    auto control = &intrusivControlBlock(cast(Unqual!_Type)this.data.ptr);
+                    auto control = &intrusivControlBlock(cast(_Type)this.data.ptr);
                 else 
-                    auto control = &intrusivControlBlock(*cast(Unqual!_Type*)this.data.ptr);
+                    auto control = &intrusivControlBlock(*cast(_Type*)this.data.ptr);
                     
                 static assert(!is(typeof(*control) == immutable), "intrusive control block cannot be immutable");
                 return *cast(Unconst!(typeof(*control))*)control;

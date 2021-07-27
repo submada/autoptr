@@ -2934,6 +2934,14 @@ private{
         alias FromPtr = CopyTypeQualifiers!(From, From.ElementReferenceType);
         alias ToPtr = CopyTypeQualifiers!(To, To.ElementReferenceType);
 
+        /+static if(isRcPtr!From){
+            static if(From.intrusive){
+
+            }
+            else
+            enum bool other = if(!From.intrusive || is(FromPtr))
+
+        }+/
         enum bool isConstructable = true
             && is(FromPtr : ToPtr)
             && is(From.DestructorType : To.DestructorType)

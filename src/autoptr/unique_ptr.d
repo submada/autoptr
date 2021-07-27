@@ -190,7 +190,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             this._element = element;
         }
 
-        private this(Rhs, this This)(scope Rhs rhs, typeof(null) nil)@trusted
+        private this(Rhs, this This)(scope Rhs rhs, Evoid ctor)@trusted
         if(true
             && isUniquePtr!Rhs
             && isOverlapable!(Rhs.ElementType, This.ElementType)
@@ -1400,7 +1400,7 @@ if(true
 
     if(auto element = cast(Return.ElementType)ptr._element){
         assert(element is ptr._element);
-        return (()@trusted => Return(ptr.move, null) )();
+        return (()@trusted => Return(ptr.move, Evoid.init) )();
 
     }
 
