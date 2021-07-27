@@ -573,11 +573,12 @@ public size_t isIntrusive(Type)()pure nothrow @trusted @nogc{
             return 1;
         }
         else{
-            Type ty = void;
+
+            Type* ty = null;
 
             size_t result = 0;
 
-            static foreach(alias T; typeof(ty.tupleof)){
+            static foreach(alias T; typeof((*ty).tupleof)){
                 static if(!isReferenceType!T && is(T == struct))
                     result += isIntrusive!T;
             }
@@ -632,8 +633,8 @@ unittest{
 
 package template IntrusivControlBlock(Type){
     alias IntrusivControlBlock = typeof(()@trusted{
-        Type elm = void;
-        return intrusivControlBlock(elm);
+        Type* elm = null;
+        return intrusivControlBlock(*elm);
     }());
 }
 

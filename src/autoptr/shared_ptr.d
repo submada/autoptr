@@ -18,21 +18,48 @@ import autoptr.rc_ptr : isRcPtr, RcPtr;
 
 
 
-/** 
-    Check if type `T` is of type `SharedPtr!(...)`.
+
+/**
+    Check if type 'T' is `SharedPtr` and has valid type qualifiers.
 */
-public template isSharedPtr(Type){
+public template isValidSharedPtr(T){
     import std.traits : Unqual;
 
-    enum bool isSharedPtr = is(Unqual!Type == SharedPtr!Args, Args...);
+
+    enum bool isValidSharedPtr = true
+        && is(Unqual!T == SharedPtr!Args, Args...)
+        && (!is(T == shared) || is(T.ControlType == shared));
+}
+
+///
+unittest{
+    static assert(!isValidSharedPtr!long);
+    static assert(!isValidSharedPtr!(void*));
+
+    static assert(isValidSharedPtr!(SharedPtr!long));
+    static assert(isValidSharedPtr!(SharedPtr!long.WeakType));
+
+    static assert(!isValidSharedPtr!(shared(SharedPtr!long)));
+    static assert(isValidSharedPtr!(shared(SharedPtr!(shared long))));
+}
+
+
+/** 
+    Check if type `T` is `SharedPtr`.
+*/
+public template isSharedPtr(T){
+    import std.traits : Unqual;
+
+    enum bool isSharedPtr = is(Unqual!T == SharedPtr!Args, Args...);
 }
 
 ///
 unittest{
     static assert(!isSharedPtr!long);
     static assert(!isSharedPtr!(void*));
+
     static assert(isSharedPtr!(SharedPtr!long));
-    static assert(isSharedPtr!(WeakPtr!long));
+    static assert(isSharedPtr!(SharedPtr!long.WeakType));
 }
 
 
@@ -473,6 +500,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && !is(Rhs == shared)
         ){
             import autoptr.unique_ptr : validateUniquePtr;
+
             mixin validateSharedPtr!This;
             mixin validateUniquePtr!Rhs;
 
@@ -493,6 +521,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && !is(Rhs == shared)
         ){
             import autoptr.rc_ptr : validateRcPtr;
+
             mixin validateSharedPtr!This;
             mixin validateRcPtr!Rhs;
 
@@ -743,6 +772,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         */
         public void opAssign(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null) nil)scope
         if(isMutable!This){
+            mixin validateSharedPtr!This;
+
             static if(is(This == shared)){
                 this.lockSharedPtr!(
                     (ref scope self) => self.opAssign!order(null)
@@ -1758,6 +1789,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         static if(weakPtr)
         public @property bool expired(this This)()scope const{
             mixin validateSharedPtr!This;
+
             return (this.useCount == 0);
         }
 
@@ -1880,6 +1912,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         public CopyTypeQualifiers!(This, WeakType) weak(this This)()scope @safe
         if(!is(This == shared)){
             mixin validateSharedPtr!This;
+
             return typeof(return)(this);
         }
 
@@ -1919,6 +1952,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         public To opCast(To, this This)()scope
         if(isSharedPtr!To && !is(This == shared)){
             mixin validateSharedPtr!This;
+
             return To(this);
         }
 
@@ -1972,6 +2006,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         public bool opEquals(Rhs)(auto ref scope const Rhs rhs)const @safe scope pure nothrow @nogc
         if(isSharedPtr!Rhs && !is(Rhs == shared)){
             mixin validateSharedPtr!Rhs;
+
             return this.opEquals(rhs._element);
         }
 
@@ -2623,106 +2658,6 @@ private template SharedPtrMakeDeleter(_Type, _DestructorType, _ControlType, Dele
 }
 
 
-/+
-class SharedPtrThis_test : SharedPtrThis!(DestructorType!long){
-
-}+/
-template SharedPtrThis(
-    _DestructorType,
-    bool _threadLocal = false,
-    _ControlType = ControlTypeDeduction!(_Type, DefaultSharedControlBlock)
-){
-
-
-    enum bool hasWeakCounter = _ControlType.hasWeakCounter;
-
-    enum bool hasSharedCounter = _ControlType.hasSharedCounter;
-
-    static if(hasSharedCounter){
-
-        static void on_zero_shared_impl(bool atomic)(SharedPtrThis self)pure nothrow @nogc @safe{
-            self.destruct();
-
-            static if(hasWeakCounter){
-                if(self._shared_ptr_counter.count!(true, atomic) == 0){
-                    self.deallocate();
-                }
-            }
-            else{
-                self.deallocate();
-            }
-        }
-
-        static void virtual_on_zero_shared_atomic(SharedPtrThis self){
-            on_zero_shared_impl!true(self);
-        }
-        static void virtual_on_zero_shared(SharedPtrThis self){
-            on_zero_shared_impl!true(self);
-        }
-    }
-
-    static if(hasWeakCounter){
-        static void virtual_on_zero_weak_atomic(SharedPtrThis self){
-
-        }
-        static void virtual_on_zero_weak(SharedPtrThis self){
-
-        }
-    }
-
-    static void virtual_manual_destroy(SharedPtrThis self, bool dealloc){
-
-    }
-
-    alias Vtable = _ControlType.Vtable;
-
-    static immutable Vtable vtable;
-
-    shared static this(){
-        static if(hasWeakCounter){
-            vtable = Vtable(
-                SharedPtrThis._shared_ptr_counter.offsetof,
-
-                cast(typeof(Vtable.on_zero_shared_atomic))&virtual_on_zero_shared_atomic,
-                cast(typeof(Vtable.on_zero_shared))&virtual_on_zero_shared,
-
-                cast(typeof(Vtable.on_zero_weak_atomic))&virtual_on_zero_weak_atomic,
-                cast(typeof(Vtable.on_zero_weak))&virtual_on_zero_weak,
-
-                cast(typeof(Vtable.manual_destroy))&virtual_manual_destroy
-            );
-        }
-        else static if(hasSharedCounter){
-            vtable = Vtable(
-                SharedPtrThis._shared_ptr_counter.offsetof,
-
-                cast(typeof(Vtable.on_zero_shared_atomic))&virtual_on_zero_shared_atomic,
-                cast(typeof(Vtable.on_zero_shared))&virtual_on_zero_shared,
-
-                cast(typeof(Vtable.manual_destroy))&virtual_manual_destroy
-            );
-        }
-        else vtable = Vtable(
-            SharedPtrThis._shared_ptr_counter.offsetof,
-
-            cast(typeof(Vtable.manual_destroy))&virtual_manual_destroy
-        );
-    }
-
-    class SharedPtrThis{
-        package _ControlType _shared_ptr_counter;
-
-
-
-        this()pure nothrow @safe @nogc{
-
-        }
-
-    }
-
-
-}
-
 /**
     Weak pointer
 
@@ -2771,6 +2706,7 @@ if(true
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){
+    mixin validateSharedPtr!Ptr;
 
     import std.traits : CopyTypeQualifiers;
     import core.lifetime : forward;
@@ -2891,16 +2827,27 @@ nothrow @nogc unittest{
 }
 
 
+/**
+    Validate qualfied `SharedPtr`.
+
+    Some `SharedPtr` are invalid:
+
+        * `shared(RcPtr)` when `ControlType` is not shared
+
+*/
+public mixin template validateSharedPtr(Ts...){
+    static foreach(alias T; Ts){
+        static assert(isSharedPtr!T);
+        static assert(!is(T == shared) || is(T.ControlType == shared),
+            "shared `SharedPtr` is valid only if its `ControlType` is shared. (" ~ T.stringof ~ ")."
+        );
+    }
+}
+
+
+
 //local traits:
 private{
-    package mixin template validateSharedPtr(Ts...){
-        static foreach(alias T; Ts){
-            static assert(isSharedPtr!T);
-            static assert(!is(T == shared) || is(T.ControlType == shared),
-                "shared `SharedPtr` is valid only if its `ControlType` is shared. (" ~ T.stringof ~ ")."
-            );
-        }
-    }
 
     template needLock(From, To)
     if(isSharedPtr!From && isSharedPtr!To){

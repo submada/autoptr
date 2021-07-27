@@ -17,16 +17,44 @@ import autoptr.common;
 /**
     Check if type `T` is of type `UniquePtr!(...)`
 */
-public template isUniquePtr(Type){
+public template isValidUniquePtr(T){
     import std.traits : Unqual;
 
-    enum bool isUniquePtr = is(Unqual!Type == UniquePtr!Args, Args...);
+    static if(is(Unqual!T == UniquePtr!Args, Args...)){
+        enum bool isValidUniquePtr = true
+            && (!is(T == shared) || is(T.ControlType == shared))
+            && !isIntrusive!(T.ElementType);
+    }
+    else
+        enum bool isValidUniquePtr = false;
+}
+
+///
+unittest{
+    static assert(!isValidUniquePtr!long);
+    static assert(!isValidUniquePtr!(void*));
+
+    static assert(isValidUniquePtr!(UniquePtr!long));
+
+    static assert(isValidUniquePtr!(shared UniquePtr!(long, shared ControlBlock!void)));
+    static assert(!isValidUniquePtr!(shared UniquePtr!(long, ControlBlock!void)));
+}
+
+
+/**
+    Check if type `T` is of type `UniquePtr!(...)`
+*/
+public template isUniquePtr(T){
+    import std.traits : Unqual;
+
+    enum bool isUniquePtr = is(Unqual!T == UniquePtr!Args, Args...);
 }
 
 ///
 unittest{
     static assert(!isUniquePtr!long);
     static assert(!isUniquePtr!(void*));
+
     static assert(isUniquePtr!(UniquePtr!long));
 }
 
