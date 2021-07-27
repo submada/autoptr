@@ -108,7 +108,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
     import std.meta : AliasSeq;
     import core.atomic : MemoryOrder;
     import std.range : ElementEncodingType;
-    import std.traits: Unqual, CopyTypeQualifiers, CopyConstness,
+    import std.traits: Unqual, Unconst, CopyTypeQualifiers, CopyConstness,
         hasIndirections, hasElaborateDestructor,
         isMutable, isAbstractClass, isDynamicArray, isStaticArray, isCallable, Select, isArray;
 
@@ -125,7 +125,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
     static assert(intrusiveElements <= 1);
 
     static if(intrusiveElements)
-    static assert(is(IntrusivControlBlock!_Type == _ControlType),
+    static assert(is(Unqual!(IntrusivControlBlock!_Type) == _ControlType),
         "control type of intrusive element is incompatible with control type of RcPtr " ~
         IntrusivControlBlock!_Type.stringof ~ " != " ~ _ControlType.stringof
     );
@@ -2089,8 +2089,15 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         package ControlType* _control(this This)()pure nothrow @trusted @nogc
         in(this._element !is null){
             static if(intrusiveElements){
-                return &intrusivControlBlock(cast(Unqual!ElementType)this._element);
-                //return &(cast(IntrusiveBase!ElementType)this._element)._autoptr_intrusive_control;
+                static assert(!isDynamicArray!ElementType);
+
+                static if(isReferenceType!ElementType)
+                    auto control = &intrusivControlBlock(this._element);
+                else 
+                    auto control = &intrusivControlBlock(*this._element);
+                    
+                //static assert(!is(typeof(*control) == immutable), "intrusive control block cannot be immutable");
+                return cast(Unconst!(typeof(*control))*)control;
             }
             else static if(isDynamicArray!ElementType){
                 return cast(ControlType*)((cast(void*)this._element.ptr) - ControlType.sizeof);
