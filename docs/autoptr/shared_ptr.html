@@ -31,6 +31,11 @@ $('#symbolSearchPane').show();</script>
 				</li>
 				<li>
 					<div class="module ">
+						<a href="../autoptr/intrusive_ptr.html">intrusive_ptr</a>
+					</div>
+				</li>
+				<li>
+					<div class="module ">
 						<a href="../autoptr/rc_ptr.html">rc_ptr</a>
 					</div>
 				</li>
@@ -99,6 +104,24 @@ $('#symbolSearchPane').show();</script>
 				</table>
 			</section>
 			<section>
+				<h2>Templates</h2>
+				<table>
+					<col class="caption"/>
+					<tr>
+						<th>Name</th><th>Description</th>
+					</tr>
+					<tr>
+						<td>
+							<code>
+								<a id="validateSharedPtr" class="public" href="../autoptr/shared_ptr/validateSharedPtr.html">validateSharedPtr</a>
+							</code>
+						</td>
+						<td>Validate qualfied <code class="lang-d"><a href="../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code>.
+</td>
+					</tr>
+				</table>
+			</section>
+			<section>
 				<h2>Manifest constants</h2>
 				<table>
 					<col class="caption"/>
@@ -113,7 +136,18 @@ $('#symbolSearchPane').show();</script>
 						</td>
 						<td>
 						</td>
-						<td>Check if type <code class="lang-d"><span class="pln">T</span></code> is of type <code class="lang-d"><a href="../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a><span class="pun">!(...)</span></code>.
+						<td>Check if type <code class="lang-d"><span class="pln">T</span></code> is <code class="lang-d"><a href="../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code>.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a id="isValidSharedPtr" class="public" href="../autoptr/shared_ptr/isValidSharedPtr.html">
+								<code>isValidSharedPtr</code>
+							</a>
+						</td>
+						<td>
+						</td>
+						<td>Check if type 'T' is <code class="lang-d"><a href="../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> and has valid type qualifiers.
 </td>
 					</tr>
 				</table>

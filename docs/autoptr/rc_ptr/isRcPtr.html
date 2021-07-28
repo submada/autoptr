@@ -30,6 +30,11 @@ $('#symbolSearchPane').show();</script>
 					</div>
 				</li>
 				<li>
+					<div class="module ">
+						<a href="../../autoptr/intrusive_ptr.html">intrusive_ptr</a>
+					</div>
+				</li>
+				<li>
 					<div class="module selected">
 						<a href="../../autoptr/rc_ptr.html">rc_ptr</a>
 					</div>
@@ -49,13 +54,13 @@ $('#symbolSearchPane').show();</script>
 			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>Enum member isRcPtr</h1><p>Check if type <code class="lang-d"><span class="pln">T</span></code> is of type <code class="lang-d"><a href="../../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a><span class="pun">!(...)</span></code>.
+			<h1>Enum member isRcPtr</h1><p>Check if type <code class="lang-d"><span class="pln">T</span></code> is <code class="lang-d"><a href="../../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a></code>.
 </p>
 			<div class="prototype">
 				<code class="lang-d">
 					<div class="single-prototype">
-			<span class="kwd">enum</span> <span class="pln">isRcPtr</span>(Type)
-			 <span class="pun">=</span> <span class="kwd">is</span><span class="pun">(</span><span class="typ">Unqual</span><span class="pun">!</span><span class="typ">Type </span><span class="pun">== </span><span class="typ">RcPtr</span><span class="pun">!</span><span class="typ">Args</span><span class="pun">, </span><span class="typ">Args</span><span class="pun">...)</span><span class="pun">;</span>
+			<span class="kwd">enum</span> <span class="pln">isRcPtr</span>(T)
+			 <span class="pun">=</span> <span class="kwd">is</span><span class="pun">(</span><span class="typ">Unqual</span><span class="pun">!</span><span class="pln">T </span><span class="pun">== </span><span class="typ">RcPtr</span><span class="pun">!</span><span class="typ">Args</span><span class="pun">, </span><span class="typ">Args</span><span class="pun">...)</span><span class="pun">;</span>
 					</div>
 				</code>
 			</div>
@@ -64,6 +69,7 @@ $('#symbolSearchPane').show();</script>
 
 <pre class="code"><code class="lang-d"><span class="kwd">static assert</span><span class="pun">(!</span><span class="pln">isRcPtr</span><span class="pun">!</span><span class="typ">long</span><span class="pun">);
 </span><span class="kwd">static assert</span><span class="pun">(!</span><span class="pln">isRcPtr</span><span class="pun">!(</span><span class="typ">void</span><span class="pun">*));
+
 </span><span class="kwd">static assert</span><span class="pun">(</span><span class="pln">isRcPtr</span><span class="pun">!(<a href="../../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a><span class="pun">!</span><span class="typ">long</span><span class="pun">));
 </span><span class="kwd">static assert</span><span class="pun">(</span><span class="pln">isRcPtr</span><span class="pun">!(<a href="../../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="typ">WeakType</span><span class="pun">));
 </span></code></pre>

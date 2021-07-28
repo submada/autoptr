@@ -31,6 +31,11 @@ $('#symbolSearchPane').show();</script>
 				</li>
 				<li>
 					<div class="module ">
+						<a href="../../autoptr/intrusive_ptr.html">intrusive_ptr</a>
+					</div>
+				</li>
+				<li>
+					<div class="module ">
 						<a href="../../autoptr/rc_ptr.html">rc_ptr</a>
 					</div>
 				</li>
@@ -93,6 +98,23 @@ $('#symbolSearchPane').show();</script>
     </span><span class="typ">Struct </span><span class="pln">str</span><span class="pun">;
 }
 </span><span class="kwd">static assert</span><span class="pun">(</span><span class="pln">isIntrusive</span><span class="pun">!</span><span class="typ">Zee </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
+
+</span></code></pre>
+</section>
+<section><h2>Example</h2>
+<p>Check if type <code class="lang-d"><span class="pln">T</span></code> is of type <code class="lang-d"><span class="typ">Intrusive</span><span class="pun">!(...)</span></code>.
+</p>
+<pre class="code"><code class="lang-d"><span class="kwd">static class </span><span class="typ">Foo</span><span class="pun">{
+    </span><span class="kwd">this</span><span class="pun">(</span><span class="typ">int </span><span class="pln">i</span><span class="pun">){}
+}
+
+</span><span class="kwd">static class </span><span class="typ">Bar </span><span class="pun">: </span><span class="typ">Foo</span><span class="pun">{
+    <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int </span><span class="pln">intrusive</span><span class="pun">;
+    </span><span class="kwd">this</span><span class="pun">(</span><span class="typ">int </span><span class="pln">i</span><span class="pun">){
+        </span><span class="kwd">super</span><span class="pun">(</span><span class="pln">i</span><span class="pun">);
+    }
+
+}
 
 </span></code></pre>
 </section>

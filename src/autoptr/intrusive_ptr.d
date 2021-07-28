@@ -1,0 +1,4047 @@
+/**
+    Implementation of reference counted pointer `IntrusivePtr` (similar to `RcPtr`).
+
+    License:   $(HTTP www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
+    Authors:   $(HTTP github.com/submada/basic_string, Adam Búš)
+*/
+module autoptr.intrusive_ptr;
+
+import autoptr.internal.mallocator : Mallocator;
+
+import autoptr.common;
+import autoptr.unique_ptr : isUniquePtr, UniquePtr;
+
+
+
+
+/**
+    Check if type `T` is `IntrusivePtr` and has valid type qualifiers.
+*/
+public template isValidIntrusivePtr(T){
+    import std.traits : Unqual;
+
+    static if(is(Unqual!T == IntrusivePtr!Args, Args...)){
+        enum bool isValidIntrusivePtr = true
+            && (!is(T == shared) || is(T.ControlType == shared));
+    }
+    else{
+        enum bool isValidIntrusivePtr = false;
+    }
+}
+
+///
+unittest{
+     static class Foo{
+        ControlBlock!(int, int) control;
+    }
+
+    static assert(isIntrusive!Foo);
+
+    static assert(isValidIntrusivePtr!(IntrusivePtr!Foo));
+
+    static assert(isValidIntrusivePtr!(IntrusivePtr!Foo));
+    static assert(isValidIntrusivePtr!(IntrusivePtr!(const Foo)));
+    static assert(isValidIntrusivePtr!(IntrusivePtr!(shared Foo)));
+    static assert(isValidIntrusivePtr!(IntrusivePtr!(const shared Foo)));
+
+
+    /+static assert(!isValidIntrusivePtr!(immutable IntrusivePtr!Foo));
+    static assert(!isValidIntrusivePtr!(immutable IntrusivePtr!(const Foo)));
+    static assert(!isValidIntrusivePtr!(immutable IntrusivePtr!(shared Foo)));
+    static assert(!isValidIntrusivePtr!(immutable IntrusivePtr!(const shared Foo)));+/
+
+}
+
+
+/**
+    Check if type `T` is `IntrusivePtr`.
+*/
+public template isIntrusivePtr(T){
+    import std.traits : Unqual;
+
+    enum bool isIntrusivePtr = is(Unqual!T == IntrusivePtr!Args, Args...);
+}
+
+///
+unittest{
+    static assert(!isIntrusivePtr!long);
+    static assert(!isIntrusivePtr!(void*));
+
+    static struct Foo{
+        ControlBlock!(int, int) control;
+    }
+    static assert(isIntrusivePtr!(IntrusivePtr!Foo));
+    static assert(isIntrusivePtr!(IntrusivePtr!Foo.WeakType));
+}
+
+
+
+/**
+    Default `ControlBlock` for `IntrusivePtr`.
+*/
+public alias DefaultRcControlBlock = ControlBlock!(int, int);
+
+/+
+/**
+    TODO
+*/
+enum IntrusiveControl{
+    Auto        = 0,
+    Mutable     = 1,    //control block is mutable (ignore const qualifiers)
+    Shareable   = 2,    //same as Mutable but immutable qualifier is transformed to shared
+}+/
+
+
+/**
+    `IntrusivePtr` is a smart pointer that retains shared ownership of an object through a pointer.
+
+    Several `IntrusivePtr` objects may own the same object.
+
+    The object is destroyed and its memory deallocated when either of the following happens:
+
+        1. the last remaining `IntrusivePtr` owning the object is destroyed.
+
+        2. the last remaining `IntrusivePtr` owning the object is assigned another pointer via various methods like `opAssign` and `store`.
+
+    The object is destroyed using destructor of type `_Type`.
+
+    A `IntrusivePtr` can not share ownership of an object while storing a pointer to another object (use `SharedPtr` for that).
+    The stored pointer is the one accessed by `get()`, the dereference and the comparison operators.
+
+    A `IntrusivePtr` may also own no objects, in which case it is called empty.
+
+    If template parameter `_ControlType` is `shared`  then all member functions (including copy constructor and copy assignment)
+    can be called by multiple threads on different instances of `IntrusivePtr` without additional synchronization even if these instances are copies and share ownership of the same object.
+
+    If multiple threads of execution access the same `IntrusivePtr` (`shared IntrusivePtr`) then only some methods can be called (`load`, `store`, `exchange`, `compareExchange`, `useCount`).
+
+    Template parameters:
+
+        `_Type` type of managed object
+
+        `_DestructorType` function pointer with attributes of destructor, to get attributes of destructor from type use `autoptr.common.DestructorType!T`. Destructor of type `_Type` must be compatible with `_DestructorType`
+
+        `_ControlType` represent type of counter, must by of type `autoptr.common.ControlBlock`. if is shared then ref counting is atomic.
+
+        `_weakPtr` if `true` then `IntrusivePtr` represent weak ptr
+
+*/
+public template IntrusivePtr(
+    _Type,
+    _DestructorType = DestructorType!_Type,
+    bool _mutableControl = false,
+    bool _weakPtr = false
+)
+if(isIntrusive!_Type && isDestructorType!_DestructorType){
+    static assert(is(_Type == struct) || is(_Type == class));
+    static assert(isIntrusive!_Type == 1);
+
+    alias _ControlType = IntrusivControlBlock!(_Type, _mutableControl);
+
+    static assert(_ControlType.hasSharedCounter);
+
+
+    static if(_weakPtr)
+    static assert(_ControlType.hasWeakCounter);
+
+    /+static assert(!is(_Type == immutable),
+        "intrusive control block cannot be immutable."
+    );+/
+
+    /+static assert(!is(IntrusivControlBlock!_Type == immutable),
+        "intrusive control block cannot be immutable."
+    );+/
+
+
+
+
+    static assert(is(DestructorType!void : _DestructorType),
+        _Type.stringof ~ " wrong DestructorType " ~ DestructorType!void.stringof ~
+        " : " ~ _DestructorType.stringof
+    );
+
+    static assert(is(DestructorType!_Type : _DestructorType),
+        "destructor of type '" ~ _Type.stringof ~
+        "' doesn't support specified finalizer " ~ _DestructorType.stringof
+    );
+
+    static if (is(_Type == class) || is(_Type == interface) || is(_Type == struct) || is(_Type == union))
+        static assert(!__traits(isNested, _Type), "IntrusivePtr does not support nested types.");
+
+
+    import std.experimental.allocator : stateSize;
+    import std.meta : AliasSeq;
+    import core.atomic : MemoryOrder;
+    import std.range : ElementEncodingType;
+    import std.traits: Unqual, Unconst, CopyTypeQualifiers, CopyConstness, PointerTarget,
+        hasIndirections, hasElaborateDestructor,
+        isMutable, isAbstractClass, isDynamicArray, isStaticArray, isCallable, Select, isArray;
+
+
+
+    enum bool hasWeakCounter = _ControlType.hasWeakCounter;
+
+    enum bool hasSharedCounter = _ControlType.hasSharedCounter;
+
+    enum bool referenceElementType = isReferenceType!_Type;
+
+    
+    static assert(!is(_ControlType == immutable));
+    alias MakeEmplace(AllocatorType, bool supportGC) = .MakeEmplace!(
+        _Type,
+        _DestructorType,
+        Unconst!_ControlType,   ///TODO what with immutable?
+        AllocatorType,
+        supportGC
+    );
+
+
+    enum bool _isLockFree = true;
+
+    struct IntrusivePtr{
+        /**
+            Type of element managed by `IntrusivePtr`.
+        */
+        public alias ElementType = _Type;
+
+
+        /**
+            Type of destructor (`void function(void*)@attributes`).
+        */
+        public alias DestructorType = _DestructorType;
+
+
+        /**
+            Type of control block.
+        */
+        public alias ControlType = _ControlType;
+
+
+        /**
+            TODO
+        */
+        public enum bool mutableControl = _mutableControl;
+
+
+        /**
+            TODO
+        */
+        public enum bool sharedControl = sharedIntrusiveControlBlock!ElementType;
+
+
+        /**
+            `true` if `IntrusivePtr` is weak ptr.
+        */
+        public enum bool weakPtr = _weakPtr;
+
+
+        /**
+            Same as `ElementType*` or `ElementType` if is class/interface/slice.
+        */
+        public alias ElementReferenceType = ElementReferenceTypeImpl!ElementType;
+
+
+        /**
+            Type of weak ptr (must have weak counter).
+        */
+        static if(hasWeakCounter && !weakPtr)
+        public alias WeakType = IntrusivePtr!(
+            _Type,
+            _DestructorType,
+            _mutableControl,
+            true
+        );
+
+
+        /**
+            Type of non weak ptr (must have weak counter).
+        */
+        static if(weakPtr)
+        public alias SharedType = IntrusivePtr!(
+            _Type,
+            _DestructorType,
+            _mutableControl,
+            false
+        );
+
+
+
+        /**
+            `true` if shared `IntrusivePtr` has lock free operations `store`, `load`, `exchange`, `compareExchange`, otherwise 'false'
+        */
+        public alias isLockFree = _isLockFree;
+
+        static if(isLockFree)
+        static assert(ElementReferenceType.sizeof == size_t.sizeof);
+
+
+
+        /**
+            Destructor
+
+            If `this` owns an object and it is the last `IntrusivePtr` owning it, the object is destroyed.
+            After the destruction, the smart pointers that shared ownership with `this`, if any, will report a `useCount()` that is one less than its previous value.
+        */
+        public ~this(){
+            this._release();
+        }
+
+
+        //necesary for autoptr.unique_ptr.sharedPtr
+        package this(Elm, this This)(Elm element)pure nothrow @safe @nogc
+        if(is(Elm : GetElementReferenceType!This) && !is(Unqual!Elm == typeof(null))){
+            this._element = element;
+        }
+
+        //
+        /+package this(C, Elm, this This)(C* control, Elm element)pure nothrow @safe @nogc
+        if(true
+            && isControlBlock!C
+            && is(Elm : GetElementReferenceType!This) 
+            && !is(Unqual!Elm == typeof(null))
+        ){
+            assert(control !is null);
+            assert((control is null) == (element is null));
+
+            this(element);
+            //if(control !is null){
+                ///TODO tests
+            //pragma(msg, C);
+                control.add!weakPtr;
+            //}
+        }+/
+
+        //copy ctor
+        package this(Rhs, this This)(ref scope Rhs rhs, Evoid ctor)@trusted
+        if(true
+            && isIntrusivePtr!Rhs
+            && isCopyable!(Rhs, This)
+            && !needLock!(Rhs, This)
+            && !is(Rhs == shared)
+        ){
+            mixin validateIntrusivePtr!(This, Rhs);
+
+            if(rhs._element is null){
+                this(null);
+            }
+            else{
+                this(rhs._element);
+                rhs._control.add!weakPtr;
+            }
+        }
+
+
+        /**
+            Constructs a `IntrusivePtr` without managed object. Same as `IntrusivePtr.init`
+
+            Examples:
+                --------------------
+                IntrusivePtr!long x = null;
+
+                assert(x == null);
+                assert(x == IntrusivePtr!long.init);
+                --------------------
+        */
+        public this(this This)(typeof(null) nil)pure nothrow @safe @nogc{
+            mixin validateIntrusivePtr!This;
+        }
+
+
+
+        /**
+            Constructs a `IntrusivePtr` which shares ownership of the object managed by `rhs`.
+
+            If rhs manages no object, this manages no object too.
+            If rhs if rvalue then ownership is moved.
+            The template overload doesn't participate in overload resolution if ElementType of `typeof(rhs)` is not implicitly convertible to `ElementType`.
+            If rhs if `WeakType` then this ctor is equivalent to `this(rhs.lock())`.
+
+            Examples:
+                --------------------
+                {
+                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
+                    assert(x.useCount == 1);
+
+                    IntrusivePtr!long a = x;         //lvalue copy ctor
+                    assert(a == x);
+
+                    const IntrusivePtr!long b = x;   //lvalue copy ctor
+                    assert(b == x);
+
+                    IntrusivePtr!(const long) c = x; //lvalue ctor
+                    assert(c == x);
+
+                    const IntrusivePtr!long d = b;   //lvalue ctor
+                    assert(d == x);
+
+                    assert(x.useCount == 5);
+                }
+
+                {
+                    import core.lifetime : move;
+                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
+                    assert(x.useCount == 1);
+
+                    IntrusivePtr!long a = move(x);        //rvalue copy ctor
+                    assert(a.useCount == 1);
+
+                    const IntrusivePtr!long b = move(a);  //rvalue copy ctor
+                    assert(b.useCount == 1);
+
+                    IntrusivePtr!(const long) c = b.load;  //rvalue ctor
+                    assert(c.useCount == 2);
+
+                    const IntrusivePtr!long d = move(c);  //rvalue ctor
+                    assert(d.useCount == 2);
+                }
+
+                {
+                    import core.lifetime : move;
+                    auto u = UniquePtr!(long, DefaultRcControlBlock).make(123);
+
+                    IntrusivePtr!long s = move(u);        //rvalue copy ctor
+                    assert(s != null);
+                    assert(s.useCount == 1);
+
+                    IntrusivePtr!long s2 = UniquePtr!(long, DefaultRcControlBlock).init;
+                    assert(s2 == null);
+                }
+                --------------------
+        */
+        public this(Rhs, this This)(ref scope Rhs rhs)@trusted
+        if(true
+            && isIntrusivePtr!Rhs
+            && !is(Unqual!This == Unqual!Rhs)   ///copy ctors
+            && isCopyable!(Rhs, This)
+            && !needLock!(Rhs, This)
+            && !is(Rhs == shared)
+        ){
+            mixin validateIntrusivePtr!(This, Rhs);
+
+            this(rhs, Evoid.init);
+        }
+
+        /// ditto
+        public this(Rhs, this This)(scope Rhs rhs)@trusted
+        if(true
+            && isIntrusivePtr!Rhs
+            //&& !is(Unqual!This == Unqual!Rhs) //TODO move ctors need this
+            && isMovable!(Rhs, This)
+            && !needLock!(Rhs, This)
+            && !is(Rhs == shared)
+        ){
+            mixin validateIntrusivePtr!(This, Rhs);
+
+            this._element = rhs._element;
+            rhs._const_reset();
+        }
+
+        /// ditto
+        public this(Rhs, this This)(auto ref scope Rhs rhs)@trusted
+        if(true
+            && isIntrusivePtr!Rhs
+            && isCopyable!(Rhs, This)   ///lock robi vzdy copiu
+            && needLock!(Rhs, This)
+            && !is(Rhs == shared)
+        ){
+            mixin validateIntrusivePtr!(This, Rhs);
+
+            if(rhs._element !is null && rhs._control.add_shared_if_exists())
+                this._element = rhs._element;
+            else
+                this._element = null;
+        }
+
+        /// ditto
+        public this(Rhs, this This)(scope Rhs rhs)@trusted
+        if(true
+            && isUniquePtr!Rhs
+            && isMovable!(Rhs, This)
+            && !is(Rhs == shared)
+        ){
+            import autoptr.unique_ptr : validateUniquePtr;
+            mixin validateIntrusivePtr!This;
+            mixin validateUniquePtr!Rhs;
+
+            if(rhs == null){
+                this(null);
+            }
+            else{
+                this(rhs.element);
+                rhs._const_reset();
+            }
+        }
+
+
+
+        //copy ctors:
+        //mutable:
+        static if(is(Unqual!ElementType == ElementType)){
+            //mutable rhs:
+            static if(isMutable!ControlType || mutableControl){
+                this(ref scope typeof(this) rhs)@trusted{this(rhs, Evoid.init);}
+                this(ref scope typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope typeof(this) rhs)@safe;
+                @disable this(ref scope typeof(this) rhs)const @safe;
+            }
+            @disable this(ref scope typeof(this) rhs)immutable @safe;
+            @disable this(ref scope typeof(this) rhs)shared @safe;
+            @disable this(ref scope typeof(this) rhs)const shared @safe;
+
+            //const rhs:
+            @disable this(ref scope const typeof(this) rhs)@safe;
+            static if(mutableControl)
+                this(ref scope const typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+            else
+                @disable this(ref scope const typeof(this) rhs)const @safe;
+            @disable this(ref scope const typeof(this) rhs)immutable @safe;
+            @disable this(ref scope const typeof(this) rhs)shared @safe;
+            @disable this(ref scope const typeof(this) rhs)const shared @safe;
+
+            //immutable(Ptr) iptr;
+            @disable this(ref scope immutable typeof(this) rhs)@safe;
+            static if(mutableControl){
+                this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+                this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope immutable typeof(this) rhs)const @safe;
+                @disable this(ref scope immutable typeof(this) rhs)immutable @safe;
+            }
+            @disable this(ref scope immutable typeof(this) rhs)shared @safe;
+            static if(is(ControlType == shared) && (isMutable!ControlType || mutableControl))
+                this(ref scope immutable typeof(this) rhs)const shared @trusted{this(rhs, Evoid.init);}
+            else
+                @disable this(ref scope immutable typeof(this) rhs)const shared @safe;
+
+        }
+        //const:
+        else static if(is(const Unqual!ElementType == ElementType)){
+            //mutable rhs:
+            static if(mutableControl){
+                this(ref scope typeof(this) rhs)@trusted{this(rhs, Evoid.init);}
+                this(ref scope typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope typeof(this) rhs)@safe;
+                @disable this(ref scope typeof(this) rhs)const @safe;
+            }
+            @disable this(ref scope typeof(this) rhs)immutable @safe;
+            @disable this(ref scope typeof(this) rhs)shared @safe;
+            @disable this(ref scope typeof(this) rhs)const shared @safe;
+
+            //const rhs:
+            static if(mutableControl){
+                this(ref scope const typeof(this) rhs)@trusted{this(rhs, Evoid.init);}
+                this(ref scope const typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope const typeof(this) rhs)@safe;
+                @disable this(ref scope const typeof(this) rhs)const @safe;
+            }
+            @disable this(ref scope const typeof(this) rhs)immutable @safe;
+            @disable this(ref scope const typeof(this) rhs)shared @safe;
+            @disable this(ref scope const typeof(this) rhs)const shared @safe;
+
+            //immutable rhs:
+            static if(mutableControl){
+                this(ref scope immutable typeof(this) rhs)@trusted{this(rhs, Evoid.init);}
+                this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+                this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope immutable typeof(this) rhs)@safe;
+                @disable this(ref scope immutable typeof(this) rhs)const @safe;
+                @disable this(ref scope immutable typeof(this) rhs)immutable @safe;
+            }
+            static if(is(ControlType == shared) && mutableControl){
+                this(ref scope immutable typeof(this) rhs)shared @trusted{this(rhs, Evoid.init);}
+                this(ref scope immutable typeof(this) rhs)const shared @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope immutable typeof(this) rhs)shared @safe;
+                @disable this(ref scope immutable typeof(this) rhs)const shared @safe;
+            }
+        }
+        //immutable:
+        else static if(is(immutable Unqual!ElementType == ElementType)){
+            //mutable rhs:
+            static if(mutableControl){
+                this(ref scope typeof(this) rhs)@trusted{this(rhs, Evoid.init);}
+                this(ref scope typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+                this(ref scope typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope typeof(this) rhs)@safe;
+                @disable this(ref scope typeof(this) rhs)const @safe;
+                @disable this(ref scope typeof(this) rhs)immutable @safe;
+            }
+            static if(is(ControlType == shared) && mutableControl){
+                this(ref scope typeof(this) rhs)shared @trusted{this(rhs, Evoid.init);}
+                this(ref scope typeof(this) rhs)const shared @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope typeof(this) rhs)shared @safe;
+                @disable this(ref scope typeof(this) rhs)const shared @safe;
+            }
+
+            //const rhs:
+            static if(mutableControl){
+                this(ref scope const typeof(this) rhs)@trusted{this(rhs, Evoid.init);}
+                this(ref scope const typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+                this(ref scope const typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}	//??
+            }
+            else{
+                @disable this(ref scope const typeof(this) rhs)@safe;
+                @disable this(ref scope const typeof(this) rhs)const @safe;
+                @disable this(ref scope const typeof(this) rhs)immutable @safe;
+            }
+            static if(is(ControlType == shared) && mutableControl){
+                this(ref scope const typeof(this) rhs)shared @trusted{this(rhs, Evoid.init);}
+                this(ref scope const typeof(this) rhs)const shared @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope const typeof(this) rhs)shared @safe;
+                @disable this(ref scope const typeof(this) rhs)const shared @safe;
+            }
+
+            //immutable rhs:
+            static if(mutableControl){
+                this(ref scope immutable typeof(this) rhs)@trusted{this(rhs, Evoid.init);}	//??
+                this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+                this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope immutable typeof(this) rhs)@safe;
+                @disable this(ref scope immutable typeof(this) rhs)const @safe;
+                @disable this(ref scope immutable typeof(this) rhs)immutable @safe;
+            }
+            static if(is(ControlType == shared) && mutableControl){
+                this(ref scope immutable typeof(this) rhs)shared @trusted{this(rhs, Evoid.init);}
+                this(ref scope immutable typeof(this) rhs)const shared @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope immutable typeof(this) rhs)shared @safe;
+                @disable this(ref scope immutable typeof(this) rhs)const shared @safe;
+            }
+        }
+        //shared:
+        else static if(is(shared Unqual!ElementType == ElementType)){
+            //static assert(!threadLocal);
+
+            //mutable rhs:
+            static if(isMutable!ControlType || mutableControl){
+                this(ref scope typeof(this) rhs)@trusted{this(rhs, Evoid.init);}
+                this(ref scope typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope typeof(this) rhs)@safe;
+                @disable this(ref scope typeof(this) rhs)const @safe;
+            }
+            @disable this(ref scope typeof(this) rhs)immutable @safe;
+            static if(is(ControlType == shared) && (isMutable!ControlType || mutableControl)){
+                this(ref scope typeof(this) rhs)shared @trusted{this(rhs, Evoid.init);}
+                this(ref scope typeof(this) rhs)const shared @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope typeof(this) rhs)shared @safe;
+                @disable this(ref scope typeof(this) rhs)const shared @safe;
+            }
+
+            //const rhs:
+            @disable this(ref scope const typeof(this) rhs)@safe;
+            static if(mutableControl)
+                this(ref scope const typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+            else
+                @disable this(ref scope const typeof(this) rhs)const @safe;
+            @disable this(ref scope const typeof(this) rhs)immutable @safe;
+            @disable this(ref scope const typeof(this) rhs)shared @safe;
+            static if(is(ControlType == shared) && mutableControl)
+                this(ref scope const typeof(this) rhs)const shared @trusted{this(rhs, Evoid.init);}
+            else
+                @disable this(ref scope const typeof(this) rhs)const shared @safe;
+
+            //immutable rhs:
+            @disable this(ref scope immutable typeof(this) rhs)@safe;
+            static if(mutableControl){
+                this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+                this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope immutable typeof(this) rhs)const @safe;
+                @disable this(ref scope immutable typeof(this) rhs)immutable @safe;
+            }
+            @disable this(ref scope immutable typeof(this) rhs)shared @safe;
+            static if(is(ControlType == shared) && mutableControl)
+                this(ref scope immutable typeof(this) rhs)const shared @trusted{this(rhs, Evoid.init);}
+            else
+                @disable this(ref scope immutable typeof(this) rhs)const shared @safe;
+        }
+        //shared const:
+        else static if(is(const shared Unqual!ElementType == ElementType)){
+            //static assert(!threadLocal);
+
+            //mutable rhs:
+            static if(mutableControl){
+                this(ref scope typeof(this) rhs)@trusted{this(rhs, Evoid.init);}
+                this(ref scope typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope typeof(this) rhs)@safe;
+                @disable this(ref scope typeof(this) rhs)const @safe;
+            }
+            @disable this(ref scope typeof(this) rhs)immutable @safe;
+            static if(is(ControlType == shared) && mutableControl){
+                this(ref scope typeof(this) rhs)shared @trusted{this(rhs, Evoid.init);}
+                this(ref scope typeof(this) rhs)const shared @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope typeof(this) rhs)shared @safe;
+                @disable this(ref scope typeof(this) rhs)const shared @safe;
+            }
+
+            //const rhs:
+            static if(mutableControl){
+                this(ref scope const typeof(this) rhs)@trusted{this(rhs, Evoid.init);}
+                this(ref scope const typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope const typeof(this) rhs)@safe;
+                @disable this(ref scope const typeof(this) rhs)const @safe;
+            }
+            @disable this(ref scope const typeof(this) rhs)immutable @safe;
+            static if(is(ControlType == shared) && mutableControl){
+                this(ref scope const typeof(this) rhs)shared @trusted{this(rhs, Evoid.init);}
+                this(ref scope const typeof(this) rhs)const shared @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope const typeof(this) rhs)shared @safe;
+                @disable this(ref scope const typeof(this) rhs)const shared @safe;
+            }
+
+            //immutable rhs:
+            static if(mutableControl){
+                this(ref scope immutable typeof(this) rhs)@trusted{this(rhs, Evoid.init);}	//??
+                this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+                this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope immutable typeof(this) rhs)@safe;
+                @disable this(ref scope immutable typeof(this) rhs)const @safe;
+                @disable this(ref scope immutable typeof(this) rhs)immutable @safe;
+            }
+            static if(is(ControlType == shared) && mutableControl){
+                this(ref scope immutable typeof(this) rhs)shared @trusted{this(rhs, Evoid.init);}
+                this(ref scope immutable typeof(this) rhs)const shared @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope immutable typeof(this) rhs)shared @safe;
+                @disable this(ref scope immutable typeof(this) rhs)const shared @safe;
+            }
+
+        }
+        else static assert(0, "no impl");
+
+
+        /+
+        //copy ctors:
+        //mutable:
+        static if(is(Unqual!ElementType == ElementType)){
+            //mutable rhs:
+            static if(isMutable!ControlType){
+                this(ref scope typeof(this) rhs)@trusted{this(rhs, Evoid.init);}
+                this(ref scope typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope typeof(this) rhs)@safe;
+                @disable this(ref scope typeof(this) rhs)const @safe;
+            }
+            @disable this(ref scope typeof(this) rhs)immutable @safe;
+            @disable this(ref scope typeof(this) rhs)shared @safe;
+            @disable this(ref scope typeof(this) rhs)const shared @safe;
+
+            //const rhs:
+            @disable this(ref scope const typeof(this) rhs)@safe;
+            @disable this(ref scope const typeof(this) rhs)const @safe;
+            @disable this(ref scope const typeof(this) rhs)immutable @safe;
+            @disable this(ref scope const typeof(this) rhs)shared @safe;
+            @disable this(ref scope const typeof(this) rhs)const shared @safe;
+
+            //immutable(Ptr) iptr;
+            @disable this(ref scope immutable typeof(this) rhs)@safe;
+            @disable this(ref scope immutable typeof(this) rhs)const @safe;
+            @disable this(ref scope immutable typeof(this) rhs)immutable @safe;
+            @disable this(ref scope immutable typeof(this) rhs)shared @safe;
+            @disable this(ref scope immutable typeof(this) rhs)const shared @safe;
+        }
+        //const:
+        else static if(is(const Unqual!ElementType == ElementType)){
+            //mutable rhs:
+            @disable this(ref scope typeof(this) rhs)@safe;
+            @disable this(ref scope typeof(this) rhs)const @safe;
+            @disable this(ref scope typeof(this) rhs)immutable @safe;
+            @disable this(ref scope typeof(this) rhs)shared @safe;
+            @disable this(ref scope typeof(this) rhs)const shared @safe;
+
+            //const rhs:
+            @disable this(ref scope const typeof(this) rhs)@safe;
+            @disable this(ref scope const typeof(this) rhs)const @safe;
+            @disable this(ref scope const typeof(this) rhs)immutable @safe;
+            @disable this(ref scope const typeof(this) rhs)shared @safe;
+            @disable this(ref scope const typeof(this) rhs)const shared @safe;
+
+            //immutable rhs:
+            @disable this(ref scope immutable typeof(this) rhs)@safe;
+            @disable this(ref scope immutable typeof(this) rhs)const @safe;
+            @disable this(ref scope immutable typeof(this) rhs)immutable @safe;
+            @disable this(ref scope immutable typeof(this) rhs)shared @safe;
+            @disable this(ref scope immutable typeof(this) rhs)const shared @safe;
+        }
+        //immutable:
+        else static if(is(immutable Unqual!ElementType == ElementType)){
+            //mutable rhs:
+            @disable this(ref scope typeof(this) rhs)@safe;
+            @disable this(ref scope typeof(this) rhs)const @safe;
+            @disable this(ref scope typeof(this) rhs)immutable @safe;
+            @disable this(ref scope typeof(this) rhs)shared @safe;
+            @disable this(ref scope typeof(this) rhs)const shared @safe;
+
+            //const rhs:
+            @disable this(ref scope const typeof(this) rhs)@safe;
+            @disable this(ref scope const typeof(this) rhs)const @safe;
+            @disable this(ref scope const typeof(this) rhs)immutable @safe;
+            @disable this(ref scope const typeof(this) rhs)shared @safe;
+            @disable this(ref scope const typeof(this) rhs)const shared @safe;
+
+            //immutable rhs:
+            @disable this(ref scope immutable typeof(this) rhs)@safe;
+            @disable this(ref scope immutable typeof(this) rhs)const @safe;
+            @disable this(ref scope immutable typeof(this) rhs)immutable @safe;
+            @disable this(ref scope immutable typeof(this) rhs)shared @safe;
+            @disable this(ref scope immutable typeof(this) rhs)const shared @safe;
+        }
+        //shared:
+        else static if(is(shared Unqual!ElementType == ElementType)){
+            //static assert(!threadLocal);
+
+            //mutable rhs:
+            static if(isMutable!ControlType){
+                this(ref scope typeof(this) rhs)@trusted{this(rhs, Evoid.init);}
+                this(ref scope typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope typeof(this) rhs)@safe;
+                @disable this(ref scope typeof(this) rhs)const @safe;
+            }
+            @disable this(ref scope typeof(this) rhs)immutable @safe;
+            static if(is(ControlType == shared) && isMutable!ControlType){
+                this(ref scope typeof(this) rhs)shared @trusted{this(rhs, Evoid.init);}
+                this(ref scope typeof(this) rhs)const shared @trusted{this(rhs, Evoid.init);}
+            }
+            else{
+                @disable this(ref scope typeof(this) rhs)shared @safe;
+                @disable this(ref scope typeof(this) rhs)const shared @safe;
+            }
+
+            //const rhs:
+            @disable this(ref scope const typeof(this) rhs)@safe;
+            @disable this(ref scope const typeof(this) rhs)const @safe;
+            @disable this(ref scope const typeof(this) rhs)immutable @safe;
+            @disable this(ref scope const typeof(this) rhs)shared @safe;
+            @disable this(ref scope const typeof(this) rhs)const shared @safe;
+
+            //immutable rhs:
+            @disable this(ref scope immutable typeof(this) rhs)@safe;
+            @disable this(ref scope immutable typeof(this) rhs)const @safe;
+            @disable this(ref scope immutable typeof(this) rhs)immutable @safe;
+            @disable this(ref scope immutable typeof(this) rhs)shared @safe;
+            @disable this(ref scope immutable typeof(this) rhs)const shared @safe;
+        }
+        //shared const:
+        else static if(is(const shared Unqual!ElementType == ElementType)){
+            //static assert(!threadLocal);
+
+            //mutable rhs:
+            @disable this(ref scope typeof(this) rhs)@safe;
+            @disable this(ref scope typeof(this) rhs)const @safe;
+            @disable this(ref scope typeof(this) rhs)immutable @safe;
+            @disable this(ref scope typeof(this) rhs)shared @safe;
+            @disable this(ref scope typeof(this) rhs)const shared @safe;
+
+            //const rhs:
+            @disable this(ref scope const typeof(this) rhs)@safe;
+            @disable this(ref scope const typeof(this) rhs)const @safe;
+            @disable this(ref scope const typeof(this) rhs)immutable @safe;
+            @disable this(ref scope const typeof(this) rhs)shared @safe;
+            @disable this(ref scope const typeof(this) rhs)const shared @safe;
+
+            //immutable rhs:
+            @disable this(ref scope immutable typeof(this) rhs)@safe;
+            @disable this(ref scope immutable typeof(this) rhs)const @safe;
+            @disable this(ref scope immutable typeof(this) rhs)immutable @safe;
+            @disable this(ref scope immutable typeof(this) rhs)shared @safe;
+            @disable this(ref scope immutable typeof(this) rhs)const shared @safe;
+        }
+        else static assert(0, "no impl");
+        +/
+
+        //shared rhs:
+        @disable this(ref scope shared typeof(this) rhs)@safe;
+        @disable this(ref scope shared typeof(this) rhs)const @safe;
+        @disable this(ref scope shared typeof(this) rhs)immutable @safe;
+        @disable this(ref scope shared typeof(this) rhs)shared @safe;
+        @disable this(ref scope shared typeof(this) rhs)const shared @safe;
+
+        //const shared rhs:
+        @disable this(ref scope const shared typeof(this) rhs)@safe;
+        @disable this(ref scope const shared typeof(this) rhs)const @safe;
+        @disable this(ref scope const shared typeof(this) rhs)immutable @safe;
+        @disable this(ref scope const shared typeof(this) rhs)shared @safe;
+        @disable this(ref scope const shared typeof(this) rhs)const shared @safe;
+
+
+        /**
+            Releases the ownership of the managed object, if any.
+
+            After the call, this manages no object.
+
+            Examples:
+                --------------------
+                {
+                    IntrusivePtr!long x = IntrusivePtr!long.make(1);
+
+                    assert(x.useCount == 1);
+                    x = null;
+                    assert(x.useCount == 0);
+                    assert(x == null);
+                }
+
+                {
+                    IntrusivePtr!(shared long) x = IntrusivePtr!(shared long).make(1);
+
+                    assert(x.useCount == 1);
+                    x = null;
+                    assert(x.useCount == 0);
+                    assert(x == null);
+                }
+
+                {
+                    shared IntrusivePtr!(long).ThreadLocal!false x = IntrusivePtr!(shared long).ThreadLocal!false.make(1);
+
+                    assert(x.useCount == 1);
+                    x = null;
+                    assert(x.useCount == 0);
+                    assert(x == null);
+                }
+                --------------------
+        */
+        public void opAssign(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null) nil)scope
+        if(isMutable!This){
+            mixin validateIntrusivePtr!This;
+
+            static if(is(This == shared)){
+                static if(isLockFree){
+                    import core.atomic : atomicExchange;
+
+                    alias Result = ChangeElementType!(This, ElementType);
+                    ()@trusted{
+                        Result tmp;
+                        tmp._set_element(cast(typeof(this._element))atomicExchange!order(
+                            cast(Unqual!(This.ElementReferenceType)*)&this._element,
+                            null
+                        ));
+                    }();
+                }
+                else{
+                    return this.lockIntrusivePtr!(
+                        (ref scope self) => self.opAssign!order(null)
+                    )();
+                }
+            }
+            else{
+                this._release();
+                this._reset();
+            }
+        }
+
+        /**
+            Shares ownership of the object managed by `rhs`.
+
+            If `rhs` manages no object, `this` manages no object too.
+            If `rhs` is rvalue then move-assigns a `IntrusivePtr` from `rhs`
+
+            Examples:
+                --------------------
+                {
+                    IntrusivePtr!long px1 = IntrusivePtr!long.make(1);
+                    IntrusivePtr!long px2 = IntrusivePtr!long.make(2);
+
+                    assert(px2.useCount == 1);
+                    px1 = px2;
+                    assert(*px1 == 2);
+                    assert(px2.useCount == 2);
+                }
+
+
+                {
+                    IntrusivePtr!long px = IntrusivePtr!long.make(1);
+                    IntrusivePtr!(const long) pcx = IntrusivePtr!long.make(2);
+
+                    assert(px.useCount == 1);
+                    pcx = px;
+                    assert(*pcx == 1);
+                    assert(pcx.useCount == 2);
+
+                }
+
+
+                {
+                    const IntrusivePtr!long cpx = IntrusivePtr!long.make(1);
+                    IntrusivePtr!(const long) pcx = IntrusivePtr!long.make(2);
+
+                    assert(pcx.useCount == 1);
+                    pcx = cpx;
+                    assert(*pcx == 1);
+                    assert(pcx.useCount == 2);
+
+                }
+
+                {
+                    IntrusivePtr!(immutable long) pix = IntrusivePtr!(immutable long).make(123);
+                    IntrusivePtr!(const long) pcx = IntrusivePtr!long.make(2);
+
+                    assert(pix.useCount == 1);
+                    pcx = pix;
+                    assert(*pcx == 123);
+                    assert(pcx.useCount == 2);
+
+                }
+                --------------------
+        */
+        public void opAssign(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(ref scope Rhs desired)scope
+        if(true
+            && isIntrusivePtr!Rhs
+            && isMutable!This
+            && isCopyable!(Rhs, This)
+            && !needLock!(Rhs, This)
+            && !is(Rhs == shared)
+        ){
+            mixin validateIntrusivePtr!(Rhs, This);
+
+            if((()@trusted => cast(const void*)&desired is cast(const void*)&this)())
+                return;
+
+            static if(is(This == shared)){
+
+                static if(isLockFree){
+                    import core.atomic : atomicExchange;
+
+                    alias Result = ChangeElementType!(This, ElementType);
+                    ()@trusted{
+                        desired._control.add!(This.weakPtr);
+
+                        Result tmp;
+                        GetElementReferenceType!This source = desired._element;    //interface/class cast
+
+                        tmp._set_element(cast(typeof(this._element))atomicExchange!order(
+                            cast(Unqual!(This.ElementReferenceType)*)&this._element,
+                            cast(Unqual!(This.ElementReferenceType))source
+                        ));
+                    }();
+                }
+                else{
+                    this.lockIntrusivePtr!(
+                        (ref scope self, ref scope Rhs x) => self.opAssign!order(x)
+                    )(desired);
+                }
+            }
+            else{
+                this._release();
+                ()@trusted{
+                    auto control = desired._control;
+                    this._set_element(desired._element);
+
+                    if(control !is null)
+                        control.add!weakPtr;
+
+                }();
+            }
+        }
+
+        ///ditto
+        public void opAssign(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs desired)scope
+        if(true
+            && isIntrusivePtr!Rhs
+            && isMutable!This
+            && isMovable!(Rhs, This)
+            && !needLock!(Rhs, This)
+            && !is(Rhs == shared)
+        ){
+            mixin validateIntrusivePtr!(Rhs, This);
+
+            static if(is(This == shared)){
+                static if(isLockFree){
+                    import core.atomic : atomicExchange;
+
+                    alias Result = ChangeElementType!(This, ElementType);
+                    ()@trusted{
+                        Result tmp;
+                        GetElementReferenceType!This source = desired._element;    //interface/class cast
+
+                        tmp._set_element(cast(typeof(this._element))atomicExchange!order(
+                            cast(Unqual!(This.ElementReferenceType)*)&this._element,
+                            cast(Unqual!(This.ElementReferenceType))source
+                        ));
+
+                        desired._const_reset();
+                    }();
+                }
+                else{
+                    return this.lockIntrusivePtr!(
+                        (ref scope self, Rhs x) => self.opAssign!order(x.move)
+                    )(desired.move);
+                }
+            }
+            else{
+
+                this._release();
+
+                ()@trusted{
+                    this._set_element(desired._element);
+                    desired._const_reset();
+                }();
+
+            }
+        }
+
+
+
+        /**
+            Constructs an object of type `ElementType` and wraps it in a `IntrusivePtr` using args as the parameter list for the constructor of `ElementType`.
+
+            The object is constructed as if by the expression `emplace!ElementType(_payload, forward!args)`, where _payload is an internal pointer to storage suitable to hold an object of type `ElementType`.
+            The storage is typically larger than `ElementType.sizeof` in order to use one allocation for both the control block and the `ElementType` object.
+
+            Examples:
+                --------------------
+                {
+                    IntrusivePtr!long a = IntrusivePtr!long.make();
+                    assert(a.get == 0);
+
+                    IntrusivePtr!(const long) b = IntrusivePtr!long.make(2);
+                    assert(b.get == 2);
+                }
+
+                {
+                    static struct Struct{
+                        int i = 7;
+
+                        this(int i)pure nothrow @safe @nogc{
+                            this.i = i;
+                        }
+                    }
+
+                    IntrusivePtr!Struct s1 = IntrusivePtr!Struct.make();
+                    assert(s1.get.i == 7);
+
+                    IntrusivePtr!Struct s2 = IntrusivePtr!Struct.make(123);
+                    assert(s2.get.i == 123);
+                }
+
+                {
+                    static interface Interface{
+                    }
+                    static class Class : Interface{
+                        int i;
+
+                        this(int i)pure nothrow @safe @nogc{
+                            this.i = i;
+                        }
+                    }
+
+                    IntrusivePtr!Interface x = IntrusivePtr!Class.make(3);
+                    //assert(x.dynTo!Class.get.i == 3);
+                }
+                --------------------
+        */
+        static if(!weakPtr)
+        public static IntrusivePtr make
+            (AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)
+            (auto ref Args args)
+        if(stateSize!AllocatorType == 0 && !isDynamicArray!ElementType){
+            static assert(!weakPtr);
+
+            import core.lifetime : forward;
+
+            auto m = MakeEmplace!(AllocatorType, supportGC).make(forward!(args));
+
+            if(m is null)
+                return typeof(return).init;
+
+
+            auto ptr = typeof(this).init;
+
+            //ptr._control = m.base;
+            ptr._set_element(m.get);
+
+            return ptr.move;
+        }
+
+
+
+        /**
+            Constructs an object of type `ElementType` and wraps it in a `IntrusivePtr` using args as the parameter list for the constructor of `ElementType`.
+
+            The object is constructed as if by the expression `emplace!ElementType(_payload, forward!args)`, where _payload is an internal pointer to storage suitable to hold an object of type `ElementType`.
+            The storage is typically larger than `ElementType.sizeof` in order to use one allocation for both the control block and the `ElementType` object.
+
+            Examples:
+                --------------------
+                auto a = allocatorObject(Mallocator.instance);
+                {
+                    IntrusivePtr!long a = IntrusivePtr!long.alloc(a);
+                    assert(a.get == 0);
+
+                    IntrusivePtr!(const long) b = IntrusivePtr!long.alloc(a, 2);
+                    assert(b.get == 2);
+                }
+
+                {
+                    static struct Struct{
+                        int i = 7;
+
+                        this(int i)pure nothrow @safe @nogc{
+                            this.i = i;
+                        }
+                    }
+
+                    IntrusivePtr!Struct s1 = IntrusivePtr!Struct.alloc(a);
+                    assert(s1.get.i == 7);
+
+                    IntrusivePtr!Struct s2 = IntrusivePtr!Struct.alloc(a, 123);
+                    assert(s2.get.i == 123);
+                }
+
+                {
+                    static interface Interface{
+                    }
+                    static class Class : Interface{
+                        int i;
+
+                        this(int i)pure nothrow @safe @nogc{
+                            this.i = i;
+                        }
+                    }
+
+                    IntrusivePtr!Interface x = IntrusivePtr!Class.alloc(a, 3);
+                    //assert(x.dynTo!Class.get.i == 3);
+                }
+                --------------------
+        */
+        static if(!weakPtr)
+        public static IntrusivePtr alloc
+            (AllocatorType, bool supportGC = platformSupportGC, Args...)
+            (AllocatorType a, auto ref Args args)
+        if(stateSize!AllocatorType >= 0 && !isDynamicArray!ElementType){
+            static assert(!weakPtr);
+
+            import core.lifetime : forward;
+
+            auto m = MakeEmplace!(AllocatorType, supportGC).make(forward!(a, args));
+
+            if(m is null)
+                return typeof(return).init;
+
+            auto ptr = typeof(this).init;
+
+            //ptr._control = m.base;
+            ptr._set_element(m.get);
+
+            return ptr.move;
+        }
+
+
+
+        /**
+            Returns the number of different `IntrusivePtr` instances
+
+            Returns the number of different `IntrusivePtr` instances (`this` included) managing the current object or `0` if there is no managed object.
+
+            Examples:
+                --------------------
+                IntrusivePtr!long x = null;
+
+                assert(x.useCount == 0);
+
+                x = IntrusivePtr!long.make(123);
+                assert(x.useCount == 1);
+
+                auto y = x;
+                assert(x.useCount == 2);
+
+                auto w1 = x.weak;    //weak ptr
+                assert(x.useCount == 2);
+
+                IntrusivePtr!long.WeakType w2 = x;   //weak ptr
+                assert(x.useCount == 2);
+
+                y = null;
+                assert(x.useCount == 1);
+
+                x = null;
+                assert(x.useCount == 0);
+                assert(w1.useCount == 0);
+                --------------------
+        */
+        public @property ControlType.Shared useCount(this This)()const scope nothrow @trusted @nogc{
+            mixin validateIntrusivePtr!This;
+
+            static if(is(This == shared)){
+                static assert(is(ControlType == shared));
+
+                return this.lockIntrusivePtr!(
+                    (ref scope return self) => self.useCount()
+                )();
+            }
+            else{
+                return (this._element is null)
+                    ? 0
+                    : this._control.count!false + 1;
+            }
+
+        }
+
+
+        /**
+            Returns the number of different `WeakIntrusivePtr` instances
+
+            Returns the number of different `WeakIntrusivePtr` instances (`this` included) managing the current object or `0` if there is no managed object.
+
+            Examples:
+                --------------------
+                IntrusivePtr!long x = null;
+                assert(x.useCount == 0);
+                assert(x.weakCount == 0);
+
+                x = IntrusivePtr!long.make(123);
+                assert(x.useCount == 1);
+                assert(x.weakCount == 0);
+
+                auto w = x.weak();
+                assert(x.useCount == 1);
+                assert(x.weakCount == 1);
+                --------------------
+        */
+        public @property ControlType.Weak weakCount(this This)()const scope nothrow @safe @nogc{
+            mixin validateIntrusivePtr!This;
+
+            static if(is(This == shared)){
+                static assert(is(ControlType == shared));
+
+                return this.lockSharedPtr!(
+                    (ref scope return self) => self.weakCount()
+                )();
+            }
+            else{
+                return (this._element is null)
+                    ? 0
+                    : this._control.count!true;
+            }
+
+        }
+
+
+
+        /**
+            Swap `this` with `rhs`
+
+            Examples:
+                --------------------
+                {
+                    IntrusivePtr!long a = IntrusivePtr!long.make(1);
+                    IntrusivePtr!long b = IntrusivePtr!long.make(2);
+                    a.proxySwap(b);
+                    assert(*a == 2);
+                    assert(*b == 1);
+                    import std.algorithm : swap;
+                    swap(a, b);
+                    assert(*a == 1);
+                    assert(*b == 2);
+                    assert(a.useCount == 1);
+                    assert(b.useCount == 1);
+                }
+                --------------------
+        */
+        public void proxySwap(ref scope typeof(this) rhs)scope @trusted pure nothrow @nogc{
+            auto element = this._element;
+            this._set_element(rhs._element);
+            rhs._set_element(element);
+        }
+
+
+
+        /**
+            Returns the non `shared` `IntrusivePtr` pointer pointed-to by `shared` `this`.
+
+            Examples:
+                --------------------
+                shared IntrusivePtr!(long).ThreadLocal!false x = IntrusivePtr!(shared long).ThreadLocal!false.make(123);
+
+                {
+                    IntrusivePtr!(shared long) y = x.load();
+                    assert(y.useCount == 2);
+
+                    assert(y.get == 123);
+                }
+                --------------------
+        */
+        public ChangeElementType!(This, CopyTypeQualifiers!(This, ElementType))
+        load(MemoryOrder order = MemoryOrder.seq, this This)()scope return{  ///TODO remove return
+            ///TODO test copyable from this => return.
+            mixin validateIntrusivePtr!This;
+
+            static if(is(This == shared)){
+                static assert(is(ControlType == shared));
+
+                return this.lockIntrusivePtr!(
+                    (ref scope return self) => self.load!order()
+                )();
+            }
+            else{
+                alias Result = ChangeElementType!(
+                    This,
+                    CopyTypeQualifiers!(This, ElementType)
+                );
+
+                return Result(this);
+            }
+        }
+
+
+
+        /**
+            Stores the non `shared` `IntrusivePtr` parameter `ptr` to `this`.
+
+            If `this` is shared then operation is atomic or guarded by mutex.
+
+            Template parameter `order` has type `core.atomic.MemoryOrder`.
+
+            Examples:
+                --------------------
+                //null store:
+                {
+                    shared x = IntrusivePtr!(shared long).make(123);
+                    assert(x.load.get == 123);
+
+                    x.store(null);
+                    assert(x.useCount == 0);
+                    assert(x.load == null);
+                }
+
+                //rvalue store:
+                {
+                    shared x = IntrusivePtr!(shared long).make(123);
+                    assert(x.load.get == 123);
+
+                    x.store(IntrusivePtr!(shared long).make(42));
+                    assert(x.load.get == 42);
+                }
+
+                //lvalue store:
+                {
+                    shared x = IntrusivePtr!(shared long).make(123);
+                    auto y = IntrusivePtr!(shared long).make(42);
+
+                    assert(x.load.get == 123);
+                    assert(y.load.get == 42);
+
+                    x.store(y);
+                    assert(x.load.get == 42);
+                    assert(x.useCount == 2);
+                }
+                --------------------
+        */
+        public void store(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null) nil)scope
+        if(isMutable!This){
+            mixin validateIntrusivePtr!(This);
+
+            this.opAssign!order(null);
+        }
+
+        /// ditto
+        public void store(MemoryOrder order = MemoryOrder.seq, Ptr, this This)(ref scope Ptr desired)scope
+        if(true
+            && isIntrusivePtr!Ptr
+            && !is(Ptr == shared)
+            && !needLock!(Ptr, This)
+            && (isCopyable!(Ptr, This) && isMutable!This)
+        ){
+            mixin validateIntrusivePtr!(Ptr, This);
+
+            import core.lifetime : forward;
+            this.opAssign!order(forward!desired);
+        }
+
+        /// ditto
+        public void store(MemoryOrder order = MemoryOrder.seq, Ptr, this This)(scope Ptr desired)scope
+        if(true
+            && isIntrusivePtr!Ptr
+            && !is(Ptr == shared)
+            && !needLock!(Ptr, This)
+            && (isMovable!(Ptr, This) && isMutable!This)
+        ){
+            mixin validateIntrusivePtr!(Ptr, This);
+
+            import core.lifetime : forward;
+            this.opAssign!order(forward!desired);
+        }
+
+
+
+        /**
+            Stores the non `shared` `IntrusivePtr` pointer ptr in the `shared(IntrusivePtr)` pointed to by `this` and returns the value formerly pointed-to by this, atomically or with mutex.
+
+            Examples:
+                --------------------
+                //lvalue exchange
+                {
+                    shared x = IntrusivePtr!(shared long).make(123);
+                    auto y = IntrusivePtr!(shared long).make(42);
+
+                    auto z = x.exchange(y);
+
+                    assert(x.load.get == 42);
+                    assert(y.get == 42);
+                    assert(z.get == 123);
+                }
+
+                //rvalue exchange
+                {
+                    shared x = IntrusivePtr!(shared long).make(123);
+                    auto y = IntrusivePtr!(shared long).make(42);
+
+                    auto z = x.exchange(y.move);
+
+                    assert(x.load.get == 42);
+                    assert(y == null);
+                    assert(z.get == 123);
+                }
+
+                //null exchange (same as move)
+                {
+                    shared x = IntrusivePtr!(shared long).make(123);
+
+                    auto z = x.exchange(null);
+
+                    assert(x.load == null);
+                    assert(z.get == 123);
+                }
+
+                //swap:
+                {
+                    shared x = IntrusivePtr!(shared long).make(123);
+                    auto y = IntrusivePtr!(shared long).make(42);
+
+                    //opAssign is same as store
+                    y = x.exchange(y.move);
+
+                    assert(x.load.get == 42);
+                    assert(y.get == 123);
+                }
+                --------------------
+        */
+        public auto exchange(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null))scope
+        if(isMutable!This){
+            mixin validateIntrusivePtr!This;
+
+            static if(is(This == shared)){
+                static if(isLockFree){
+                    import core.atomic : atomicExchange;
+
+                    return()@trusted{
+                        alias Result = ChangeElementType!(This, ElementType);
+                        Result result;
+                        result._set_element(cast(typeof(this._element))atomicExchange!order(
+                            cast(Unqual!(This.ElementReferenceType)*)&this._element,
+                            null
+                        ));
+
+                        return result.move;
+                    }();
+                }
+                else{
+                    return this.lockIntrusivePtr!(
+                        (ref scope self) => self.exchange!order(null)
+                    )();
+                }
+            }
+            else{
+                return this.move;
+            }
+        }
+
+        /// ditto
+        public auto exchange(MemoryOrder order = MemoryOrder.seq, Ptr, this This)(scope Ptr ptr)scope
+        if(true
+            && isIntrusivePtr!Ptr 
+            && !is(Ptr == shared) 
+            && isMovable!(Ptr, This)
+            && isMutable!This
+        ){
+            mixin validateIntrusivePtr!(Ptr, This);
+
+            static if(is(This == shared)){
+
+                static if(isLockFree){
+                    import core.atomic : atomicExchange;
+
+                    return()@trusted{
+                        alias Result = ChangeElementType!(This, ElementType);
+                        Result result;
+                        GetElementReferenceType!This source = ptr._element;    //interface/class cast
+
+                        result._set_element(cast(typeof(this._element))atomicExchange!order(
+                            cast(Unqual!(This.ElementReferenceType)*)&this._element,
+                            cast(Unqual!(This.ElementReferenceType))source
+                        ));
+                        ptr._const_reset();
+
+                        return result.move;
+                    }();
+                }
+                else{
+                    return this.lockIntrusivePtr!(
+                        (ref scope self, Ptr x) => self.exchange!order(x.move)
+                    )(ptr.move);
+                }
+            }
+            else{
+                auto result = this.move;
+
+                return()@trusted{
+                    this = ptr.move;
+                    return result.move;
+                }();
+            }
+        }
+
+
+        /**
+            Compares the `IntrusivePtr` pointers pointed-to by `this` and `expected`.
+
+            If they are equivalent (store the same pointer value, and either share ownership of the same object or are both empty), assigns `desired` into `this` using the memory ordering constraints specified by `success` and returns `true`.
+            If they are not equivalent, assigns `this` into `expected` using the memory ordering constraints specified by `failure` and returns `false`.
+
+            More info in c++ std::atomic<std::shared_ptr>.
+
+
+            Examples:
+                --------------------
+                static foreach(enum bool weak; [true, false]){
+                    //fail
+                    {
+                        IntrusivePtr!long a = IntrusivePtr!long.make(123);
+                        IntrusivePtr!long b = IntrusivePtr!long.make(42);
+                        IntrusivePtr!long c = IntrusivePtr!long.make(666);
+
+                        static if(weak)a.compareExchangeWeak(b, c);
+                        else a.compareExchangeStrong(b, c);
+
+                        assert(*a == 123);
+                        assert(*b == 123);
+                        assert(*c == 666);
+
+                    }
+
+                    //success
+                    {
+                        IntrusivePtr!long a = IntrusivePtr!long.make(123);
+                        IntrusivePtr!long b = a;
+                        IntrusivePtr!long c = IntrusivePtr!long.make(666);
+
+                        static if(weak)a.compareExchangeWeak(b, c);
+                        else a.compareExchangeStrong(b, c);
+
+                        assert(*a == 666);
+                        assert(*b == 123);
+                        assert(*c == 666);
+                    }
+
+                    //shared fail
+                    {
+                        shared IntrusivePtr!(shared long) a = IntrusivePtr!(shared long).make(123);
+                        IntrusivePtr!(shared long) b = IntrusivePtr!(shared long).make(42);
+                        IntrusivePtr!(shared long) c = IntrusivePtr!(shared long).make(666);
+
+                        static if(weak)a.compareExchangeWeak(b, c);
+                        else a.compareExchangeStrong(b, c);
+
+                        auto tmp = a.exchange(null);
+                        assert(*tmp == 123);
+                        assert(*b == 123);
+                        assert(*c == 666);
+                    }
+
+                    //shared success
+                    {
+                        IntrusivePtr!(shared long) b = IntrusivePtr!(shared long).make(123);
+                        shared IntrusivePtr!(shared long) a = b;
+                        IntrusivePtr!(shared long) c = IntrusivePtr!(shared long).make(666);
+
+                        static if(weak)a.compareExchangeWeak(b, c);
+                        else a.compareExchangeStrong(b, c);
+
+                        auto tmp = a.exchange(null);
+                        assert(*tmp == 666);
+                        assert(*b == 123);
+                        assert(*c == 666);
+                    }
+                }
+                --------------------
+        */
+        public bool compareExchangeStrong
+            (MemoryOrder success = MemoryOrder.seq, MemoryOrder failure = success, E, D, this This)
+            (ref scope E expected, scope D desired)scope
+        if(true
+            && isIntrusivePtr!E && !is(E == shared)
+            && isIntrusivePtr!D && !is(D == shared)
+            && (isMovable!(D, This) && isMutable!This)
+            && (isMovable!(This, E) && isMutable!E)
+            && (This.weakPtr == D.weakPtr)
+            && (This.weakPtr == E.weakPtr)
+        ){
+            mixin validateIntrusivePtr!(E, D, This);
+
+            return this.compareExchangeImpl!(false, success, failure)(expected, desired.move);
+        }
+
+
+
+        /**
+            Same as `compareExchangeStrong` but may fail spuriously.
+
+            More info in c++ `std::atomic<std::shared_ptr>`.
+        */
+        public bool compareExchangeWeak
+            (MemoryOrder success = MemoryOrder.seq, MemoryOrder failure = success, E, D, this This)
+            (ref scope E expected, scope D desired)scope
+        if(true
+            && isIntrusivePtr!E && !is(E == shared)
+            && isIntrusivePtr!D && !is(D == shared)
+            && (isMovable!(D, This) && isMutable!This)
+            && (isMovable!(This, E) && isMutable!E)
+            && (This.weakPtr == D.weakPtr)
+            && (This.weakPtr == E.weakPtr)
+        ){
+            mixin validateIntrusivePtr!(E, D, This);
+
+            return this.compareExchangeImpl!(true, success, failure)(expected, desired.move);
+        }
+
+
+        private bool compareExchangeImpl
+            (bool weak, MemoryOrder success, MemoryOrder failure, E, D, this This)
+            (ref scope E expected, scope D desired)scope @trusted pure @nogc
+        if(true
+            && isIntrusivePtr!E && !is(E == shared)
+            && isIntrusivePtr!D && !is(D == shared)
+            && (isMovable!(D, This) && isMutable!This)
+            && (isMovable!(This, E) && isMutable!E)
+            && (This.weakPtr == D.weakPtr)
+            && (This.weakPtr == E.weakPtr)
+        ){
+            mixin validateIntrusivePtr!(E, D, This);
+
+            static if(is(This == shared) && isLockFree){
+                import core.atomic : cas, casWeak;
+                static if(weak)
+                    alias casImpl = casWeak;
+                else
+                    alias casImpl = cas;
+
+
+                return ()@trusted{
+                    GetElementReferenceType!This source_desired = desired._element;     //interface/class cast
+                    GetElementReferenceType!This source_expected = expected._element;   //interface/class cast
+
+                    const bool store_occurred = casImpl!(success, failure)(
+                        cast(Unqual!(This.ElementReferenceType)*)&this._element,
+                        cast(Unqual!(This.ElementReferenceType)*)&source_expected,
+                        cast(Unqual!(This.ElementReferenceType))source_desired
+                    );
+
+                    if(store_occurred){
+                        desired._const_reset();
+                        if(expected._element !is null)
+                            expected._control.release!(This.weakPtr);
+                    }
+                    else{
+                        expected = null;
+                        expected._set_element(source_expected);
+                    }
+
+                    return store_occurred;
+                }();
+            }
+            else{
+                return this.compareExchange!(success, failure)(expected, desired.move);
+            }
+        }
+
+
+        /*
+            implementation of `compareExchangeWeak` and `compareExchangeStrong`
+        */
+        private bool compareExchange
+            (MemoryOrder success = MemoryOrder.seq, MemoryOrder failure = success, E, D, this This)
+            (ref scope E expected, scope D desired)scope @trusted pure @nogc
+        if(true
+            && isIntrusivePtr!E && !is(E == shared)
+            && isIntrusivePtr!D && !is(D == shared)
+            && (isMovable!(D, This) && isMutable!This)
+            && (isMovable!(This, E) && isMutable!E)
+            && (This.weakPtr == D.weakPtr)
+            && (This.weakPtr == E.weakPtr)
+        ){
+            mixin validateIntrusivePtr!(E, D, This);
+
+            static if(is(This == shared)){
+                import core.atomic : cas;
+
+
+                static assert(!isLockFree);
+                shared mutex = getMutex(this);
+
+                mutex.lock();
+
+                alias Self = ChangeElementType!(
+                    This, //CopyConstness!(This, Unqual!This),
+                    CopyTypeQualifiers!(This, ElementType)
+                );
+
+                static assert(!is(Self == shared));
+
+                Self* self = cast(Self*)&this;
+
+                if(*self == expected){
+                    auto tmp = self.move;   //destructor is called after  mutex.unlock();
+                    *self = desired.move;
+
+                    mutex.unlock();
+                    return true;
+                }
+
+                auto tmp = expected.move;   //destructor is called after  mutex.unlock();
+                expected = *self;
+
+                mutex.unlock();
+                return false;
+            }
+            else{
+                if(this == expected){
+                    this = desired.move;
+                    return true;
+                }
+                expected = this;
+
+                return false;
+            }
+        }
+
+
+
+        /**
+            Creates a new non weak `IntrusivePtr` that shares ownership of the managed object (must be `WeakIntrusivePtr`).
+
+            If there is no managed object, i.e. this is empty or this is `expired`, then the returned `IntrusivePtr` is empty.
+            Method exists only if `IntrusivePtr` is `weakPtr`
+
+            Examples:
+                --------------------
+                {
+                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
+
+                    auto w = x.weak;    //weak ptr
+
+                    IntrusivePtr!long y = w.lock;
+
+                    assert(x == y);
+                    assert(x.useCount == 2);
+                    assert(y.get == 123);
+                }
+
+                {
+                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
+
+                    auto w = x.weak;    //weak ptr
+
+                    assert(w.expired == false);
+
+                    x = IntrusivePtr!long.make(321);
+
+                    assert(w.expired == true);
+
+                    IntrusivePtr!long y = w.lock;
+
+                    assert(y == null);
+                }
+                --------------------
+        */
+        static if(weakPtr)
+        public CopyConstness!(This, SharedType) lock(this This)()scope @trusted
+        if(!is(This == shared)){
+            ///TODO copy this -> return
+            mixin validateIntrusivePtr!This;
+
+            static assert(needLock!(This, typeof(return)));
+
+            return typeof(return)(this);
+        }
+
+
+
+        /**
+            Equivalent to `useCount() == 0` (must be `WeakIntrusivePtr`).
+
+            Method exists only if `IntrusivePtr` is `weakPtr`
+
+            Examples:
+                --------------------
+                {
+                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
+
+                    auto wx = x.weak;   //weak pointer
+
+                    assert(wx.expired == false);
+
+                    x = null;
+
+                    assert(wx.expired == true);
+                }
+                --------------------
+        */
+        static if(weakPtr)
+        public @property bool expired(this This)()scope const{
+            mixin validateIntrusivePtr!This;
+            return (this.useCount == 0);
+        }
+
+
+        static if(!weakPtr){
+            /**
+                Operator *, same as method 'get'.
+
+                Examples:
+                    --------------------
+                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
+                    assert(*x == 123);
+                    (*x = 321);
+                    assert(*x == 321);
+                    const y = x;
+                    assert(*y == 321);
+                    assert(*x == 321);
+                    static assert(is(typeof(*y) == const long));
+                    --------------------
+            */
+            public template opUnary(string op : "*")
+            if(op == "*"){  //doc
+                alias opUnary = get;
+            }
+
+
+
+            /**
+                Get reference to managed object of `ElementType` or value if `ElementType` is reference type (class or interface) or dynamic array.
+
+                Examples:
+                    --------------------
+                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
+                    assert(x.get == 123);
+                    x.get = 321;
+                    assert(x.get == 321);
+                    const y = x;
+                    assert(y.get == 321);
+                    assert(x.get == 321);
+                    static assert(is(typeof(y.get) == const long));
+                    --------------------
+            */
+            static if(referenceElementType)
+                public @property inout(ElementType) get()inout scope return pure nothrow @system @nogc{
+                    return this._element;
+                }
+            else static if(is(Unqual!ElementType == void))
+                /// ditto
+                public @property inout(ElementType) get()inout scope pure nothrow @system @nogc{
+                }
+            else
+                /// ditto
+                public @property ref inout(ElementType) get()inout scope return pure nothrow @system @nogc{
+                    return *cast(inout ElementType*)this._element;
+                }
+
+
+
+
+            /**
+                Get pointer to managed object of `ElementType` or reference if `ElementType` is reference type (class or interface) or dynamic array
+
+                Examples:
+                    --------------------
+                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
+                    assert(*x.element == 123);
+                    x.get = 321;
+                    assert(*x.element == 321);
+                    const y = x;
+                    assert(*y.element == 321);
+                    assert(*x.element == 321);
+                    static assert(is(typeof(y.ptr) == const(long)*));
+                    --------------------
+            */
+            public @property ElementReferenceTypeImpl!(inout ElementType) element()
+            inout scope return pure nothrow @system @nogc{
+                return this._element;
+            }
+
+        }
+
+
+
+        /**
+            Returns length of dynamic array (isDynamicArray!ElementType == true).
+
+            Examples:
+                --------------------
+                auto x = IntrusivePtr!(int[]).make(10, -1);
+                assert(x.length == 10);
+                assert(x.get.length == 10);
+
+                import std.algorithm : all;
+                assert(x.get.all!(i => i == -1));
+                --------------------
+        */
+        static if(isDynamicArray!ElementType)
+        public @property size_t length()const scope pure nothrow @safe @nogc{
+            return this._element.length;
+        }
+
+
+        /**
+            Returns weak pointer (must have weak counter).
+
+            Examples:
+                --------------------
+                IntrusivePtr!long x = IntrusivePtr!long.make(123);
+                assert(x.useCount == 1);
+                auto wx = x.weak;   //weak pointer
+                assert(wx.expired == false);
+                assert(wx.lock.get == 123);
+                assert(wx.useCount == 1);
+                x = null;
+                assert(wx.expired == true);
+                assert(wx.useCount == 0);
+                --------------------
+        */
+        static if(hasWeakCounter)
+        public CopyTypeQualifiers!(This, WeakType) weak(this This)()scope @safe
+        if(!is(This == shared)){
+            ///TODO copy this -> return
+            mixin validateIntrusivePtr!This;
+
+            return typeof(return)(this);
+        }
+
+
+
+        /**
+            Checks if `this` stores a non-null pointer, i.e. whether `this != null`.
+
+            Examples:
+                --------------------
+                IntrusivePtr!long x = IntrusivePtr!long.make(123);
+                assert(cast(bool)x);    //explicit cast
+                assert(x);              //implicit cast
+                x = null;
+                assert(!cast(bool)x);   //explicit cast
+                assert(!x);             //implicit cast
+                --------------------
+        */
+        public bool opCast(To : bool)()const scope pure nothrow @safe @nogc
+        if(is(To : bool)){ //docs
+            return (this != null);
+        }
+
+
+        /**
+            Cast `this` to different type `To` when `isIntrusivePtr!To`.
+
+            Examples:
+                --------------------
+                IntrusivePtr!long x = IntrusivePtr!long.make(123);
+                auto y = cast(IntrusivePtr!(const long))x;
+                auto z = cast(const IntrusivePtr!long)x;
+                auto u = cast(const IntrusivePtr!(const long))x;
+                assert(x.useCount == 4);
+                --------------------
+        */
+        public To opCast(To, this This)()scope
+        if(isIntrusivePtr!To && !is(This == shared)){
+            ///copy this -> return
+            mixin validateIntrusivePtr!This;
+
+            return To(this);
+        }
+
+
+        /**
+            Operator == and != .
+            Compare pointers.
+
+            Examples:
+                --------------------
+                {
+                    IntrusivePtr!long x = IntrusivePtr!long.make(0);
+                    assert(x != null);
+                    x = null;
+                    assert(x == null);
+                }
+
+                {
+                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
+                    IntrusivePtr!long y = IntrusivePtr!long.make(123);
+                    assert(x == x);
+                    assert(y == y);
+                    assert(x != y);
+                }
+
+                {
+                    IntrusivePtr!long x;
+                    IntrusivePtr!(const long) y;
+                    assert(x == x);
+                    assert(y == y);
+                    assert(x == y);
+                }
+
+                {
+                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
+                    IntrusivePtr!long y = IntrusivePtr!long.make(123);
+                    assert(x == x.element);
+                    assert(y.element == y);
+                    assert(x != y.element);
+                }
+                --------------------
+        */
+        public bool opEquals(typeof(null) nil)const @safe scope pure nothrow @nogc{
+            static if(isDynamicArray!ElementType)
+                return (this._element.length == 0);
+            else
+                return (this._element is null);
+        }
+
+        /// ditto
+        public bool opEquals(Rhs)(auto ref scope const Rhs rhs)const @safe scope pure nothrow @nogc
+        if(isIntrusivePtr!Rhs && !is(Rhs == shared)){
+            mixin validateIntrusivePtr!Rhs;
+
+            return this.opEquals(rhs._element);
+        }
+
+        /// ditto
+        public bool opEquals(Elm)(scope const Elm elm)const @safe scope pure nothrow @nogc
+        if(is(Elm : GetElementReferenceType!(typeof(this)))){
+            static if(isDynamicArray!ElementType){
+                static assert(isDynamicArray!Elm);
+
+                if(this._element.length != elm.length)
+                    return false;
+
+                if(this._element.ptr is elm.ptr)
+                    return true;
+
+                return (this._element.length == 0);
+            }
+            else{
+                return (this._element is elm);
+            }
+        }
+
+
+
+        /**
+            Operators <, <=, >, >= for `IntrusivePtr`.
+
+            Compare address of payload.
+
+            Examples:
+                --------------------
+                {
+                    const a = IntrusivePtr!long.make(42);
+                    const b = IntrusivePtr!long.make(123);
+                    const n = IntrusivePtr!long.init;
+
+                    assert(a <= a);
+                    assert(a >= a);
+
+                    assert((a < b) == !(a >= b));
+                    assert((a > b) == !(a <= b));
+
+                    assert(a > n);
+                    assert(a > null);
+
+                    assert(n < a);
+                    assert(null < a);
+                }
+
+                {
+                    const a = IntrusivePtr!long.make(42);
+                    const b = IntrusivePtr!long.make(123);
+
+                    assert(a <= a.element);
+                    assert(a.element >= a);
+
+                    assert((a < b.element) == !(a.element >= b));
+                    assert((a > b.element) == !(a.element <= b));
+                }
+                --------------------
+        */
+        public sizediff_t opCmp(typeof(null) nil)const @trusted scope pure nothrow @nogc{
+            static if(isDynamicArray!ElementType){
+                return this._element.length;
+            }
+            else{
+                return (cast(const void*)this._element) - (cast(const void*)null);
+            }
+
+        }
+
+        /// ditto
+        public sizediff_t opCmp(Elm)(scope const Elm elm)const @trusted scope pure nothrow @nogc
+        if(is(Elm : GetElementReferenceType!(typeof(this)))){
+            static if(isDynamicArray!ElementType){
+                const void* lhs = cast(const void*)(this._element.ptr + this._element.length);
+                const void* rhs = cast(const void*)(elm.ptr + elm.length);
+
+                return lhs - rhs;
+            }
+            else{
+                return (cast(const void*)this._element) - (cast(const void*)elm);
+            }
+        }
+
+        /// ditto
+        public sizediff_t opCmp(Rhs)(auto ref scope const Rhs rhs)const @trusted scope pure nothrow @nogc
+        if(isIntrusivePtr!Rhs && !is(Rhs == shared)){
+            mixin validateIntrusivePtr!Rhs;
+
+            return this.opCmp(rhs._element);
+        }
+
+
+
+        /**
+            Generate hash
+
+            Return:
+                Address of payload as `size_t`
+
+            Examples:
+                --------------------
+                {
+                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
+                    IntrusivePtr!long y = IntrusivePtr!long.make(123);
+                    assert(x.toHash == x.toHash);
+                    assert(y.toHash == y.toHash);
+                    assert(x.toHash != y.toHash);
+                    IntrusivePtr!(const long) z = x;
+                    assert(x.toHash == z.toHash);
+                }
+                {
+                    IntrusivePtr!long x;
+                    IntrusivePtr!(const long) y;
+                    assert(x.toHash == x.toHash);
+                    assert(y.toHash == y.toHash);
+                    assert(x.toHash == y.toHash);
+                }
+                --------------------
+        */
+        public @property size_t toHash()@trusted scope const pure nothrow @nogc {
+            static if(isDynamicArray!ElementType)
+                return cast(size_t)cast(void*)(this._element.ptr + this._element.length);
+            else
+                return cast(size_t)cast(void*)this._element;
+        }
+
+
+
+        /**
+            Move `IntrusivePtr`
+        */
+        public auto move()()scope{
+            import core.lifetime : move_impl = move;
+
+            return move_impl(this);
+        }
+
+        private ElementReferenceType _element;
+
+
+        package auto _control(this This)()pure nothrow @trusted @nogc
+        in(this._element !is null){
+            mixin validateIntrusivePtr!This;
+
+            static if(is(ElementType == class))
+                auto control = intrusivControlBlock(this._element);
+            else static if(is(ElementType == struct))
+                auto control = intrusivControlBlock(*this._element);
+            else static assert(0, "no impl");
+                
+            alias ControlPtr = typeof(control);
+
+            static if(mutableControl){
+                alias MutableControl = CopyTypeQualifiers!(
+                    Unconst!ControlPtr, 
+                    Unconst!(PointerTarget!ControlPtr)
+                );
+                return cast(MutableControl*)control;
+            }
+            else
+                return control;
+            //static assert(!is(typeof(*control) == immutable));
+            //return cast(Unconst!(typeof(*control))*)control;
+            //return control;
+        }
+
+        private void _set_element(ElementReferenceType e)pure nothrow @trusted @nogc{
+            static if(isMutable!ElementReferenceType)
+                this._element = e;
+            else
+                (*cast(Unqual!ElementReferenceType*)&this._element) = cast(Unqual!ElementReferenceType)e;
+        }
+
+        private void _const_set_element(ElementReferenceType e)const pure nothrow @trusted @nogc{
+            auto self = cast(Unqual!(typeof(this))*)&this;
+
+            static if(isMutable!ElementReferenceType)
+                self._element = e;
+            else
+                (*cast(Unqual!ElementReferenceType*)&self._element) = cast(Unqual!ElementReferenceType)e;
+        }
+
+        private void _release()scope /*pure nothrow @safe @nogc*/ {
+            if(false){
+                DestructorType dt;
+                dt(null);
+            }
+
+            import std.traits : hasIndirections;
+            import core.memory : GC;
+
+            if(this._element is null)
+                return;
+
+            auto control = ()@trusted{
+                static if(is(ControlType == immutable))
+                    return cast(shared(Unconst!ControlType)*)this._control;
+                else
+                    return cast(Unconst!ControlType*)this._control;
+            }();
+            control.release!weakPtr;
+        }
+
+        private void _reset()scope pure nothrow @trusted @nogc{
+            this._set_element(null);
+        }
+
+        package void _const_reset()scope const pure nothrow @trusted @nogc{
+            auto self = cast(Unqual!(typeof(this))*)&this;
+
+            self._reset();
+        }
+    }
+
+}
+
+/// ditto
+public template IntrusivePtr(
+    _Type,
+    bool _mutableControl,
+    _DestructorType = DestructorType!_Type
+)
+if(isIntrusive!_Type && isDestructorType!_DestructorType){
+    alias IntrusivePtr = .IntrusivePtr!(_Type, _DestructorType, _mutableControl, false);
+}
+
+/+
+///
+pure nothrow @nogc unittest{
+
+    static class Foo{
+        ControlBlock!(int, int) c;
+        int i;
+
+        this(int i)pure nothrow @safe @nogc{
+            this.i = i;
+        }
+    }
+
+    static class Bar : Foo{
+        double d;
+
+        this(int i, double d)pure nothrow @safe @nogc{
+            super(i);
+            this.d = d;
+        }
+    }
+
+    //implicit qualifier cast
+    {
+        IntrusivePtr!(const Foo, true) foo =  IntrusivePtr!(Foo, true).make(42);
+        assert(foo.get.i == 42);
+        assert(foo.useCount == 1);
+
+        const IntrusivePtr!(Foo, true) foo2 = foo;
+        assert(foo2.get.i == 42);
+        assert(foo.useCount == 2);
+
+    }
+
+    //polymorphic classes:
+    {
+        IntrusivePtr!Foo foo = IntrusivePtr!Bar.make(42, 3.14);
+        assert(foo != null);
+        assert(foo.useCount == 1);
+        assert(foo.get.i == 42);
+
+        //dynamic cast:
+        {
+            IntrusivePtr!Bar bar = dynCast!Bar(foo);
+            assert(foo.useCount == 2);
+
+            assert(bar.get.i == 42);
+            assert(bar.get.d == 3.14);
+        }
+
+    }
+
+    //weak references:
+    {
+        auto x = IntrusivePtr!Foo.make(314);
+        assert(x.useCount == 1);
+        assert(x.weakCount == 0);
+
+        auto w = x.weak();  //weak pointer
+        assert(x.useCount == 1);
+        assert(x.weakCount == 1);
+        assert(w.lock.get.i == 314);
+
+        IntrusivePtr!Foo.WeakType w2 = x;
+        assert(x.useCount == 1);
+        assert(x.weakCount == 2);
+
+        assert(w2.expired == false);
+        x = null;
+        assert(w2.expired == true);
+    }
+}
+
+///
+pure nothrow @safe @nogc unittest{
+    //make IntrusivePtr object
+    static struct Foo{
+        ControlBlock!(int, int) c;
+        int i;
+
+        this(int i)pure nothrow @safe @nogc{
+            this.i = i;
+        }
+    }
+
+    {
+        auto foo = IntrusivePtr!Foo.make(42);
+        auto foo2 = IntrusivePtr!Foo.make!Mallocator(42);  //explicit stateless allocator
+    }
+}
+
+///
+nothrow unittest{
+
+    static struct Foo{
+        ControlBlock!(int, int) c;
+        int i;
+
+        this(int i)pure nothrow @safe @nogc{
+            this.i = i;
+        }
+    }
+
+    //alloc IntrusivePtr object
+    import std.experimental.allocator : make, dispose, allocatorObject;
+
+    auto allocator = allocatorObject(Mallocator.instance);
+
+    {
+        auto x = IntrusivePtr!Foo.alloc(allocator, 42);
+    }
+
+}+/
+
+
+
+/**
+    Dynamic cast for shared pointers if `ElementType` is class with D linkage.
+
+    Creates a new instance of `IntrusivePtr` whose stored pointer is obtained from `ptr`'s stored pointer using a dynaic cast expression.
+
+    If `ptr` is null or dynamic cast fail then result `IntrusivePtr` is null.
+    Otherwise, the new `IntrusivePtr` will share ownership with the initial value of `ptr`.
+*/
+public auto dynCast(T, Ptr)(ref scope Ptr ptr)
+if(true
+    && isIntrusive!T
+    && isIntrusivePtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
+    && isReferenceType!T && __traits(getLinkage, T) == "D"
+    && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
+){
+    mixin validateIntrusivePtr!Ptr;
+
+    import std.traits : CopyTypeQualifiers;
+    import core.lifetime : forward;
+
+    alias Result = ChangeElementType!(Ptr, T);
+
+    /+static assert(is(
+        CopyTypeQualifiers!(GetElementReferenceType!Ptr, void*)
+            : CopyTypeQualifiers!(GetElementReferenceType!Result, void*)
+    ));+/
+
+    if(ptr == null)
+        return Result.init;
+
+    if(auto element = cast(Result.ElementType)ptr._element){
+        ptr._control.add!false;
+        return Result(element);
+
+    }
+
+    return Result.init;
+}
+
+/// ditto
+public ChangeElementType!(Ptr, T) dynCast(T, Ptr)(scope Ptr ptr)
+if(true
+    && isIntrusivePtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
+    && isReferenceType!T && __traits(getLinkage, T) == "D"
+    && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
+){
+    mixin validateIntrusivePtr!Ptr;
+
+    import std.traits : CopyTypeQualifiers;
+    import core.lifetime : forward;
+
+    alias Result = typeof(return);
+
+    /+static assert(is(
+        CopyTypeQualifiers!(GetElementReferenceType!Ptr, void*)
+            : CopyTypeQualifiers!(GetElementReferenceType!Result, void*)
+    ));+/
+
+    if(ptr == null)
+        return Result.init;
+
+    if(auto element = cast(Result.ElementType)ptr._element){
+        ptr._const_set_counter(null);
+        return Result(element);
+    }
+
+    return Result.init;
+}
+
+/+
+///
+unittest{
+    static class Base{
+        ControlBlock!(int, int) c;
+    }
+    static class Foo : Base{
+        int i;
+
+        this(int i)pure nothrow @safe @nogc{
+            this.i = i;
+        }
+    }
+
+    static class Bar : Foo{
+        double d;
+
+        this(int i, double d)pure nothrow @safe @nogc{
+            super(i);
+            this.d = d;
+        }
+    }
+
+    static class Zee : Base{
+    }
+
+    {
+        IntrusivePtr!(const Foo, true) foo = IntrusivePtr!(Bar, true).make(42, 3.14);
+        assert(foo.get.i == 42);
+
+        auto bar = dynCast!Bar(foo);
+        assert(bar != null);
+        assert(bar.get.d == 3.14);
+        static assert(is(typeof(bar) == IntrusivePtr!(const Bar, true)));
+
+        auto zee = dynCast!Zee(foo);
+        assert(zee == null);
+        static assert(is(typeof(zee) == IntrusivePtr!(const Zee, true)));
+    }
+}+/
+
+
+
+/**
+    Weak pointer
+
+    `WeakIntrusivePtr` is a smart pointer that holds a non-owning ("weak") reference to an object that is managed by `SharedPtr`.
+    It must be converted to `SharedPtr` in order to access the referenced object.
+
+    `WeakIntrusivePtr` models temporary ownership: when an object needs to be accessed only if it exists, and it may be deleted at any time by someone else,
+    `WeakIntrusivePtr` is used to track the object, and it is converted to `SharedPtr` to assume temporary ownership.
+    If the original `SharedPtr` is destroyed at this time, the object's lifetime is extended until the temporary `SharedPtr` is destroyed as well.
+
+    Another use for `WeakIntrusivePtr` is to break reference cycles formed by objects managed by `SharedPtr`.
+    If such cycle is orphaned (i,e. there are no outside shared pointers into the cycle), the `SharedPtr` reference counts cannot reach zero and the memory is leaked.
+    To prevent this, one of the pointers in the cycle can be made weak.
+*/
+public template WeakIntrusivePtr(
+    _Type,
+    _DestructorType = DestructorType!_Type,
+    _ControlType = ControlTypeDeduction!(_Type, DefaultRcControlBlock),
+)
+if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
+    alias WeakIntrusivePtr = .IntrusivePtr!(_Type, _DestructorType, _ControlType, true);
+}
+
+/// ditto
+public template WeakIntrusivePtr(
+    _Type,
+    _ControlType,
+    _DestructorType = DestructorType!_Type,
+)
+if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
+    alias WeakIntrusivePtr = .IntrusivePtr!(_Type, _DestructorType, _ControlType, true);
+}
+
+
+
+/**
+    Return `shared IntrusivePtr` pointing to same managed object like parameter `ptr`.
+
+    Type of parameter `ptr` must be `IntrusivePtr` with `shared(ControlType)` and `shared`/`immutable` `ElementType` .
+*/
+public shared(Ptr) share(Ptr)(auto ref scope Ptr ptr)
+if(isIntrusivePtr!Ptr){
+    mixin validateIntrusivePtr!Ptr;
+
+    import core.lifetime : forward;
+    static if(is(Ptr == shared)){
+        return forward!ptr;
+    }
+    else{
+        static assert(is(Ptr.ControlType == shared),
+            "`IntrusivePtr` has not shared ref counter `ControlType`."
+        );
+
+        static assert(is(Ptr.ElementType == shared) || is(Ptr.ElementType == immutable),
+            "`IntrusivePtr` has not shared/immutable `ElementType`."
+        );
+
+        alias Result = shared(Ptr);
+        mixin validateIntrusivePtr!Result;
+
+        return Result(forward!ptr);
+    }
+}
+
+///
+nothrow @nogc unittest{
+    static struct Foo{
+        ControlBlock!(int, int) c;
+        int i;
+
+        this(int i)pure nothrow @safe @nogc{
+            this.i = i;
+        }
+    }
+
+    {
+        auto x = IntrusivePtr!(shared Foo).make(123);
+        assert(x.useCount == 1);
+
+        shared s1 = share(x);
+        assert(x.useCount == 2);
+
+
+        shared s2 = share(x.move);
+        assert(x == null);
+        assert(s2.useCount == 2);
+        assert(s2.load.get.i == 123);
+
+    }
+
+    {
+        auto x = IntrusivePtr!(Foo).make(123);
+        assert(x.useCount == 1);
+
+        ///error `shared IntrusivePtr` need shared `ControlType` and shared `ElementType`.
+        //shared s1 = share(x);
+
+    }
+
+}
+
+/**
+    Validate qualfied `IntrusivePtr`.
+
+    Some `IntrusivePtr` are invalid:
+
+        * `shared(IntrusivePtr)` when `ControlType` is not shared
+
+        * `immutable(IntrusivePtr)` when `ElementType` has intrusive control block.
+
+*/
+public mixin template validateIntrusivePtr(Ts...){
+    static foreach(alias T; Ts){
+        static assert(isIntrusivePtr!T);
+
+        static assert(!is(T == shared) || is(T.ControlType == shared),
+            "shared `IntrusivePtr` is valid only if its `ControlType` is shared. (" ~ T.stringof ~ ")."
+        );
+
+        /+static if(T.intrusive){
+            static assert(!is(IntrusivControlBlock!T == immutable),
+                "intrusive control block cannot be immtuable."
+            );
+
+        }+/
+    }
+
+}
+
+
+//local traits:
+private{
+
+    template needLock(From, To)
+    if(isIntrusivePtr!From && isIntrusivePtr!To){
+        enum needLock = (From.weakPtr && !To.weakPtr);
+    }
+
+    template isMovable(From, To)
+    if(isIntrusivePtr!From && isIntrusivePtr!To){
+        import std.traits : Unqual, CopyTypeQualifiers;
+
+        alias FromPtr = CopyTypeQualifiers!(From, From.ElementReferenceType);
+        alias ToPtr = CopyTypeQualifiers!(To, To.ElementReferenceType);
+
+        alias FromElm = CopyTypeQualifiers!(From, From.ElementType);
+        alias ToElm = CopyTypeQualifiers!(To, To.ElementType);
+
+        static if(is(Unqual!FromElm == Unqual!ToElm))
+            enum bool aliasable = is(FromPtr : ToPtr);
+
+        else static if(is(FromElm == class) && is(ToElm == class))
+            enum bool aliasable = true
+                && is(FromElm : ToElm);
+                //&& isIntrusive!FromElm;
+
+        else static if(is(FromElm == struct) && is(ToElm == struct))
+            enum bool aliasable = false;
+
+        else
+            enum bool aliasable = false;
+        
+
+        enum bool isMovable = true
+            && aliasable
+            //&& isOverlapable!(From.ElementType, To.ElementType) //&& is(Unqual!(From.ElementType) == Unqual!(To.ElementType))
+            //&& is(FromPtr : ToPtr)
+            && is(From.DestructorType : To.DestructorType)
+            && is(From.ControlType : To.ControlType)
+            && (From.mutableControl == To.mutableControl);
+    }
+
+    template isCopyable(From, To)
+    if(isIntrusivePtr!From && isIntrusivePtr!To){
+        import std.traits : isMutable;
+
+        static if(isMovable!(From, To)){
+            ///TODO restriction for const control blocks
+            enum bool isCopyable = true;
+        }
+        else{
+            enum bool isCopyable = false;
+        }
+        
+    }
+
+    //alias isMovable = isConstructable;
+
+    /+template isAssignable(From, To)
+    if(isIntrusivePtr!From && isIntrusivePtr!To){
+        import std.traits : isMutable;
+
+        enum bool isAssignable = true
+            && isConstructable!(From, To)
+            && isMutable!To;
+    }+/
+
+    template ChangeElementType(Ptr, T)
+    if(isIntrusivePtr!Ptr){
+        import std.traits : CopyTypeQualifiers;
+
+        alias FromType = CopyTypeQualifiers!(Ptr, Ptr.ElementType);
+        alias ResultType = CopyTypeQualifiers!(FromType, T);
+
+        alias ResultPtr = IntrusivePtr!(
+            ResultType,
+
+            Ptr.DestructorType,
+            Ptr.mutableControl,
+            Ptr.weakPtr
+        );
+
+        alias ChangeElementType = ResultPtr;
+    }
+
+    template GetElementReferenceType(Ptr)
+    if(isIntrusivePtr!Ptr){
+        import std.traits : CopyTypeQualifiers, isDynamicArray;
+        import std.range : ElementEncodingType;
+
+        alias ElementType = CopyTypeQualifiers!(Ptr, Ptr.ElementType);
+
+        alias GetElementReferenceType = ElementReferenceTypeImpl!ElementType;
+    }
+}
+
+//mutex:
+private static auto lockIntrusivePtr
+    (alias fn, Ptr, Args...)
+    (auto ref scope shared Ptr ptr, auto ref scope return Args args)
+{
+    import std.traits : CopyConstness, CopyTypeQualifiers, Unqual;
+    import core.lifetime : forward;
+    import autoptr.internal.mutex : getMutex;
+
+
+    //static assert(!Ptr.threadLocal);
+    shared mutex = getMutex(ptr);
+
+    mutex.lock();
+    scope(exit)mutex.unlock();
+
+    alias Result = ChangeElementType!(
+        CopyConstness!(Ptr, Unqual!Ptr),      //remove shared from this
+        CopyTypeQualifiers!(shared Ptr, Ptr.ElementType)
+    );
+
+
+    return fn(
+        *(()@trusted => cast(Result*)&ptr )(),
+        forward!args
+    );
+}
+
+
+version(unittest){
+    struct TestAllocator{
+        static assert(stateSize!TestAllocator > 0);
+        private int x;
+        import std.experimental.allocator.common : platformAlignment, stateSize;
+
+        enum uint alignment = platformAlignment;
+
+        void[] allocate(size_t bytes)@trusted @nogc nothrow pure{
+            import core.memory : pureMalloc;
+            if (!bytes) return null;
+            auto p = pureMalloc(bytes);
+            return p ? p[0 .. bytes] : null;
+        }
+
+        bool deallocate(void[] b)@system @nogc nothrow pure{
+            import core.memory : pureFree;
+            pureFree(b.ptr);
+            return true;
+        }
+
+        bool reallocate(ref void[] b, size_t s)@system @nogc nothrow pure{
+            import core.memory : pureRealloc;
+            if (!s){
+                // fuzzy area in the C standard, see http://goo.gl/ZpWeSE
+                // so just deallocate and nullify the pointer
+                deallocate(b);
+                b = null;
+                return true;
+            }
+
+            auto p = cast(ubyte*) pureRealloc(b.ptr, s);
+            if (!p) return false;
+            b = p[0 .. s];
+            return true;
+        }
+
+        //static TestAllocator instance;
+
+    }
+
+    //copy ctor
+    pure nothrow @nogc unittest{
+
+
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        import std.meta : AliasSeq;
+        static foreach(alias ControlType; AliasSeq!(DefaultRcControlBlock, shared DefaultRcControlBlock)){{
+            alias SPtr(T) = IntrusivePtr!(T, DestructorType!T, true);
+
+            //mutable:
+            {
+                alias Ptr = SPtr!(Foo);
+                Ptr ptr;
+                static assert(__traits(compiles, Ptr(ptr)));
+                static assert(__traits(compiles, const(Ptr)(ptr)));
+                static assert(!__traits(compiles, immutable(Ptr)(ptr)));
+                static assert(!__traits(compiles, shared(Ptr)(ptr)));
+                static assert(!__traits(compiles, const(shared(Ptr))(ptr)));
+
+                const(Ptr) cptr;
+                static assert(!__traits(compiles, Ptr(cptr)));
+                static assert(__traits(compiles, const(Ptr)(cptr)));
+                static assert(!__traits(compiles, immutable(Ptr)(cptr)));
+                static assert(!__traits(compiles, shared(Ptr)(cptr)));
+                static assert(!__traits(compiles, const(shared(Ptr))(cptr)));
+
+                immutable(Ptr) iptr;
+                static assert(!__traits(compiles, Ptr(iptr)));
+                static assert(__traits(compiles, const(Ptr)(iptr)));
+                static assert(__traits(compiles, immutable(Ptr)(iptr)));
+                static assert(!__traits(compiles, shared(Ptr)(iptr)));
+                static assert(__traits(compiles, const(shared(Ptr))(iptr)) == Ptr.sharedControl);
+
+                shared(Ptr) sptr;
+                static assert(!__traits(compiles, Ptr(sptr)));
+                static assert(!__traits(compiles, const(Ptr)(sptr)));
+                static assert(!__traits(compiles, immutable(Ptr)(sptr)));
+                static assert(!__traits(compiles, shared(Ptr)(sptr)));   //need load
+                static assert(!__traits(compiles, const shared Ptr(sptr)));  //need load
+                shared(const(Ptr)) scptr;
+                static assert(!__traits(compiles, Ptr(scptr)));
+                static assert(!__traits(compiles, const(Ptr)(scptr)));
+                static assert(!__traits(compiles, immutable(Ptr)(scptr)));
+                static assert(!__traits(compiles, shared(Ptr)(scptr)));
+                static assert(!__traits(compiles, const(shared(Ptr))(scptr)));  //need load
+            }
+
+            //const:
+            {
+                alias Ptr = SPtr!(const Foo);
+                Ptr ptr;
+                static assert(__traits(compiles, Ptr(ptr)));
+                static assert(__traits(compiles, const(Ptr)(ptr)));
+                static assert(!__traits(compiles, immutable(Ptr)(ptr)));
+                static assert(!__traits(compiles, shared(Ptr)(ptr)));
+                static assert(!__traits(compiles, const(shared(Ptr))(ptr)));
+
+                const(Ptr) cptr;
+                static assert(__traits(compiles, Ptr(cptr)));
+                static assert(__traits(compiles, const(Ptr)(cptr)));
+                static assert(!__traits(compiles, immutable(Ptr)(cptr)));
+                static assert(!__traits(compiles, shared(Ptr)(cptr)));
+                static assert(!__traits(compiles, const(shared(Ptr))(cptr)));
+
+                immutable(Ptr) iptr;
+                static assert(__traits(compiles, Ptr(iptr)));
+                static assert(__traits(compiles, const(Ptr)(iptr)));
+                static assert(__traits(compiles, immutable(Ptr)(iptr)));
+                static assert(__traits(compiles, shared(Ptr)(iptr)) == Ptr.sharedControl);
+                static assert(__traits(compiles, const(shared(Ptr))(iptr)) == Ptr.sharedControl);
+
+                shared(Ptr) sptr;
+                static assert(!__traits(compiles, Ptr(sptr)));
+                static assert(!__traits(compiles, const(Ptr)(sptr)));
+                static assert(!__traits(compiles, immutable(Ptr)(sptr)));
+                static assert(!__traits(compiles, shared(Ptr)(sptr)));          //need load
+                static assert(!__traits(compiles, const shared Ptr(sptr)));     //need load
+                shared(const(Ptr)) scptr;
+                static assert(!__traits(compiles, Ptr(scptr)));
+                static assert(!__traits(compiles, const(Ptr)(scptr)));
+                static assert(!__traits(compiles, immutable(Ptr)(scptr)));
+                static assert(!__traits(compiles, shared(Ptr)(scptr)));         //need load
+                static assert(!__traits(compiles, const(shared(Ptr))(scptr)));  //need load
+            }
+
+            //immutable:
+            {
+                alias Ptr = SPtr!(immutable Foo);
+                Ptr ptr;
+                static assert(__traits(compiles, Ptr(ptr)));
+                static assert(__traits(compiles, const(Ptr)(ptr)));
+                static assert(__traits(compiles, immutable(Ptr)(ptr)));
+                static assert(__traits(compiles, shared(Ptr)(ptr)) == Ptr.sharedControl);
+                static assert(__traits(compiles, const(shared(Ptr))(ptr)) == Ptr.sharedControl);
+
+                const(Ptr) cptr;
+                static assert(__traits(compiles, Ptr(cptr)));
+                static assert(__traits(compiles, const(Ptr)(cptr)));
+                static assert(__traits(compiles, immutable(Ptr)(cptr)));
+                static assert(__traits(compiles, shared(Ptr)(cptr)) == Ptr.sharedControl);
+                static assert(__traits(compiles, const(shared(Ptr))(cptr)) == Ptr.sharedControl);
+
+                immutable(Ptr) iptr;
+                static assert(__traits(compiles, Ptr(iptr)));
+                static assert(__traits(compiles, const(Ptr)(iptr)));
+                static assert(__traits(compiles, immutable(Ptr)(iptr)));
+                static assert(__traits(compiles, shared(Ptr)(iptr)) == Ptr.sharedControl);
+                static assert(__traits(compiles, const(shared(Ptr))(iptr)) == Ptr.sharedControl);
+
+                shared(Ptr) sptr;
+                static assert(!__traits(compiles, Ptr(sptr)));
+                static assert(!__traits(compiles, const(Ptr)(sptr)));
+                static assert(!__traits(compiles, immutable(Ptr)(sptr)));
+                static assert(!__traits(compiles, shared(Ptr)(sptr)));          //need load
+                static assert(!__traits(compiles, const shared Ptr(sptr)));     //need load
+                shared(const(Ptr)) scptr;
+                static assert(!__traits(compiles, Ptr(scptr)));
+                static assert(!__traits(compiles, const(Ptr)(scptr)));
+                static assert(!__traits(compiles, immutable(Ptr)(scptr)));
+                static assert(!__traits(compiles, shared(Ptr)(scptr)));         //need load
+                static assert(!__traits(compiles, const(shared(Ptr))(scptr)));  //need load
+            }
+
+
+            //shared:
+            static if(is(ControlType == shared)){{
+                alias Ptr = SPtr!(shared Foo);
+                Ptr ptr;
+                static assert(__traits(compiles, Ptr(ptr)));
+                static assert(__traits(compiles, const(Ptr)(ptr)));
+                static assert(!__traits(compiles, immutable(Ptr)(ptr)));
+                static assert(__traits(compiles, shared(Ptr)(ptr)));
+                static assert(__traits(compiles, const(shared(Ptr))(ptr)));
+
+                const(Ptr) cptr;
+                static assert(!__traits(compiles, Ptr(cptr)));
+                static assert(__traits(compiles, const(Ptr)(cptr)));
+                static assert(!__traits(compiles, immutable(Ptr)(cptr)));
+                static assert(!__traits(compiles, shared(Ptr)(cptr)));
+                static assert(__traits(compiles, const(shared(Ptr))(cptr)));
+
+                immutable(Ptr) iptr;
+                static assert(!__traits(compiles, Ptr(iptr)));
+                static assert(__traits(compiles, const(Ptr)(iptr)));
+                static assert(__traits(compiles, immutable(Ptr)(iptr)));
+                static assert(!__traits(compiles, shared(Ptr)(iptr)));
+                static assert(__traits(compiles, const(shared(Ptr))(iptr)));
+
+                shared(Ptr) sptr;
+                static assert(!__traits(compiles, Ptr(sptr)));
+                static assert(!__traits(compiles, const(Ptr)(sptr)));
+                static assert(!__traits(compiles, immutable(Ptr)(sptr)));
+                static assert(!__traits(compiles, shared(Ptr)(sptr)));          //need load
+                static assert(!__traits(compiles, const shared Ptr(sptr)));     //need load
+                shared(const(Ptr)) scptr;
+                static assert(!__traits(compiles, Ptr(scptr)));
+                static assert(!__traits(compiles, const(Ptr)(scptr)));
+                static assert(!__traits(compiles, immutable(Ptr)(scptr)));
+                static assert(!__traits(compiles, shared(Ptr)(scptr)));         //need load
+                static assert(!__traits(compiles, const(shared(Ptr))(scptr)));  //need load
+            }}
+
+
+            //const shared:
+            static if(is(ControlType == shared)){{
+                alias Ptr = SPtr!(const shared Foo);
+                Ptr ptr;
+                static assert(__traits(compiles, Ptr(ptr)));
+                static assert(__traits(compiles, const(Ptr)(ptr)));
+                static assert(!__traits(compiles, immutable(Ptr)(ptr)));
+                static assert(__traits(compiles, shared(Ptr)(ptr)));
+                static assert(__traits(compiles, const(shared(Ptr))(ptr)));
+
+                const(Ptr) cptr;
+                static assert(__traits(compiles, Ptr(cptr)));
+                static assert(__traits(compiles, const(Ptr)(cptr)));
+                static assert(!__traits(compiles, immutable(Ptr)(cptr)));
+                static assert(__traits(compiles, shared(Ptr)(cptr)));
+                static assert(__traits(compiles, const(shared(Ptr))(cptr)));
+
+                immutable(Ptr) iptr;
+                static assert(__traits(compiles, Ptr(iptr)));
+                static assert(__traits(compiles, const(Ptr)(iptr)));
+                static assert(__traits(compiles, immutable(Ptr)(iptr)));
+                static assert(__traits(compiles, shared(Ptr)(iptr)));
+                static assert(__traits(compiles, const(shared(Ptr))(iptr)));
+
+                shared(Ptr) sptr;
+                static assert(!__traits(compiles, Ptr(sptr)));
+                static assert(!__traits(compiles, const(Ptr)(sptr)));
+                static assert(!__traits(compiles, immutable(Ptr)(sptr)));
+                static assert(!__traits(compiles, shared(Ptr)(sptr)));          //need load
+                static assert(!__traits(compiles, const shared Ptr(sptr)));     //need load
+                shared(const(Ptr)) scptr;
+                static assert(!__traits(compiles, Ptr(scptr)));
+                static assert(!__traits(compiles, const(Ptr)(scptr)));
+                static assert(!__traits(compiles, immutable(Ptr)(scptr)));
+                static assert(!__traits(compiles, shared(Ptr)(scptr)));         //need load
+                static assert(!__traits(compiles, const(shared(Ptr))(scptr)));  //need load
+
+            }}
+
+        }}
+    }
+
+    //this(typeof(null))
+    pure nothrow @safe @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+        }
+
+        {
+            IntrusivePtr!Foo x = null;
+
+            assert(x == null);
+            assert(x == IntrusivePtr!Foo.init);
+
+        }
+
+    }
+
+
+    //opAssign(IntrusivePtr)
+    pure nothrow @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        {
+            IntrusivePtr!Foo px1 = IntrusivePtr!Foo.make(1);
+            IntrusivePtr!Foo px2 = IntrusivePtr!Foo.make(2);
+
+            assert(px2.useCount == 1);
+            px1 = px2;
+            assert(px1.get.i == 2);
+            assert(px2.useCount == 2);
+        }
+
+
+
+        {
+            IntrusivePtr!(Foo, true) px = IntrusivePtr!(Foo, true).make(1);
+            IntrusivePtr!(const Foo, true) pcx = IntrusivePtr!(Foo, true).make(2);
+
+            assert(px.useCount == 1);
+            pcx = px;
+            assert(pcx.get.i == 1);
+            assert(pcx.useCount == 2);
+
+        }
+
+
+        {
+            const IntrusivePtr!(Foo, true) cpx = IntrusivePtr!(Foo, true).make(1);
+            IntrusivePtr!(const Foo, true) pcx = IntrusivePtr!(Foo, true).make(2);
+
+            assert(pcx.useCount == 1);
+            pcx = cpx;
+            assert(pcx.get.i == 1);
+            assert(pcx.useCount == 2);
+
+        }
+
+        {
+            IntrusivePtr!(immutable Foo, true) pix = IntrusivePtr!(immutable Foo, true).make(123);
+            IntrusivePtr!(const Foo, true) pcx = IntrusivePtr!(Foo, true).make(2);
+
+            assert(pix.useCount == 1);
+            pcx = pix;
+            assert(pcx.get.i == 123);
+            assert(pcx.useCount == 2);
+
+        }
+    }
+
+    //opAssign(null)
+    nothrow @safe @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        {
+            IntrusivePtr!Foo x = IntrusivePtr!Foo.make(1);
+
+            assert(x.useCount == 1);
+            x = null;
+            assert(x.useCount == 0);
+            assert(x == null);
+        }
+
+        {
+            IntrusivePtr!(shared Foo) x = IntrusivePtr!(shared Foo).make(1);
+
+            assert(x.useCount == 1);
+            x = null;
+            assert(x.useCount == 0);
+            assert(x == null);
+        }
+
+        import autoptr.internal.mutex : supportMutex;
+        static if(supportMutex){
+            shared IntrusivePtr!(shared Foo) x = IntrusivePtr!(shared Foo).make(1);
+
+            assert(x.useCount == 1);
+            x = null;
+            assert(x.useCount == 0);
+            assert(x.load == null);
+        }
+    }
+
+    //useCount
+    pure nothrow @safe @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+
+        IntrusivePtr!Foo x = null;
+
+        assert(x.useCount == 0);
+
+        x = IntrusivePtr!Foo.make(123);
+        assert(x.useCount == 1);
+
+        auto y = x;
+        assert(x.useCount == 2);
+
+        auto w1 = x.weak;    //weak ptr
+        assert(x.useCount == 2);
+
+        IntrusivePtr!Foo.WeakType w2 = x;   //weak ptr
+        assert(x.useCount == 2);
+
+        y = null;
+        assert(x.useCount == 1);
+
+        x = null;
+        assert(x.useCount == 0);
+        assert(w1.useCount == 0);
+    }
+
+    //weakCount
+    pure nothrow @safe @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        IntrusivePtr!Foo x = null;
+        assert(x.useCount == 0);
+        assert(x.weakCount == 0);
+
+        x = IntrusivePtr!Foo.make(123);
+        assert(x.useCount == 1);
+        assert(x.weakCount == 0);
+
+        auto w = x.weak();
+        assert(x.useCount == 1);
+        assert(x.weakCount == 1);
+    }
+
+    // store:
+    nothrow @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        //null store:
+        {
+            shared x = IntrusivePtr!(shared Foo).make(123);
+            assert(x.load.get.i == 123);
+
+            x.store(null);
+            assert(x.useCount == 0);
+            assert(x.load == null);
+        }
+
+        //rvalue store:
+        {
+            shared x = IntrusivePtr!(shared Foo).make(123);
+            assert(x.load.get.i == 123);
+
+            x.store(IntrusivePtr!(shared Foo).make(42));
+            assert(x.load.get.i == 42);
+        }
+
+        //lvalue store:
+        {
+            shared x = IntrusivePtr!(shared Foo).make(123);
+            auto y = IntrusivePtr!(shared Foo).make(42);
+
+            assert(x.load.get.i == 123);
+            assert(y.load.get.i == 42);
+
+            x.store(y);
+            assert(x.load.get.i == 42);
+            assert(x.useCount == 2);
+        }
+    }
+
+    //load:
+    nothrow @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        shared IntrusivePtr!(shared Foo) x = IntrusivePtr!(shared Foo).make(123);
+
+        import autoptr.internal.mutex : supportMutex;
+        static if(supportMutex){
+            IntrusivePtr!(shared Foo) y = x.load();
+            assert(y.useCount == 2);
+
+            assert(y.get.i == 123);
+        }
+
+    }
+
+    //exchange
+    nothrow @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        //lvalue exchange
+        {
+            shared x = IntrusivePtr!(shared Foo).make(123);
+            auto y = IntrusivePtr!(shared Foo).make(42);
+
+            auto z = x.exchange(y);
+
+            assert(x.load.get.i == 42);
+            assert(y.get.i == 42);
+            assert(z.get.i == 123);
+        }
+
+        //rvalue exchange
+        {
+            shared x = IntrusivePtr!(shared Foo).make(123);
+            auto y = IntrusivePtr!(shared Foo).make(42);
+
+            auto z = x.exchange(y.move);
+
+            assert(x.load.get.i == 42);
+            assert(y == null);
+            assert(z.get.i == 123);
+        }
+
+        //null exchange (same as move)
+        {
+            shared x = IntrusivePtr!(shared Foo).make(123);
+
+            auto z = x.exchange(null);
+
+            assert(x.load == null);
+            assert(z.get.i == 123);
+        }
+
+        //swap:
+        {
+            shared x = IntrusivePtr!(shared Foo).make(123);
+            auto y = IntrusivePtr!(shared Foo).make(42);
+
+            //opAssign is same as store
+            y = x.exchange(y.move);
+
+            assert(x.load.get.i == 42);
+            assert(y.get.i == 123);
+        }
+
+    }
+
+
+    //compareExchange
+    pure nothrow @nogc unittest{
+        static class Foo{
+            long i;
+            ControlBlock!(int, int) c;
+
+            this(long i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+
+            bool opEquals(this This)(long i)const @trusted{
+                import std.traits : Unqual;
+                auto self = cast(Unqual!This)this;
+                return (self.i == i);
+            }
+
+
+        }
+        alias Type = const Foo;
+        static foreach(enum bool weak; [true, false]){
+            //fail
+            {
+                IntrusivePtr!(Type, true) a = IntrusivePtr!(Type, true).make(123);
+                IntrusivePtr!(Type, true) b = IntrusivePtr!(Type, true).make(42);
+                IntrusivePtr!(Type, true) c = IntrusivePtr!(Type, true).make(666);
+
+                static if(weak)a.compareExchangeWeak(b, c);
+                else a.compareExchangeStrong(b, c);
+
+                assert(*a == 123);
+                assert(*b == 123);
+                assert(*c == 666);
+
+            }
+
+            //success
+            {
+                IntrusivePtr!(Type, true) a = IntrusivePtr!(Type, true).make(123);
+                IntrusivePtr!(Type, true) b = a;
+                IntrusivePtr!(Type, true) c = IntrusivePtr!(Type, true).make(666);
+
+                static if(weak)a.compareExchangeWeak(b, c);
+                else a.compareExchangeStrong(b, c);
+
+                assert(*a == 666);
+                assert(*b == 123);
+                assert(*c == 666);
+            }
+
+            //shared fail
+            {
+                shared IntrusivePtr!(shared Type, true) a = IntrusivePtr!(shared Type, true).make(123);
+                IntrusivePtr!(shared Type, true) b = IntrusivePtr!(shared Type, true).make(42);
+                IntrusivePtr!(shared Type, true) c = IntrusivePtr!(shared Type, true).make(666);
+
+                static if(weak)a.compareExchangeWeak(b, c);
+                else a.compareExchangeStrong(b, c);
+
+                auto tmp = a.exchange(null);
+                assert(*tmp == 123);
+                assert(*b == 123);
+                assert(*c == 666);
+            }
+
+            //shared success
+            {
+                IntrusivePtr!(shared Type, true) b = IntrusivePtr!(shared Type, true).make(123);
+                shared IntrusivePtr!(shared Type, true) a = b;
+                IntrusivePtr!(shared Type, true) c = IntrusivePtr!(shared Type, true).make(666);
+
+                static if(weak)a.compareExchangeWeak(b, c);
+                else a.compareExchangeStrong(b, c);
+
+                auto tmp = a.exchange(null);
+                assert(*tmp == 666);
+                assert(*b == 123);
+                assert(*c == 666);
+            }
+        }
+
+    }
+
+    //lock
+    nothrow @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        {
+            IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+
+            auto w = x.weak;    //weak ptr
+
+            IntrusivePtr!Foo y = w.lock;
+
+            assert(x == y);
+            assert(x.useCount == 2);
+            assert(y.get.i == 123);
+        }
+
+        {
+            IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+
+            auto w = x.weak;    //weak ptr
+
+            assert(w.expired == false);
+
+            x = IntrusivePtr!Foo.make(321);
+
+            assert(w.expired == true);
+
+            IntrusivePtr!Foo y = w.lock;
+
+            assert(y == null);
+        }
+        /+{
+            shared IntrusivePtr!long x = IntrusivePtr!(shared long).make(123);
+
+            shared IntrusivePtr!long.WeakType w = x.weak;    //weak ptr
+
+            assert(w.expired == false);
+
+            x = IntrusivePtr!(shared long).make(321);
+
+            assert(w.expired == true);
+
+            IntrusivePtr!(shared long) y = w.lock;
+
+            assert(y == null);
+        }+/
+    }
+
+    //expired
+    nothrow @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        {
+            IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+
+            auto wx = x.weak;   //weak pointer
+
+            assert(wx.expired == false);
+
+            x = null;
+
+            assert(wx.expired == true);
+        }
+    }
+
+    //make
+    pure nothrow @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        {
+            IntrusivePtr!Foo a = IntrusivePtr!Foo.make();
+            assert(a.get.i == 0);
+
+            IntrusivePtr!(const Foo) b = IntrusivePtr!Foo.make(2);
+            assert(b.get.i == 2);
+        }
+
+        {
+            static struct Struct{
+                ControlBlock!int c;
+                int i = 7;
+
+                this(int i)pure nothrow @safe @nogc{
+                    this.i = i;
+                }
+            }
+
+            IntrusivePtr!Struct s1 = IntrusivePtr!Struct.make();
+            assert(s1.get.i == 7);
+
+            IntrusivePtr!Struct s2 = IntrusivePtr!Struct.make(123);
+            assert(s2.get.i == 123);
+        }
+    }
+
+    //alloc
+    pure nothrow @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        {
+            TestAllocator allocator;
+
+            {
+                IntrusivePtr!Foo a = IntrusivePtr!Foo.alloc(&allocator);
+                assert(a.get.i == 0);
+
+                IntrusivePtr!(const Foo) b = IntrusivePtr!Foo.alloc(&allocator, 2);
+                assert(b.get.i == 2);
+            }
+
+            {
+                static struct Struct{
+                    ControlBlock!(int) c;
+                    int i = 7;
+
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
+                }
+
+                IntrusivePtr!Struct s1 = IntrusivePtr!Struct.alloc(allocator);
+                assert(s1.get.i == 7);
+
+                IntrusivePtr!Struct s2 = IntrusivePtr!Struct.alloc(allocator, 123);
+                assert(s2.get.i == 123);
+            }
+
+        }
+    }
+
+    //alloc
+    unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        {
+            import std.experimental.allocator : allocatorObject;
+
+            auto a = allocatorObject(Mallocator.instance);
+            {
+                IntrusivePtr!Foo x = IntrusivePtr!Foo.alloc(a);
+                assert(x.get.i == 0);
+
+                IntrusivePtr!(const Foo) y = IntrusivePtr!Foo.alloc(a, 2);
+                assert(y.get.i == 2);
+            }
+
+            {
+                static struct Struct{
+                    ControlBlock!(int) c;
+                    int i = 7;
+
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
+                }
+
+                IntrusivePtr!Struct s1 = IntrusivePtr!Struct.alloc(a);
+                assert(s1.get.i == 7);
+
+                IntrusivePtr!Struct s2 = IntrusivePtr!Struct.alloc(a, 123);
+                assert(s2.get.i == 123);
+            }
+
+        }
+    }
+
+    //ctor
+    pure nothrow @nogc @safe unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        {
+            IntrusivePtr!(Foo, true) x = IntrusivePtr!(Foo, true).make(123);
+            assert(x.useCount == 1);
+
+            IntrusivePtr!(Foo, true) a = x;         //lvalue copy ctor
+            assert(a == x);
+
+            const IntrusivePtr!(Foo, true) b = x;   //lvalue copy ctor
+            assert(b == x);
+
+            IntrusivePtr!(const Foo, true) c = x; //lvalue ctor
+            assert(c == x);
+
+            const IntrusivePtr!(Foo, true) d = b;   //lvalue ctor
+            assert(d == x);
+
+            assert(x.useCount == 5);
+        }
+
+        {
+            import core.lifetime : move;
+            IntrusivePtr!(Foo, true) x = IntrusivePtr!(Foo, true).make(123);
+            assert(x.useCount == 1);
+
+            IntrusivePtr!(Foo, true) a = move(x);        //rvalue copy ctor
+            assert(a.useCount == 1);
+
+            const IntrusivePtr!(Foo, true) b = move(a);  //rvalue copy ctor
+            assert(b.useCount == 1);
+
+            IntrusivePtr!(const Foo, true) c = b.load;  //rvalue ctor
+            assert(c.useCount == 2);
+
+            const IntrusivePtr!(Foo, true) d = move(c);  //rvalue ctor
+            assert(d.useCount == 2);
+        }
+
+    }
+
+    //weak
+    pure nothrow @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+        assert(x.useCount == 1);
+        auto wx = x.weak;   //weak pointer
+        assert(wx.expired == false);
+        assert(wx.lock.get.i == 123);
+        assert(wx.useCount == 1);
+        x = null;
+        assert(wx.expired == true);
+        assert(wx.useCount == 0);
+
+    }
+
+    //operator *
+    pure nothrow @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+            alias i this;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+        assert(*x == 123);
+        ((*x).i = 321);
+        assert(*x == 321);
+        const y = x;
+        assert(*y == 321);
+        assert(*x == 321);
+        static assert(is(typeof(*y) == const Foo));
+    }
+
+    //get
+    pure nothrow @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+        assert(x.get.i == 123);
+        x.get.i = 321;
+        assert(x.get.i == 321);
+        const y = x;
+        assert(y.get.i == 321);
+        assert(x.get.i == 321);
+        static assert(is(typeof(y.get) == const Foo));
+    }
+
+    //element
+    pure nothrow @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+        assert(x.element.i == 123);
+        x.get.i = 321;
+        assert(x.element.i == 321);
+        const y = x;
+        assert(y.element.i == 321);
+        assert(x.element.i == 321);
+        static assert(is(typeof(y.element) == const(Foo)*));
+    }
+
+    //opCast bool
+    @safe pure nothrow @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+        assert(cast(bool)x);    //explicit cast
+        assert(x);              //implicit cast
+        x = null;
+        assert(!cast(bool)x);   //explicit cast
+        assert(!x);             //implicit cast
+    }
+
+    //opCast IntrusivePtr
+    @safe pure nothrow @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+            alias i this;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        import std.conv;
+
+        IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+        assert(x.useCount == 1
+        );
+        auto y = cast(IntrusivePtr!(const Foo))x;
+        //debug assert(x.useCount == 2, x.useCount.to!string);
+        assert(x.useCount == 2);
+
+
+        auto z = cast(const IntrusivePtr!Foo)x;
+        assert(x.useCount == 3);
+
+        auto u = cast(const IntrusivePtr!(const Foo))x;
+        assert(x.useCount == 4);
+    }
+
+    //opEquals IntrusivePtr
+    pure @safe nothrow @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        {
+            IntrusivePtr!Foo x = IntrusivePtr!Foo.make(0);
+            assert(x != null);
+            x = null;
+            assert(x == null);
+        }
+
+        {
+            IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+            IntrusivePtr!Foo y = IntrusivePtr!Foo.make(123);
+            assert(x == x);
+            assert(y == y);
+            assert(x != y);
+        }
+
+        {
+            IntrusivePtr!Foo x;
+            IntrusivePtr!(const Foo) y;
+            assert(x == x);
+            assert(y == y);
+            assert(x == y);
+        }
+    }
+
+    //opEquals IntrusivePtr
+    pure nothrow @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        {
+            IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+            IntrusivePtr!Foo y = IntrusivePtr!Foo.make(123);
+            assert(x == x.element);
+            assert(y.element == y);
+            assert(x != y.element);
+        }
+    }
+
+    //opCmp
+    pure nothrow @safe @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        {
+            const a = IntrusivePtr!Foo.make(42);
+            const b = IntrusivePtr!Foo.make(123);
+            const n = IntrusivePtr!Foo.init;
+
+            assert(a <= a);
+            assert(a >= a);
+
+            assert((a < b) == !(a >= b));
+            assert((a > b) == !(a <= b));
+
+            assert(a > n);
+            assert(a > null);
+
+            assert(n < a);
+            assert(null < a);
+        }
+    }
+
+    //opCmp
+    pure nothrow @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        {
+            const a = IntrusivePtr!Foo.make(42);
+            const b = IntrusivePtr!Foo.make(123);
+
+            assert(a <= a.element);
+            assert(a.element >= a);
+
+            assert((a < b.element) == !(a.element >= b));
+            assert((a > b.element) == !(a.element <= b));
+        }
+    }
+
+    //toHash
+    pure nothrow @safe @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        {
+            IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+            IntrusivePtr!Foo y = IntrusivePtr!Foo.make(123);
+            assert(x.toHash == x.toHash);
+            assert(y.toHash == y.toHash);
+            assert(x.toHash != y.toHash);
+            IntrusivePtr!(const Foo) z = x;
+            assert(x.toHash == z.toHash);
+        }
+        {
+            IntrusivePtr!Foo x;
+            IntrusivePtr!(const Foo) y;
+            assert(x.toHash == x.toHash);
+            assert(y.toHash == y.toHash);
+            assert(x.toHash == y.toHash);
+        }
+    }
+
+    //proxySwap
+    pure nothrow @nogc unittest{
+        static struct Foo{
+            ControlBlock!(int, int) c;
+            int i;
+
+            this(int i)pure nothrow @safe @nogc{
+                this.i = i;
+            }
+        }
+
+        {
+            IntrusivePtr!Foo a = IntrusivePtr!Foo.make(1);
+            IntrusivePtr!Foo b = IntrusivePtr!Foo.make(2);
+            a.proxySwap(b);
+            assert(a != null);
+            assert(b != null);
+            assert(a.get.i == 2);
+            assert(b.get.i == 1);
+            import std.algorithm : swap;
+            swap(a, b);
+            assert(a.get.i == 1);
+            assert(b.get.i == 2);
+            assert(a.useCount == 1);
+            assert(b.useCount == 1);
+        }
+    }
+}
+

@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="UTF-8"/>
-		<title>Class Intrusive</title>
+		<title>Template validateIntrusivePtr</title>
 		<link rel="stylesheet" type="text/css" href="../../styles/ddox.css"/>
 		<link rel="stylesheet" href="../../prettify/prettify.css" type="text/css"/>
 		<script type="text/javascript" src="../../scripts/jquery.js">/**/</script><script type="text/javascript" src="../../scripts/ddox.js">/**/</script>
@@ -25,8 +25,13 @@ $('#symbolSearchPane').show();</script>
 					</div>
 			<ul class="tree-view">
 				<li>
-					<div class="module selected">
+					<div class="module ">
 						<a href="../../autoptr/common.html">common</a>
+					</div>
+				</li>
+				<li>
+					<div class="module selected">
+						<a href="../../autoptr/intrusive_ptr.html">intrusive_ptr</a>
 					</div>
 				</li>
 				<li>
@@ -49,20 +54,23 @@ $('#symbolSearchPane').show();</script>
 			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>Class Intrusive</h1><p>Check if type <code class="lang-d"><span class="pln">T</span></code> is of type <code class="lang-d"><span class="typ">Intrusive</span><span class="pun">!(...)</span></code>.
+			<h1>Template validateIntrusivePtr</h1><p>Validate qualfied <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"><span class="typ">IntrusivePtr</span></a></code>.
 </p>
 			<div class="prototype">
 				<code class="lang-d">
 					<div class="single-prototype">
-			<span class="kwd">class</span> <span class="typ">Intrusive</span>(_ControlType, Base...)
-			<br/>
-			&nbsp;&nbsp;
-			<br/>
-			<span class="kwd">if</span> <span class="pun">(</span><span class="pln">isControlBlock</span><span class="pun">!</span><span class="pln">_ControlType</span><span class="pun">);</span>
+			<span class="kwd">template</span> <span class="pln">validateIntrusivePtr</span>(Ts...)
+			;
 					</div>
 				</code>
 			</div>
-			<section><p>TODO
+			<section><p>Some <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"><span class="typ">IntrusivePtr</span></a></code> are invalid:
+</p>
+
+<p> <code class="lang-d"><span class="kwd">shared</span><span class="pun">(<a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">)</span></code> when <code class="lang-d"><span class="typ">ControlType</span></code> is not shared
+</p>
+
+<p> <code class="lang-d"><span class="kwd">immutable</span><span class="pun">(<a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">)</span></code> when <code class="lang-d"><span class="typ">ElementType</span></code> has intrusive control block.
 </p>
 </section>
 

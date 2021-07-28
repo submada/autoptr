@@ -30,6 +30,11 @@ $('#symbolSearchPane').show();</script>
 					</div>
 				</li>
 				<li>
+					<div class="module ">
+						<a href="../autoptr/intrusive_ptr.html">intrusive_ptr</a>
+					</div>
+				</li>
+				<li>
 					<div class="module selected">
 						<a href="../autoptr/rc_ptr.html">rc_ptr</a>
 					</div>
@@ -99,6 +104,24 @@ $('#symbolSearchPane').show();</script>
 				</table>
 			</section>
 			<section>
+				<h2>Templates</h2>
+				<table>
+					<col class="caption"/>
+					<tr>
+						<th>Name</th><th>Description</th>
+					</tr>
+					<tr>
+						<td>
+							<code>
+								<a id="validateRcPtr" class="public" href="../autoptr/rc_ptr/validateRcPtr.html">validateRcPtr</a>
+							</code>
+						</td>
+						<td>Validate qualfied <code class="lang-d"><a href="../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a></code>.
+</td>
+					</tr>
+				</table>
+			</section>
+			<section>
 				<h2>Manifest constants</h2>
 				<table>
 					<col class="caption"/>
@@ -113,7 +136,18 @@ $('#symbolSearchPane').show();</script>
 						</td>
 						<td>
 						</td>
-						<td>Check if type <code class="lang-d"><span class="pln">T</span></code> is of type <code class="lang-d"><a href="../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a><span class="pun">!(...)</span></code>.
+						<td>Check if type <code class="lang-d"><span class="pln">T</span></code> is <code class="lang-d"><a href="../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a></code>.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a id="isValidRcPtr" class="public" href="../autoptr/rc_ptr/isValidRcPtr.html">
+								<code>isValidRcPtr</code>
+							</a>
+						</td>
+						<td>
+						</td>
+						<td>Check if type <code class="lang-d"><span class="pln">T</span></code> is <code class="lang-d"><a href="../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a></code> and has valid type qualifiers.
 </td>
 					</tr>
 				</table>
