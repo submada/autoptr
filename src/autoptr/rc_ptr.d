@@ -7,51 +7,24 @@
 module autoptr.rc_ptr;
 
 import autoptr.internal.mallocator : Mallocator;
-//import autoptr.internal.destruct : destruct;
 
 import autoptr.common;
 import autoptr.unique_ptr : isUniquePtr, UniquePtr;
 
-/*
-
-    static foreach(alias T; Ts){
-        static assert(isRcPtr!T);
-
-        static assert(!is(T == shared) || is(T.ControlType == shared),
-            "shared `RcPtr` is valid only if its `ControlType` is shared. (" ~ T.stringof ~ ")."
-        );
-
-        static if(T.intrusive){
-            static assert(!is(IntrusivControlBlock!T == immutable),
-                "intrusive control block cannot be immtuable."
-            );
-
-        }
-    }
-*/
 
 
 /**
     Check if type `T` is `RcPtr` and has valid type qualifiers.
 */
 public template isValidRcPtr(T){
-    import std.traits : Unqual, CopyTypeQualifiers;
+    import std.traits : Unqual;
 
-    static if(is(Unqual!T == RcPtr!Args, Args...)){
-        static if(T.intrusive)
-            enum bool valid = !is(
-                IntrusivControlBlock!(CopyTypeQualifiers!(T, T.ElementType)) == immutable
-            );
-        else
-            enum bool valid = true;
-
+    static if(is(Unqual!T == RcPtr!Args, Args...))
         enum bool isValidRcPtr = true
-            && (!is(T == shared) || is(T.ControlType == shared))
-            && valid;
-    }
-    else{
+            && (!is(T == shared) || is(T.ControlType == shared));
+    else
         enum bool isValidRcPtr = false;
-    }
+    
 }
 
 ///
@@ -64,27 +37,6 @@ unittest{
 
     static assert(!isValidRcPtr!(shared(RcPtr!long)));
     static assert(isValidRcPtr!(shared(RcPtr!(shared long))));
-
-    static class Foo{
-        ControlBlock!(int, int) control;
-    }
-
-    static assert(isIntrusive!Foo);
-    static assert(RcPtr!Foo.intrusive);
-
-    static assert(isValidRcPtr!(RcPtr!Foo));
-
-    static assert(isValidRcPtr!(RcPtr!Foo));
-    static assert(isValidRcPtr!(RcPtr!(const Foo)));
-    static assert(isValidRcPtr!(RcPtr!(shared Foo)));
-    static assert(isValidRcPtr!(RcPtr!(const shared Foo)));
-
-
-    static assert(!isValidRcPtr!(immutable RcPtr!Foo));
-    static assert(!isValidRcPtr!(immutable RcPtr!(const Foo)));
-    static assert(!isValidRcPtr!(immutable RcPtr!(shared Foo)));
-    static assert(!isValidRcPtr!(immutable RcPtr!(const shared Foo)));
-
 }
 
 
@@ -195,26 +147,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
     enum bool referenceElementType = isReferenceType!_Type || isDynamicArray!_Type;
 
-    enum size_t intrusiveElements = isIntrusive!_Type;
-
-    static if(intrusiveElements){
-        static assert(intrusiveElements <= 1,
-            "`_Type` contains multiple intrusiv counters."
-        );
-
-        static assert(!is(_Type == immutable),
-            "intrusive control block cannot be immutable."
-        );
-
-        static assert(!is(IntrusivControlBlock!_Type == immutable),
-            "intrusive control block cannot be immutable."
-        );
-
-        static assert(is(Unconst!(IntrusivControlBlock!_Type) == _ControlType),
-            "control type of intrusive element is incompatible with control type of RcPtr " ~
-            Unconst!(IntrusivControlBlock!_Type).stringof ~ " != " ~ _ControlType.stringof
-        );
-    }
+    static assert(!isIntrusive!_Type);
 
     alias MakeEmplace(AllocatorType, bool supportGC) = .MakeEmplace!(
         _Type,
@@ -258,12 +191,6 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             `true` if `RcPtr` is weak ptr.
         */
         public enum bool weakPtr = _weakPtr;
-
-
-        /**
-            `true` if `RcPtr` has intrusive `ElementType`.
-        */
-        public enum bool intrusive = (intrusiveElements == 1);
 
 
         /**
@@ -540,16 +467,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             //immutable(Ptr) iptr;
             @disable this(ref scope immutable typeof(this) rhs)@safe;
-            static if(intrusive){
-                @disable this(ref scope immutable typeof(this) rhs)const @safe;
-                @disable this(ref scope immutable typeof(this) rhs)immutable @safe;
-            }
-            else{
-                this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
-                this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}
-            }
+            this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+            this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}
             @disable this(ref scope immutable typeof(this) rhs)shared @safe;
-            static if(is(ControlType == shared) && !intrusive)
+            static if(is(ControlType == shared))
                 this(ref scope immutable typeof(this) rhs)const shared @trusted{this(rhs, Evoid.init);}
             else
                 @disable this(ref scope immutable typeof(this) rhs)const shared @safe;
@@ -572,17 +493,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             @disable this(ref scope const typeof(this) rhs)const shared @safe;
 
             //immutable rhs:
-            static if(intrusive){
-                @disable this(ref scope immutable typeof(this) rhs)@safe;
-                @disable this(ref scope immutable typeof(this) rhs)const @safe;
-                @disable this(ref scope immutable typeof(this) rhs)immutable @safe;
-            }
-            else{
-                this(ref scope immutable typeof(this) rhs)@trusted{this(rhs, Evoid.init);}
-                this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
-                this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}
-            }
-            static if(is(ControlType == shared) && !intrusive){
+            this(ref scope immutable typeof(this) rhs)@trusted{this(rhs, Evoid.init);}
+            this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+            this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}
+            static if(is(ControlType == shared)){
                 this(ref scope immutable typeof(this) rhs)shared @trusted{this(rhs, Evoid.init);}
                 this(ref scope immutable typeof(this) rhs)const shared @trusted{this(rhs, Evoid.init);}
             }
@@ -594,17 +508,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         //immutable:
         else static if(is(immutable Unqual!ElementType == ElementType)){
             //mutable rhs:
-            static if(intrusive){
-                @disable this(ref scope typeof(this) rhs)@safe;
-                @disable this(ref scope typeof(this) rhs)const @safe;
-                @disable this(ref scope typeof(this) rhs)immutable @safe;
-            }
-            else{
-                this(ref scope typeof(this) rhs)@trusted{this(rhs, Evoid.init);}
-                this(ref scope typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
-                this(ref scope typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}
-            }
-            static if(is(ControlType == shared) && !intrusive){
+            this(ref scope typeof(this) rhs)@trusted{this(rhs, Evoid.init);}
+            this(ref scope typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+            this(ref scope typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}
+            static if(is(ControlType == shared)){
                 this(ref scope typeof(this) rhs)shared @trusted{this(rhs, Evoid.init);}
                 this(ref scope typeof(this) rhs)const shared @trusted{this(rhs, Evoid.init);}
             }
@@ -614,17 +521,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             }
 
             //const rhs:
-            static if(intrusive){
-                @disable this(ref scope const typeof(this) rhs)@safe;
-                @disable this(ref scope const typeof(this) rhs)const @safe;
-                @disable this(ref scope const typeof(this) rhs)immutable @safe;
-            }
-            else{
-                this(ref scope const typeof(this) rhs)@trusted{this(rhs, Evoid.init);}
-                this(ref scope const typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
-                this(ref scope const typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}	//??
-            }
-            static if(is(ControlType == shared) && !intrusive){
+            this(ref scope const typeof(this) rhs)@trusted{this(rhs, Evoid.init);}
+            this(ref scope const typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+            this(ref scope const typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}	//??
+            static if(is(ControlType == shared)){
                 this(ref scope const typeof(this) rhs)shared @trusted{this(rhs, Evoid.init);}
                 this(ref scope const typeof(this) rhs)const shared @trusted{this(rhs, Evoid.init);}
             }
@@ -634,17 +534,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             }
 
             //immutable rhs:
-            static if(intrusive){
-                @disable this(ref scope immutable typeof(this) rhs)@safe;
-                @disable this(ref scope immutable typeof(this) rhs)const @safe;
-                @disable this(ref scope immutable typeof(this) rhs)immutable @safe;
-            }
-            else{
-                this(ref scope immutable typeof(this) rhs)@trusted{this(rhs, Evoid.init);}	//??
-                this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
-                this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}
-            }
-            static if(is(ControlType == shared) && !intrusive){
+            this(ref scope immutable typeof(this) rhs)@trusted{this(rhs, Evoid.init);}	//??
+            this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+            this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}
+            static if(is(ControlType == shared)){
                 this(ref scope immutable typeof(this) rhs)shared @trusted{this(rhs, Evoid.init);}
                 this(ref scope immutable typeof(this) rhs)const shared @trusted{this(rhs, Evoid.init);}
             }
@@ -682,16 +575,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             //immutable rhs:
             @disable this(ref scope immutable typeof(this) rhs)@safe;
-            static if(intrusive){
-                @disable this(ref scope immutable typeof(this) rhs)const @safe;
-                @disable this(ref scope immutable typeof(this) rhs)immutable @safe;
-            }
-            else{
-                this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
-                this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}
-            }
+            this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+            this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}
             @disable this(ref scope immutable typeof(this) rhs)shared @safe;
-            static if(is(ControlType == shared) && !intrusive)
+            static if(is(ControlType == shared))
                 this(ref scope immutable typeof(this) rhs)const shared @trusted{this(rhs, Evoid.init);}
             else
                 @disable this(ref scope immutable typeof(this) rhs)const shared @safe;
@@ -727,17 +614,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             }
 
             //immutable rhs:
-            static if(intrusive){
-                @disable this(ref scope immutable typeof(this) rhs)@safe;
-                @disable this(ref scope immutable typeof(this) rhs)const @safe;
-                @disable this(ref scope immutable typeof(this) rhs)immutable @safe;
-            }
-            else{
-                this(ref scope immutable typeof(this) rhs)@trusted{this(rhs, Evoid.init);}	//??
-                this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
-                this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}
-            }
-            static if(is(ControlType == shared) && !intrusive){
+            this(ref scope immutable typeof(this) rhs)@trusted{this(rhs, Evoid.init);}	//??
+            this(ref scope immutable typeof(this) rhs)const @trusted{this(rhs, Evoid.init);}
+            this(ref scope immutable typeof(this) rhs)immutable @trusted{this(rhs, Evoid.init);}
+            static if(is(ControlType == shared)){
                 this(ref scope immutable typeof(this) rhs)shared @trusted{this(rhs, Evoid.init);}
                 this(ref scope immutable typeof(this) rhs)const shared @trusted{this(rhs, Evoid.init);}
             }
@@ -2229,18 +2109,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         in(this._element !is null){
             mixin validateRcPtr!This;
 
-            static if(intrusive){
-                static assert(!isDynamicArray!ElementType);
-
-                static if(isReferenceType!ElementType)
-                    auto control = &intrusivControlBlock(this._element);
-                else 
-                    auto control = &intrusivControlBlock(*this._element);
-                    
-                //static assert(!is(typeof(*control) == immutable));
-                return cast(Unconst!(typeof(*control))*)control;
-            }
-            else static if(isDynamicArray!ElementType){
+            static if(isDynamicArray!ElementType){
                 return cast(ControlType*)((cast(void*)this._element.ptr) - ControlType.sizeof);
             }
             else static if(is(ElementType == interface)){
@@ -2671,13 +2540,6 @@ public mixin template validateRcPtr(Ts...){
         static assert(!is(T == shared) || is(T.ControlType == shared),
             "shared `RcPtr` is valid only if its `ControlType` is shared. (" ~ T.stringof ~ ")."
         );
-
-        static if(T.intrusive){
-            static assert(!is(IntrusivControlBlock!T == immutable),
-                "intrusive control block cannot be immtuable."
-            );
-
-        }
     }
 
 }

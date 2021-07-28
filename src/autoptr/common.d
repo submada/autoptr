@@ -385,7 +385,7 @@ public template ControlBlock(_Shared, _Weak = void){
 
 
         static if(hasSharedCounter)
-            private Shared shared_count = 0;
+            package Shared shared_count = 0;
 
         static if(hasWeakCounter)
             private Weak weak_count = 0;
@@ -550,6 +550,7 @@ if(is(Type == class)){
 
     size_t result = 0;
 
+    pragma(msg, Type.stringof ~ ": " ~ typeof(ty.tupleof).stringof);
     static foreach(alias T; typeof(ty.tupleof)){
         static if(!isReferenceType!T && is(T == struct))
             result += isIntrusive!T;
@@ -557,7 +558,7 @@ if(is(Type == class)){
 
     static if(!ignoreBase)
     static foreach(alias T; BaseClassesTuple!Type){
-        result += isIntrusive!T;
+        result += isIntrusiveClass!(T, true);
     }
 
     return result;
@@ -631,44 +632,84 @@ unittest{
 }
 
 
-package template IntrusivControlBlock(Type){
-    alias IntrusivControlBlock = typeof(()@trusted{
+public template IntrusivControlBlock(Type, bool mutableControl = false){
+    alias Ptr = typeof(()@trusted{
         Type* elm = null;
         return intrusivControlBlock(*elm);
     }());
+
+    import std.traits : CopyTypeQualifiers, PointerTarget, Unconst;
+
+    static if(mutableControl)
+        alias IntrusivControlBlock = CopyTypeQualifiers!(Ptr, Unconst!(PointerTarget!Ptr));
+    else 
+        alias IntrusivControlBlock = PointerTarget!Ptr;
 }
+
+public template sharedIntrusiveControlBlock(Type){
+    alias Ptr = typeof(()@trusted{
+        Type* elm = null;
+        return intrusivControlBlock(*elm);
+    }());
+
+    enum bool sharedIntrusiveControlBlock = is(Ptr == shared);
+}
+
 
 
 import std.traits : BaseClassesTuple, Unqual, CopyTypeQualifiers;
 import std.meta : AliasSeq;
 
-package ref auto intrusivControlBlock(Type)(auto ref Type elm)pure nothrow @trusted @nogc{
-    static assert(isIntrusive!Type == 1);
+package auto intrusivControlBlock(Type)(auto ref Type elm)pure nothrow @trusted @nogc{
+    static assert(isIntrusive!(Unqual!Type) == 1);
 
     static if(is(Type == struct)){
         static if(isControlBlock!Type){
-            return elm;
+            static if(is(Type == shared))
+                return cast(CopyTypeQualifiers!(shared(void), Type*))&elm;
+            else 
+                return &elm;
         }
         else{
-            foreach(ref x; elm.tupleof){
-                static if(is(typeof(x) == struct) && isIntrusive!(typeof(x)))
-                    return intrusivControlBlock(x);
+            foreach(ref x; (*cast(Unqual!(typeof(elm))*)&elm).tupleof){
+                static if(is(typeof(x) == struct) && isIntrusive!(typeof(x))){
+                    auto control = intrusivControlBlock(*cast(CopyTypeQualifiers!(Type, typeof(x))*)&x);
+
+                    static if(is(Type == shared) || is(typeof(x) == shared))
+                        return cast(CopyTypeQualifiers!(shared(void), typeof(control)))control;
+                    else
+                        return control; 
+                }
             }
         }
     }
     else static if(is(Type == class)){
         static if(isIntrusiveClass!(Type, true)){
-            foreach(ref x; elm.tupleof){
-                static if(is(typeof(x) == struct) && isIntrusive!(typeof(x)))
-                    return intrusivControlBlock(x);
+
+            foreach(ref x; (cast(Unqual!(typeof(elm)))elm).tupleof){
+                static if(is(typeof(x) == struct) && isIntrusive!(typeof(x))){
+                    auto control = intrusivControlBlock(*cast(CopyTypeQualifiers!(Type, typeof(x))*)&x);
+                    
+                    static if(is(Type == shared) || is(typeof(x) == shared))
+                        return cast(CopyTypeQualifiers!(shared(void), typeof(control)))control;
+                    else
+                        return control; 
+                }
             }
 
         }
         else static foreach(alias T; BaseClassesTuple!Type){
             static if(isIntrusiveClass!(T, true)){
-                foreach(ref x; (cast(CopyTypeQualifiers!(Type, T))elm).tupleof){
-                    static if(is(typeof(x) == struct) && isIntrusive!(typeof(x)))
-                        return intrusivControlBlock(x);
+
+                foreach(ref x; (cast(Unqual!T)elm).tupleof){
+                    static if(is(typeof(x) == struct) && isIntrusive!(typeof(x))){
+                        auto control = intrusivControlBlock(*cast(CopyTypeQualifiers!(Type, typeof(x))*)&x);
+                        
+                        static if(is(Type == shared) || is(typeof(x) == shared))
+                            return cast(CopyTypeQualifiers!(shared(void), typeof(control)))control;
+                        else
+                            return control; 
+                    }
                 }
 
             }
@@ -679,7 +720,8 @@ package ref auto intrusivControlBlock(Type)(auto ref Type elm)pure nothrow @trus
 }
 
 package size_t intrusivControlBlockOffset(Type)(){
-    static assert(isIntrusive!Type == 1);
+    static assert(isIntrusive!(Unqual!Type) == 1);
+    
     static if(is(Type == struct)){
         static if(isControlBlock!Type){
             return 0;
@@ -722,7 +764,7 @@ unittest{
 
     {
         Foo foo;
-        auto control = &intrusivControlBlock(foo);
+        auto control = intrusivControlBlock(foo);
     }
 
 
@@ -759,7 +801,7 @@ unittest{
 
     {
         Zee zee;
-        auto control = &intrusivControlBlock(zee);
+        auto control = intrusivControlBlock(zee);
     }
 
 }
@@ -869,7 +911,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
     static if(intrusiveElements){
         alias IntrusivControlBlockType = IntrusivControlBlock!_Type;
 
-        static assert(!is(IntrusivControlBlockType == immutable));
+        //static assert(!is(IntrusivControlBlockType == immutable));
 
         static assert(is(Unconst!IntrusivControlBlockType == _ControlType),
             "control type of intrusive element is incompatible with control type of smart ptr. " ~
@@ -880,7 +922,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
     import core.lifetime : emplace;
     import std.traits: hasIndirections, isAbstractClass, isMutable,
         Select, CopyTypeQualifiers,
-        Unqual, Unconst;
+        Unqual, Unconst, PointerTarget;
 
     enum bool hasWeakCounter = _ControlType.hasWeakCounter;
 
@@ -910,12 +952,19 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
         else
             private @property ref _ControlType control()pure nothrow @trusted @nogc{
                 static if(isReferenceType!_Type)
-                    auto control = &intrusivControlBlock(cast(_Type)this.data.ptr);
+                    auto control = intrusivControlBlock(cast(_Type)this.data.ptr);
                 else 
-                    auto control = &intrusivControlBlock(*cast(_Type*)this.data.ptr);
-                    
-                static assert(!is(typeof(*control) == immutable), "intrusive control block cannot be immutable");
-                return *cast(Unconst!(typeof(*control))*)control;
+                    auto control = intrusivControlBlock(*cast(_Type*)this.data.ptr);
+
+                alias ControlPtr = typeof(control);
+
+                static if(is(typeof(control) == shared))
+                    alias MutableControl = shared(Unconst!(PointerTarget!ControlPtr)*);
+                else
+                    alias MutableControl = Unconst!(PointerTarget!ControlPtr)*;
+
+                //static assert(!is(typeof(*control) == immutable), "intrusive control block cannot be immutable");
+                return *cast(MutableControl)control;
             }
 
         private void[instanceSize!_Type] data;
@@ -1517,11 +1566,12 @@ package template classHasIndirections(T){
 
             bool has_indirection = false;
 
-            TOP:foreach (B; AliasSeq!(T, BaseClassesTuple!T)) {
-                static foreach(alias var; B.tupleof){
-                    if(hasIndirections!(typeof(var))){
+            static foreach (alias B; AliasSeq!(T, BaseClassesTuple!T)) {
+                static foreach(alias Var; typeof(B.init.tupleof)){
+                    static if(hasIndirections!Var){
                         has_indirection = true;
-                        break TOP;
+                        //has_indirection = true;
+                        //break TOP;
                     }
                 }
             }
@@ -1769,7 +1819,10 @@ private static T rc_increment(bool atomic, T)(ref T counter){
         return atomicFetchAdd!(MemoryOrder.raw)(counter, 1) + 1;
     }
     else{
-        return counter += 1;
+        auto result = counter += 1;
+
+        result += 0;
+        return result;
     }
 }
 

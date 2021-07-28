@@ -8,7 +8,6 @@ module autoptr.unique_ptr;
 
 
 import autoptr.internal.mallocator : Mallocator;
-//import autoptr.internal.destruct : destruct;
 
 import autoptr.common;
 

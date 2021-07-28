@@ -10,7 +10,6 @@ import std.stdio : writeln;
 import std.conv : to;
 
 import autoptr.internal.mallocator : Mallocator;
-//import autoptr.internal.destruct : destruct;
 
 import autoptr.common;
 import autoptr.unique_ptr : isUniquePtr, UniquePtr;
@@ -26,9 +25,11 @@ public template isValidSharedPtr(T){
     import std.traits : Unqual;
 
 
-    enum bool isValidSharedPtr = true
-        && is(Unqual!T == SharedPtr!Args, Args...)
-        && (!is(T == shared) || is(T.ControlType == shared));
+    static if(is(Unqual!T == SharedPtr!Args, Args...))
+        enum bool isValidSharedPtr = true
+            && (!is(T == shared) || is(T.ControlType == shared));
+    else
+        enum bool isValidSharedPtr = false;
 }
 
 ///
