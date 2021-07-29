@@ -21,12 +21,14 @@ public template isValidUniquePtr(T){
     import std.traits : Unqual;
 
     static if(is(Unqual!T == UniquePtr!Args, Args...)){
-        enum bool isValidUniquePtr = true
+        enum bool impl = true
             && (!is(T == shared) || is(T.ControlType == shared))
             && !isIntrusive!(T.ElementType);
     }
     else
-        enum bool isValidUniquePtr = false;
+        enum bool impl = false;
+
+    enum bool isValidUniquePtr = impl;
 }
 
 ///

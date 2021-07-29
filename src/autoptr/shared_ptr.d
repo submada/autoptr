@@ -27,10 +27,12 @@ public template isValidSharedPtr(T){
 
 
     static if(is(Unqual!T == SharedPtr!Args, Args...))
-        enum bool isValidSharedPtr = true
+        enum bool impl = true
             && (!is(T == shared) || is(T.ControlType == shared));
     else
-        enum bool isValidSharedPtr = false;
+        enum bool impl = false;
+
+    enum bool isValidSharedPtr = impl;
 }
 
 ///
@@ -2550,7 +2552,7 @@ nothrow @nogc unittest{
 }
 
 
-/**
+/*
     Validate qualfied `SharedPtr`.
 
     Some `SharedPtr` are invalid:
@@ -2558,7 +2560,7 @@ nothrow @nogc unittest{
         * `shared(RcPtr)` when `ControlType` is not shared
 
 */
-public mixin template validateSharedPtr(Ts...){
+package mixin template validateSharedPtr(Ts...){
     static foreach(alias T; Ts){
         static assert(isSharedPtr!T);
         static assert(!is(T == shared) || is(T.ControlType == shared),

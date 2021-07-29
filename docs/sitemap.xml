@@ -73,7 +73,6 @@
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/isIntrusivePtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/isValidIntrusivePtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/share.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/intrusive_ptr/validateIntrusivePtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/dynCast.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/dynCast.html</loc></url>
@@ -130,7 +129,6 @@
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.WeakType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/share.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/rc_ptr/validateRcPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/dynCast.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/isSharedPtr.html</loc></url>
@@ -191,7 +189,6 @@
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.weakPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.WeakType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/shared_ptr/validateSharedPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/WeakPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/WeakPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/unique_ptr.html</loc></url>

@@ -86,10 +86,9 @@ private alias DestructorTypes = AliasSeq!(
     Check if type `Type` is of type destructor type (is(void function(Evoid* )pure nothrow @safe @nogc : Type))
 */
 public template isDestructorType(Type){
-    import std.traits : Unqual;
-
-    enum bool isDestructorType = true
-        && is(void function(Evoid* )pure nothrow @safe @nogc : Type);
+    enum bool isDestructorType = is(
+        void function(Evoid* )pure nothrow @safe @nogc : Type
+    );
 }
 
 ///
@@ -110,7 +109,7 @@ public template DestructorType(Types...){
     import std.meta : AliasSeq;
 
     alias Get(T) = T;
-    alias DestructorType = Get!(typeof(function void(Evoid*){
+    alias impl = Get!(typeof(function void(Evoid*){
 
         static foreach(alias Type; Types){
             static if(is(Unqual!Type == void)){
@@ -146,6 +145,7 @@ public template DestructorType(Types...){
             }
         }
     }));
+    alias DestructorType = impl;
 }
 
 
@@ -193,7 +193,7 @@ public template ShallowDestructorType(Types...){
     import std.range : ElementEncodingType;
 
     alias Get(T) = T;
-    alias ShallowDestructorType = Get!(typeof(function void(Evoid*){
+    alias impl = Get!(typeof(function void(Evoid*){
 
         static foreach(alias Type; Types){
             static if(is(Unqual!Type == void)){
@@ -218,6 +218,7 @@ public template ShallowDestructorType(Types...){
             }
         }
     }));
+    alias ShallowDestructorType = impl;
 }
 
 ///
@@ -293,10 +294,9 @@ public template isControlBlock(T...)
 if(T.length == 1){
     import std.traits : Unqual, isMutable;
 
-    enum bool isControlBlock = true
-        //&& isMutable!(T[0])
-        && is(Unqual!(T[0]) == ControlBlock!Args, Args...)
-        ;
+    enum bool isControlBlock = is(
+        Unqual!(T[0]) == ControlBlock!Args, Args...
+    );
 }
 
 ///
@@ -557,15 +557,16 @@ unittest{
 */
 public template isIntrusive(Type){
     static if(is(Type == struct)){
-        enum size_t isIntrusive = isIntrusiveStruct!(Type)();
+        enum size_t impl = isIntrusiveStruct!(Type)();
     }
     else static if(is(Type == class)){
-        enum size_t isIntrusive = isIntrusiveClass!(Type, false)();
+        enum size_t impl = isIntrusiveClass!(Type, false)();
     }
     else{
-        enum size_t isIntrusive = 0;
+        enum size_t impl = 0;
     }
 
+    enum size_t isIntrusive = impl;
 }
 
 ///

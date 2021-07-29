@@ -22,12 +22,14 @@ public template isValidIntrusivePtr(T){
     import std.traits : Unqual;
 
     static if(is(Unqual!T == IntrusivePtr!Args, Args...)){
-        enum bool isValidIntrusivePtr = true
+        enum bool impl = true
             && (!is(T == shared) || is(T.ControlType == shared));
     }
     else{
-        enum bool isValidIntrusivePtr = false;
+        enum bool impl = false;
     }
+
+    enum bool isValidIntrusivePtr = impl;
 }
 
 ///
@@ -2664,7 +2666,7 @@ nothrow @nogc unittest{
 
 }
 
-/**
+/*
     Validate qualfied `IntrusivePtr`.
 
     Some `IntrusivePtr` are invalid:
@@ -2674,7 +2676,7 @@ nothrow @nogc unittest{
         * `immutable(IntrusivePtr)` when `ElementType` has intrusive control block.
 
 */
-public mixin template validateIntrusivePtr(Ts...){
+package mixin template validateIntrusivePtr(Ts...){
     static foreach(alias T; Ts){
         static assert(isIntrusivePtr!T);
 

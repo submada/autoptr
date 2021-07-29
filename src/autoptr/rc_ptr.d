@@ -21,10 +21,12 @@ public template isValidRcPtr(T){
     import std.traits : Unqual;
 
     static if(is(Unqual!T == RcPtr!Args, Args...))
-        enum bool isValidRcPtr = true
+        enum bool impl = true
             && (!is(T == shared) || is(T.ControlType == shared));
     else
-        enum bool isValidRcPtr = false;
+        enum bool impl = false;
+
+    enum bool isValidRcPtr = impl;
     
 }
 
@@ -2492,7 +2494,7 @@ nothrow @nogc unittest{
 
 }
 
-/**
+/*
     Validate qualfied `RcPtr`.
 
     Some `RcPtr` are invalid:
@@ -2502,7 +2504,7 @@ nothrow @nogc unittest{
         * `immutable(RcPtr)` when `ElementType` has intrusive control block.
 
 */
-public mixin template validateRcPtr(Ts...){
+package mixin template validateRcPtr(Ts...){
     static foreach(alias T; Ts){
         static assert(isRcPtr!T);
 
