@@ -553,7 +553,7 @@ unittest{
 
 
 /**
-    Check if type `T` is of type `ControlBlock!(...)`.
+    Check if type `T` is of type `MutableControlBlock!(...)`.
 */
 public template isMutableControlBlock(T...)
 if(T.length == 1){
