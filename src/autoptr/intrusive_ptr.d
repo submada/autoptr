@@ -299,7 +299,8 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
             && !needLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
-            mixin validateIntrusivePtr!(This, Rhs);
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
+            static assert(isValidIntrusivePtr!Rhs, "`Rhs` is invalid `IntrusivePtr`");
 
             if(rhs._element is null){
                 this(null);
@@ -323,7 +324,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                 --------------------
         */
         public this(this This)(typeof(null) nil)pure nothrow @safe @nogc{
-            mixin validateIntrusivePtr!This;
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
         }
 
 
@@ -396,7 +397,8 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
             && !needLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
-            mixin validateIntrusivePtr!(This, Rhs);
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
+            static assert(isValidIntrusivePtr!Rhs, "`Rhs` is invalid `IntrusivePtr`");
 
             this(rhs, Evoid.init);
         }
@@ -410,7 +412,8 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
             && !needLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
-            mixin validateIntrusivePtr!(This, Rhs);
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
+            static assert(isValidIntrusivePtr!Rhs, "`Rhs` is invalid `IntrusivePtr`");
 
             this._element = rhs._element;
             rhs._const_reset();
@@ -424,34 +427,14 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
             && needLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
-            mixin validateIntrusivePtr!(This, Rhs);
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
+            static assert(isValidIntrusivePtr!Rhs, "`Rhs` is invalid `IntrusivePtr`");
 
             if(rhs._element !is null && rhs._control.add_shared_if_exists())
                 this._element = rhs._element;
             else
                 this._element = null;
         }
-
-        /// ditto
-        public this(Rhs, this This)(scope Rhs rhs)@trusted
-        if(true
-            && isUniquePtr!Rhs
-            && isMovable!(Rhs, This)
-            && !is(Rhs == shared)
-        ){
-            import autoptr.unique_ptr : validateUniquePtr;
-            mixin validateIntrusivePtr!This;
-            mixin validateUniquePtr!Rhs;
-
-            if(rhs == null){
-                this(null);
-            }
-            else{
-                this(rhs.element);
-                rhs._const_reset();
-            }
-        }
-
 
 
         //copy ctors:
@@ -919,7 +902,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         */
         public void opAssign(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null) nil)scope
         if(isMutable!This){
-            mixin validateIntrusivePtr!This;
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
 
             static if(is(This == shared)){
                 static if(isLockFree){
@@ -1008,7 +991,8 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
             && !needLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
-            mixin validateIntrusivePtr!(Rhs, This);
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
+            static assert(isValidIntrusivePtr!Rhs, "`Rhs` is invalid `IntrusivePtr`");
 
             if((()@trusted => cast(const void*)&desired is cast(const void*)&this)())
                 return;
@@ -1059,7 +1043,8 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
             && !needLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
-            mixin validateIntrusivePtr!(Rhs, This);
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
+            static assert(isValidIntrusivePtr!Rhs, "`Rhs` is invalid `IntrusivePtr`");
 
             static if(is(This == shared)){
                 static if(isLockFree){
@@ -1276,7 +1261,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                 --------------------
         */
         public @property ControlType.Shared useCount(this This)()const scope nothrow @trusted @nogc{
-            mixin validateIntrusivePtr!This;
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
 
             static if(is(This == shared)){
                 static assert(is(ControlType == shared));
@@ -1315,7 +1300,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                 --------------------
         */
         public @property ControlType.Weak weakCount(this This)()const scope nothrow @safe @nogc{
-            mixin validateIntrusivePtr!This;
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
 
             static if(is(This == shared)){
                 static assert(is(ControlType == shared));
@@ -1380,7 +1365,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         public ChangeElementType!(This, CopyTypeQualifiers!(This, ElementType))
         load(MemoryOrder order = MemoryOrder.seq, this This)()scope return{  ///TODO remove return
             ///TODO test copyable from this => return.
-            mixin validateIntrusivePtr!This;
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
 
             static if(is(This == shared)){
                 static assert(is(ControlType == shared));
@@ -1445,34 +1430,36 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         */
         public void store(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null) nil)scope
         if(isMutable!This){
-            mixin validateIntrusivePtr!(This);
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
 
             this.opAssign!order(null);
         }
 
         /// ditto
-        public void store(MemoryOrder order = MemoryOrder.seq, Ptr, this This)(ref scope Ptr desired)scope
+        public void store(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(ref scope Rhs desired)scope
         if(true
-            && isIntrusivePtr!Ptr
-            && !is(Ptr == shared)
-            && !needLock!(Ptr, This)
-            && (isCopyable!(Ptr, This) && isMutable!This)
+            && isIntrusivePtr!Rhs
+            && !is(Rhs == shared)
+            && !needLock!(Rhs, This)
+            && (isCopyable!(Rhs, This) && isMutable!This)
         ){
-            mixin validateIntrusivePtr!(Ptr, This);
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
+            static assert(isValidIntrusivePtr!Rhs, "`Rhs` is invalid `IntrusivePtr`");
 
             import core.lifetime : forward;
             this.opAssign!order(forward!desired);
         }
 
         /// ditto
-        public void store(MemoryOrder order = MemoryOrder.seq, Ptr, this This)(scope Ptr desired)scope
+        public void store(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs desired)scope
         if(true
-            && isIntrusivePtr!Ptr
-            && !is(Ptr == shared)
-            && !needLock!(Ptr, This)
-            && (isMovable!(Ptr, This) && isMutable!This)
+            && isIntrusivePtr!Rhs
+            && !is(Rhs == shared)
+            && !needLock!(Rhs, This)
+            && (isMovable!(Rhs, This) && isMutable!This)
         ){
-            mixin validateIntrusivePtr!(Ptr, This);
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
+            static assert(isValidIntrusivePtr!Rhs, "`Rhs` is invalid `IntrusivePtr`");
 
             import core.lifetime : forward;
             this.opAssign!order(forward!desired);
@@ -1534,7 +1521,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         */
         public auto exchange(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null))scope
         if(isMutable!This){
-            mixin validateIntrusivePtr!This;
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
 
             static if(is(This == shared)){
                 static if(isLockFree){
@@ -1563,14 +1550,15 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         }
 
         /// ditto
-        public auto exchange(MemoryOrder order = MemoryOrder.seq, Ptr, this This)(scope Ptr ptr)scope
+        public auto exchange(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs ptr)scope
         if(true
-            && isIntrusivePtr!Ptr 
-            && !is(Ptr == shared) 
-            && isMovable!(Ptr, This)
+            && isIntrusivePtr!Rhs 
+            && !is(Rhs == shared) 
+            && isMovable!(Rhs, This)
             && isMutable!This
         ){
-            mixin validateIntrusivePtr!(Ptr, This);
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
+            static assert(isValidIntrusivePtr!Rhs, "`Rhs` is invalid `IntrusivePtr`");
 
             static if(is(This == shared)){
 
@@ -1593,7 +1581,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                 }
                 else{
                     return this.lockIntrusivePtr!(
-                        (ref scope self, Ptr x) => self.exchange!order(x.move)
+                        (ref scope self, Rhs x) => self.exchange!order(x.move)
                     )(ptr.move);
                 }
             }
@@ -1692,7 +1680,9 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
             && (This.weakPtr == D.weakPtr)
             && (This.weakPtr == E.weakPtr)
         ){
-            mixin validateIntrusivePtr!(E, D, This);
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
+            static assert(isValidIntrusivePtr!E, "`E expected` is invalid `IntrusivePtr`");
+            static assert(isValidIntrusivePtr!D, "`D desired` is invalid `IntrusivePtr`");
 
             return this.compareExchangeImpl!(false, success, failure)(expected, desired.move);
         }
@@ -1715,7 +1705,9 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
             && (This.weakPtr == D.weakPtr)
             && (This.weakPtr == E.weakPtr)
         ){
-            mixin validateIntrusivePtr!(E, D, This);
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
+            static assert(isValidIntrusivePtr!E, "`E expected` is invalid `IntrusivePtr`");
+            static assert(isValidIntrusivePtr!D, "`D desired` is invalid `IntrusivePtr`");
 
             return this.compareExchangeImpl!(true, success, failure)(expected, desired.move);
         }
@@ -1732,7 +1724,9 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
             && (This.weakPtr == D.weakPtr)
             && (This.weakPtr == E.weakPtr)
         ){
-            mixin validateIntrusivePtr!(E, D, This);
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
+            static assert(isValidIntrusivePtr!E, "`E expected` is invalid `IntrusivePtr`");
+            static assert(isValidIntrusivePtr!D, "`D desired` is invalid `IntrusivePtr`");
 
             static if(is(This == shared) && isLockFree){
                 import core.atomic : cas, casWeak;
@@ -1785,7 +1779,9 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
             && (This.weakPtr == D.weakPtr)
             && (This.weakPtr == E.weakPtr)
         ){
-            mixin validateIntrusivePtr!(E, D, This);
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
+            static assert(isValidIntrusivePtr!E, "`E expected` is invalid `IntrusivePtr`");
+            static assert(isValidIntrusivePtr!D, "`D desired` is invalid `IntrusivePtr`");
 
             static if(is(This == shared)){
                 import core.atomic : cas;
@@ -1873,7 +1869,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         public CopyConstness!(This, SharedType) lock(this This)()scope @trusted
         if(!is(This == shared)){
             ///TODO copy this -> return
-            mixin validateIntrusivePtr!This;
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
 
             static assert(needLock!(This, typeof(return)));
 
@@ -1904,7 +1900,8 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         */
         static if(weakPtr)
         public @property bool expired(this This)()scope const{
-            mixin validateIntrusivePtr!This;
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
+
             return (this.useCount == 0);
         }
 
@@ -2023,7 +2020,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         public CopyTypeQualifiers!(This, WeakType) weak(this This)()scope @safe
         if(!is(This == shared)){
             ///TODO copy this -> return
-            mixin validateIntrusivePtr!This;
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
 
             return typeof(return)(this);
         }
@@ -2064,7 +2061,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         public To opCast(To, this This)()scope
         if(isIntrusivePtr!To && !is(This == shared)){
             ///copy this -> return
-            mixin validateIntrusivePtr!This;
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
 
             return To(this);
         }
@@ -2118,7 +2115,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         /// ditto
         public bool opEquals(Rhs)(auto ref scope const Rhs rhs)const @safe scope pure nothrow @nogc
         if(isIntrusivePtr!Rhs && !is(Rhs == shared)){
-            mixin validateIntrusivePtr!Rhs;
+            static assert(isValidIntrusivePtr!Rhs, "`Rhs` is invalid `IntrusivePtr`");
 
             return this.opEquals(rhs._element);
         }
@@ -2208,7 +2205,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         /// ditto
         public sizediff_t opCmp(Rhs)(auto ref scope const Rhs rhs)const @trusted scope pure nothrow @nogc
         if(isIntrusivePtr!Rhs && !is(Rhs == shared)){
-            mixin validateIntrusivePtr!Rhs;
+            static assert(isValidIntrusivePtr!Rhs, "`Rhs` is invalid `IntrusivePtr`");
 
             return this.opCmp(rhs._element);
         }
@@ -2264,7 +2261,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
         package auto _control(this This)()pure nothrow @trusted @nogc
         in(this._element !is null){
-            mixin validateIntrusivePtr!This;
+            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
 
             static if(is(ElementType == class))
                 auto control = intrusivControlBlock(this._element);
@@ -2479,7 +2476,7 @@ if(true
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){
-    mixin validateIntrusivePtr!Ptr;
+    static assert(isValidIntrusivePtr!Ptr, "`Ptr` is invalid `IntrusivePtr`");
 
     import std.traits : CopyTypeQualifiers;
     import core.lifetime : forward;
@@ -2510,7 +2507,7 @@ if(true
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){
-    mixin validateIntrusivePtr!Ptr;
+    static assert(isValidIntrusivePtr!Ptr, "`Ptr` is invalid `IntrusivePtr`");
 
     import std.traits : CopyTypeQualifiers;
     import core.lifetime : forward;
@@ -2583,7 +2580,7 @@ unittest{
 */
 public shared(Ptr) share(Ptr)(auto ref scope Ptr ptr)
 if(isIntrusivePtr!Ptr){
-    mixin validateIntrusivePtr!Ptr;
+    static assert(isValidIntrusivePtr!Ptr, "`Ptr` is invalid `IntrusivePtr`");
 
     import core.lifetime : forward;
     static if(is(Ptr == shared)){
@@ -2598,10 +2595,11 @@ if(isIntrusivePtr!Ptr){
             "`IntrusivePtr` has not shared/immutable `ElementType`."
         );
 
-        alias Result = shared(Ptr);
-        mixin validateIntrusivePtr!Result;
+        static assert(isValidIntrusivePtr!(typeof(return)),
+            "`shared(Ptr)` is invalid `IntrusivePtr`"
+        );
 
-        return Result(forward!ptr);
+        return typeof(return)(forward!ptr);
     }
 }
 
@@ -2642,33 +2640,6 @@ nothrow @nogc unittest{
 
 }
 
-/*
-    Validate qualfied `IntrusivePtr`.
-
-    Some `IntrusivePtr` are invalid:
-
-        * `shared(IntrusivePtr)` when `ControlType` is not shared
-
-        * `immutable(IntrusivePtr)` when `ElementType` has intrusive control block.
-
-*/
-package mixin template validateIntrusivePtr(Ts...){
-    static foreach(alias T; Ts){
-        static assert(isIntrusivePtr!T);
-
-        static assert(!is(T == shared) || is(T.ControlType == shared),
-            "shared `IntrusivePtr` is valid only if its `ControlType` is shared. (" ~ T.stringof ~ ")."
-        );
-
-        /+static if(T.intrusive){
-            static assert(!is(IntrusivControlBlock!T == immutable),
-                "intrusive control block cannot be immtuable."
-            );
-
-        }+/
-    }
-
-}
 
 
 //local traits:

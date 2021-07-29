@@ -65,7 +65,6 @@
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.this.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.this.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.this.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.this.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.toHash.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.useCount.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.weak.html</loc></url>
@@ -79,6 +78,8 @@
 <url><loc>http://127.0.0.1/autoptr/rc_ptr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/dynCast.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/dynCast.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/rc_ptr/first.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/rc_ptr/first.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/isRcPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/isValidRcPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.html</loc></url>
@@ -134,6 +135,7 @@
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/share.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/dynCast.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/shared_ptr/first.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/isSharedPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/isValidSharedPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/share.html</loc></url>
@@ -176,6 +178,7 @@
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.SharedType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.store.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.store.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.this.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.this.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.this.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.this.html</loc></url>

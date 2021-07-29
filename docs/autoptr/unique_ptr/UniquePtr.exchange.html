@@ -69,14 +69,14 @@ $('#symbolSearchPane').show();</script>
 			<span class="kwd">if</span> <span class="pun">(</span><span class="pln">isMutable</span><span class="pun">!</span><span class="typ">This</span><span class="pun">);</span>
 			<br/>
 			<br/>
-			<span class="kwd">auto</span> <span class="pln">exchange</span>(<span class="typ">MemoryOrder</span> order<span class="pln"> </span><span class="pun">= </span><span class="typ">MemoryOrder<wbr/></span><span class="pun">.</span><span class="pln">seq</span>, Ptr, This)
+			<span class="kwd">auto</span> <span class="pln">exchange</span>(<span class="typ">MemoryOrder</span> order<span class="pln"> </span><span class="pun">= </span><span class="typ">MemoryOrder<wbr/></span><span class="pun">.</span><span class="pln">seq</span>, Rhs, This)
 			<span class="pun">(</span>
 			<br/>
-			&nbsp;&nbsp;<span class="kwd">scope </span><span class="typ">Ptr</span> <span class="pln">ptr</span>
+			&nbsp;&nbsp;<span class="kwd">scope </span><span class="typ">Rhs</span> <span class="pln">ptr</span>
 			<br/>
 			<span class="pun">)</span><span class="pln"> </span><span class="kwd">scope</span>
 			<br/>
-			<span class="kwd">if</span> <span class="pun">(</span><span class="kwd">true </span><span class="pun">&amp;&amp; </span><span class="pln">isUniquePtr</span><span class="pun">!</span><span class="typ">Ptr </span><span class="pun">&amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Ptr </span><span class="pun">== </span><span class="kwd">shared</span><span class="pun">) &amp;&amp; </span><span class="pln">isAssignable</span><span class="pun">!(</span><span class="typ">Ptr</span><span class="pun">, </span><span class="typ">This</span><span class="pun">)</span><span class="pun">);</span>
+			<span class="kwd">if</span> <span class="pun">(</span><span class="kwd">true </span><span class="pun">&amp;&amp; </span><span class="pln">isUniquePtr</span><span class="pun">!</span><span class="typ">Rhs </span><span class="pun">&amp;&amp; </span><span class="pln">isAssignable</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Rhs </span><span class="pun">== </span><span class="kwd">shared</span><span class="pun">)</span><span class="pun">);</span>
 					</div>
 				</code>
 			</div>

@@ -221,7 +221,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && isAliasable!(Rhs, This)
             && !is(Rhs == shared)
         ){
-            mixin validateUniquePtr!(This, Rhs);
+            static assert(isValidUniquePtr!This, "`This` is invalid `UniquePtr`");
+            static assert(isValidUniquePtr!Rhs, "`Rhs` is invalid `UniquePtr`");
 
             this._set_element(cast(typeof(this._element))rhs._element);
             rhs._const_reset();
@@ -242,7 +243,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         public this(this This)(typeof(null) nil)pure nothrow @safe @nogc{
-            mixin validateUniquePtr!This;
+            static assert(isValidUniquePtr!This, "`This` is invalid `UniquePtr`");
         }
 
 
@@ -262,7 +263,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && isConstructable!(Rhs, This)
             && !is(Rhs == shared)
         ){
-            mixin validateUniquePtr!(This, Rhs);
+            static assert(isValidUniquePtr!This, "`This` is invalid `UniquePtr`");
+            static assert(isValidUniquePtr!Rhs, "`Rhs` is invalid `UniquePtr`");
 
             this(rhs._element);
             //this._element = rhs._element;   //this._set_element(rhs._element);
@@ -302,7 +304,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         */
         public void opAssign(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null) nil)scope
         if(isMutable!This){
-            mixin validateUniquePtr!This;
+            static assert(isValidUniquePtr!This, "`This` is invalid `UniquePtr`");
 
             static if(is(This == shared)){
                 static if(isLockFree){
@@ -370,7 +372,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && !is(Rhs == shared)
             && isMutable!This
         ){
-            mixin validateUniquePtr!(Rhs, This);
+            static assert(isValidUniquePtr!This, "`This` is invalid `UniquePtr`");
+            static assert(isValidUniquePtr!Rhs, "`Rhs` is invalid `UniquePtr`");
 
             static if(is(This == shared)){
                 static if(isLockFree){
@@ -667,20 +670,21 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         */
         public void store(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null) desired)scope
         if(isMutable!This){
-            mixin validateUniquePtr!This;
+            static assert(isValidUniquePtr!This, "`This` is invalid `UniquePtr`");
 
             this.opAssign!order(null);
 
         }
 
         /// ditto
-        public void store(MemoryOrder order = MemoryOrder.seq, Ptr, this This)(scope Ptr desired)scope
+        public void store(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs desired)scope
         if(true
-            && isUniquePtr!Ptr
-            && !is(Ptr == shared)
-            && isAssignable!(Ptr, This)
+            && isUniquePtr!Rhs
+            && !is(Rhs == shared)
+            && isAssignable!(Rhs, This)
         ){
-            mixin validateUniquePtr!(Ptr, This);
+            static assert(isValidUniquePtr!This, "`This` is invalid `UniquePtr`");
+            static assert(isValidUniquePtr!Rhs, "`Rhs` is invalid `UniquePtr`");
 
             this.opAssign!order(desired.move);
         }
@@ -723,7 +727,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         */
         public auto exchange(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null) ptr)scope
         if(isMutable!This){
-            mixin validateUniquePtr!This;
+            static assert(isValidUniquePtr!This, "`This` is invalid `UniquePtr`");
 
             static if(is(This == shared)){
                 static if(isLockFree){
@@ -753,13 +757,14 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         }
 
         /// ditto
-        public auto exchange(MemoryOrder order = MemoryOrder.seq, Ptr, this This)(scope Ptr ptr)scope
+        public auto exchange(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs ptr)scope
         if(true
-            && isUniquePtr!Ptr
-            && !is(Ptr == shared)
-            && isAssignable!(Ptr, This)
+            && isUniquePtr!Rhs
+            && isAssignable!(Rhs, This)
+            && !is(Rhs == shared)
         ){
-            mixin validateUniquePtr!(Ptr, This);
+            static assert(isValidUniquePtr!This, "`This` is invalid `UniquePtr`");
+            static assert(isValidUniquePtr!Rhs, "`Rhs` is invalid `UniquePtr`");
 
             static if(is(This == shared)){
                 static if(isLockFree){
@@ -782,7 +787,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 }
                 else{
                     return this.lockUniquePtr!(
-                        (ref scope self, Ptr x) => self.exchange!order(x.move)
+                        (ref scope self, Rhs x) => self.exchange!order(x.move)
                     )(ptr.move);
                 }
             }
@@ -1251,7 +1256,7 @@ pure nothrow @nogc unittest{
 */
 public shared(Ptr) share(Ptr)(scope Ptr ptr)
 if(isUniquePtr!Ptr){
-    mixin validateUniquePtr!Ptr;
+    static assert(isValidUniquePtr!Ptr, "`Ptr` is invalid `UniquePtr`");
 
     import core.lifetime : forward;
     static if(is(Ptr == shared)){
@@ -1266,10 +1271,11 @@ if(isUniquePtr!Ptr){
             "`UniquePtr` has not shared/immutable `ElementType`."
         );
 
-        alias Result = shared(Ptr);
-        mixin validateUniquePtr!Result;
+        static assert(isValidUniquePtr!(shared Ptr),
+            "`shared(Ptr)` is invalid `UniquePtr`"
+        );
 
-        return Result(forward!ptr);
+        return typeof(return)(forward!ptr);
     }
 }
 
@@ -1327,7 +1333,7 @@ if(isReferenceType!Elm || isPointer!Elm || isDynamicArray!Elm){
 
 
 /**
-    TODO
+    Return `UniquePtr` pointing to first element of dynamic array managed by unique pointer `ptr`.
 */
 public auto first(Ptr)(scope Ptr ptr)@trusted
 if(isUniquePtr!Ptr && is(Ptr.ElementType : T[], T)){
@@ -1529,15 +1535,6 @@ unittest{
 
 //local traits:
 private{
-    package mixin template validateUniquePtr(Ts...){
-        static foreach(alias T; Ts){
-            static assert(isUniquePtr!T);
-            static assert(!is(T == shared) || is(T.ControlType == shared),
-                "shared `UniquePtr` is valid only if its `ControlType` is shared."
-            );
-        }
-    }
-
     template isOverlapable(From, To)
     if(!isUniquePtr!From && !isUniquePtr!To){
         import std.traits : Unqual;

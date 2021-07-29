@@ -10,7 +10,7 @@ import autoptr.internal.mallocator : Mallocator;
 import autoptr.internal.traits;
 
 import autoptr.common;
-import autoptr.unique_ptr : isUniquePtr, UniquePtr;
+import autoptr.unique_ptr : UniquePtr, isUniquePtr, isValidUniquePtr;
 
 
 
@@ -302,7 +302,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && !needLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
-            mixin validateRcPtr!(This, Rhs);
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
+            static assert(isValidRcPtr!Rhs, "`Rhs` is invalid `RcPtr`");
 
             if(rhs._element is null)
                 this(null);
@@ -323,7 +324,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         public this(this This)(typeof(null) nil)pure nothrow @safe @nogc{
-            mixin validateRcPtr!This;
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
         }
 
 
@@ -396,7 +397,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && !needLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
-            mixin validateRcPtr!(This, Rhs);
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
+            static assert(isValidRcPtr!Rhs, "`Rhs` is invalid `RcPtr`");
 
             this(rhs, Evoid.init);
         }
@@ -410,7 +412,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && !needLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
-            mixin validateRcPtr!(This, Rhs);
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
+            static assert(isValidRcPtr!Rhs, "`Rhs` is invalid `RcPtr`");
 
             this._element = rhs._element;
             rhs._const_reset();
@@ -424,7 +427,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && needLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
-            mixin validateRcPtr!(This, Rhs);
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
+            static assert(isValidRcPtr!Rhs, "`Rhs` is invalid `RcPtr`");
 
             if(rhs._element !is null && rhs._control.add_shared_if_exists())
                 this._element = rhs._element;
@@ -439,9 +443,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && isConstructable!(Rhs, This)
             && !is(Rhs == shared)
         ){
-            import autoptr.unique_ptr : validateUniquePtr;
-            mixin validateRcPtr!This;
-            mixin validateUniquePtr!Rhs;
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
+            static assert(isValidUniquePtr!Rhs, "`Rhs` is invalid `Unique`");
 
             if(rhs == null){
                 this(null);
@@ -688,7 +691,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         */
         public void opAssign(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null) nil)scope
         if(isMutable!This){
-            mixin validateRcPtr!This;
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
 
             static if(is(This == shared)){
                 static if(isLockFree){
@@ -776,7 +779,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && !needLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
-            mixin validateRcPtr!(Rhs, This);
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
+            static assert(isValidRcPtr!Rhs, "`Rhs` is invalid `RcPtr`");
 
             if((()@trusted => cast(const void*)&desired is cast(const void*)&this)())
                 return;
@@ -826,7 +830,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && !needLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
-            mixin validateRcPtr!(Rhs, This);
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
+            static assert(isValidRcPtr!Rhs, "`Rhs` is invalid `RcPtr`");
 
             static if(is(This == shared)){
                 static if(isLockFree){
@@ -1145,7 +1150,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         public @property ControlType.Shared useCount(this This)()const scope nothrow @trusted @nogc{
-            mixin validateRcPtr!This;
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
 
             static if(is(This == shared)){
                 static assert(is(ControlType == shared));
@@ -1184,7 +1189,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         public @property ControlType.Weak weakCount(this This)()const scope nothrow @safe @nogc{
-            mixin validateRcPtr!This;
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
 
             static if(is(This == shared)){
                 static assert(is(ControlType == shared));
@@ -1247,7 +1252,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         public auto load(MemoryOrder order = MemoryOrder.seq, this This)()scope return{
-            mixin validateRcPtr!This;
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
 
             static if(is(This == shared)){
                 static assert(is(ControlType == shared));
@@ -1312,20 +1317,21 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         */
         public void store(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null) nil)scope
         if(isMutable!This){
-            mixin validateRcPtr!(This);
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
 
             this.opAssign!order(null);
         }
 
         /// ditto
-        public void store(MemoryOrder order = MemoryOrder.seq, Ptr, this This)(auto ref scope Ptr desired)scope
+        public void store(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(auto ref scope Rhs desired)scope
         if(true
-            && isRcPtr!Ptr
-            && !is(Ptr == shared)
-            && !needLock!(Ptr, This)
-            && isAssignable!(Ptr, This)
+            && isRcPtr!Rhs
+            && !is(Rhs == shared)
+            && !needLock!(Rhs, This)
+            && isAssignable!(Rhs, This)
         ){
-            mixin validateRcPtr!(Ptr, This);
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
+            static assert(isValidRcPtr!Rhs, "`Rhs` is invalid `RcPtr`");
 
             import core.lifetime : forward;
             this.opAssign!order(forward!desired);
@@ -1387,7 +1393,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         */
         public auto exchange(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null))scope
         if(isMutable!This){
-            mixin validateRcPtr!This;
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
 
             static if(is(This == shared)){
                 static if(isLockFree){
@@ -1416,9 +1422,14 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         }
 
         /// ditto
-        public auto exchange(MemoryOrder order = MemoryOrder.seq, Ptr, this This)(scope Ptr ptr)scope
-        if(isRcPtr!Ptr && !is(Ptr == shared) && isAssignable!(Ptr, This)){
-            mixin validateRcPtr!(Ptr, This);
+        public auto exchange(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs rhs)scope
+        if(true
+            && isRcPtr!Rhs
+            && isAssignable!(Rhs, This)
+            && !is(Rhs == shared)
+        ){
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
+            static assert(isValidRcPtr!Rhs, "`Rhs` is invalid `RcPtr`");
 
             static if(is(This == shared)){
 
@@ -1428,28 +1439,28 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     return()@trusted{
                         alias Result = ChangeElementType!(This, ElementType);
                         Result result;
-                        GetElementReferenceType!This source = ptr._element;    //interface/class cast
+                        GetElementReferenceType!This source = rhs._element;    //interface/class cast
 
                         result._set_element(cast(typeof(this._element))atomicExchange!order(
                             cast(Unqual!(This.ElementReferenceType)*)&this._element,
                             cast(Unqual!(This.ElementReferenceType))source
                         ));
-                        ptr._const_reset();
+                        rhs._const_reset();
 
                         return result.move;
                     }();
                 }
                 else{
                     return this.lockRcPtr!(
-                        (ref scope self, Ptr x) => self.exchange!order(x.move)
-                    )(ptr.move);
+                        (ref scope self, Rhs x) => self.exchange!order(x.move)
+                    )(rhs.move);
                 }
             }
             else{
                 auto result = this.move;
 
                 return()@trusted{
-                    this = ptr.move;
+                    this = rhs.move;
                     return result.move;
                 }();
             }
@@ -1540,7 +1551,9 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && (This.weakPtr == D.weakPtr)
             && (This.weakPtr == E.weakPtr)
         ){
-            mixin validateRcPtr!(E, D, This);
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
+            static assert(isValidRcPtr!E, "`E expected` is invalid `RcPtr`");
+            static assert(isValidRcPtr!D, "`D desired` is invalid `RcPtr`");
 
             return this.compareExchangeImpl!(false, success, failure)(expected, desired.move);
         }
@@ -1563,7 +1576,9 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && (This.weakPtr == D.weakPtr)
             && (This.weakPtr == E.weakPtr)
         ){
-            mixin validateRcPtr!(E, D, This);
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
+            static assert(isValidRcPtr!E, "`E expected` is invalid `RcPtr`");
+            static assert(isValidRcPtr!D, "`D desired` is invalid `RcPtr`");
 
             return this.compareExchangeImpl!(true, success, failure)(expected, desired.move);
         }
@@ -1580,7 +1595,9 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && (This.weakPtr == D.weakPtr)
             && (This.weakPtr == E.weakPtr)
         ){
-            mixin validateRcPtr!(E, D, This);
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
+            static assert(isValidRcPtr!E, "`E expected` is invalid `RcPtr`");
+            static assert(isValidRcPtr!D, "`D desired` is invalid `RcPtr`");
 
             static if(is(This == shared) && isLockFree){
                 import core.atomic : cas, casWeak;
@@ -1633,7 +1650,9 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && (This.weakPtr == D.weakPtr)
             && (This.weakPtr == E.weakPtr)
         ){
-            mixin validateRcPtr!(E, D, This);
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
+            static assert(isValidRcPtr!E, "`E expected` is invalid `RcPtr`");
+            static assert(isValidRcPtr!D, "`D desired` is invalid `RcPtr`");
 
             static if(is(This == shared)){
                 import core.atomic : cas;
@@ -1720,7 +1739,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         static if(weakPtr)
         public CopyConstness!(This, SharedType) lock(this This)()scope @trusted
         if(!is(This == shared)){
-            mixin validateRcPtr!This;
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
 
             static assert(needLock!(This, typeof(return)));
 
@@ -1751,7 +1770,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         */
         static if(weakPtr)
         public @property bool expired(this This)()scope const{
-            mixin validateRcPtr!This;
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
+
             return (this.useCount == 0);
         }
 
@@ -1873,7 +1893,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         static if(hasWeakCounter)
         public CopyTypeQualifiers!(This, WeakType) weak(this This)()scope @safe
         if(!is(This == shared)){
-            mixin validateRcPtr!This;
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
 
             return typeof(return)(this);
         }
@@ -1913,7 +1933,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         */
         public To opCast(To, this This)()scope
         if(isRcPtr!To && !is(This == shared)){
-            mixin validateRcPtr!This;
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
+            static assert(isValidRcPtr!To, "`To` is invalid `RcPtr`");
 
             return To(this);
         }
@@ -1967,7 +1988,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         /// ditto
         public bool opEquals(Rhs)(auto ref scope const Rhs rhs)const @safe scope pure nothrow @nogc
         if(isRcPtr!Rhs && !is(Rhs == shared)){
-            mixin validateRcPtr!Rhs;
+            static assert(isValidRcPtr!Rhs, "`Rhs` is invalid `RcPtr`");
 
             return this.opEquals(rhs._element);
         }
@@ -2057,7 +2078,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         /// ditto
         public sizediff_t opCmp(Rhs)(auto ref scope const Rhs rhs)const @trusted scope pure nothrow @nogc
         if(isRcPtr!Rhs && !is(Rhs == shared)){
-            mixin validateRcPtr!Rhs;
+            static assert(isValidRcPtr!Rhs, "`Rhs` is invalid `RcPtr`");
 
             return this.opCmp(rhs._element);
         }
@@ -2113,7 +2134,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
         package ControlType* _control(this This)()pure nothrow @trusted @nogc
         in(this._element !is null){
-            mixin validateRcPtr!This;
+            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
 
             static if(isDynamicArray!ElementType){
                 return cast(ControlType*)((cast(void*)this._element.ptr) - ControlType.sizeof);
@@ -2344,17 +2365,12 @@ if(true
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){
-    mixin validateRcPtr!Ptr;
+    static assert(isValidRcPtr!Ptr, "`Ptr` is invalid `RcPtr`");
 
     import std.traits : CopyTypeQualifiers;
     import core.lifetime : forward;
 
     alias Result = typeof(return);
-
-    /+static assert(is(
-        CopyTypeQualifiers!(GetElementReferenceType!Ptr, void*)
-            : CopyTypeQualifiers!(GetElementReferenceType!Result, void*)
-    ));+/
 
     if(ptr == null)
         return Result.init;
@@ -2374,7 +2390,7 @@ if(true
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){
-    mixin validateRcPtr!Ptr;
+    static assert(isValidRcPtr!Ptr, "`Ptr` is invalid `RcPtr`");
 
     import std.traits : CopyTypeQualifiers;
     import core.lifetime : forward;
@@ -2390,7 +2406,7 @@ if(true
         return Result.init;
 
     if(auto element = cast(Result.ElementType)ptr._element){
-        ptr._const_set_counter(null);
+        ptr._const_reset();
         return Result(element);
     }
 
@@ -2433,6 +2449,16 @@ unittest{
         assert(zee == null);
         static assert(is(typeof(zee) == RcPtr!(const Zee)));
     }
+
+    {
+        RcPtr!(const Foo) foo = RcPtr!Bar.make(42, 3.14);
+        assert(foo.get.i == 42);
+
+        auto bar = dynCast!Bar(foo.move);
+        assert(bar != null);
+        assert(bar.get.d == 3.14);
+        static assert(is(typeof(bar) == RcPtr!(const Bar)));
+    }
 }
 
 
@@ -2444,7 +2470,7 @@ unittest{
 */
 public shared(Ptr) share(Ptr)(auto ref scope Ptr ptr)
 if(isRcPtr!Ptr){
-    mixin validateRcPtr!Ptr;
+    static assert(isValidRcPtr!Ptr, "`Ptr` is invalid `RcPtr`");
 
     import core.lifetime : forward;
     static if(is(Ptr == shared)){
@@ -2459,10 +2485,11 @@ if(isRcPtr!Ptr){
             "`RcPtr` has not shared/immutable `ElementType`."
         );
 
-        alias Result = shared(Ptr);
-        mixin validateRcPtr!Result;
+        static assert(isValidRcPtr!(typeof(return)),
+            "`typeof(return)` is invalid `RcPtr`"
+        );
 
-        return Result(forward!ptr);
+        return typeof(return)(forward!ptr);
     }
 }
 
@@ -2494,26 +2521,95 @@ nothrow @nogc unittest{
 
 }
 
-/*
-    Validate qualfied `RcPtr`.
 
-    Some `RcPtr` are invalid:
 
-        * `shared(RcPtr)` when `ControlType` is not shared
-
-        * `immutable(RcPtr)` when `ElementType` has intrusive control block.
-
+/**
+    Return `RcPtr` pointing to first element of dynamic array managed by rc pointer `ptr`.
 */
-package mixin template validateRcPtr(Ts...){
-    static foreach(alias T; Ts){
-        static assert(isRcPtr!T);
+public auto first(Ptr)(scope ref Ptr ptr)@trusted
+if(isValidRcPtr!Ptr && is(Ptr.ElementType : T[], T)){
+    import std.traits : isDynamicArray, isStaticArray;
+    import std.range : ElementEncodingType;
 
-        static assert(!is(T == shared) || is(T.ControlType == shared),
-            "shared `RcPtr` is valid only if its `ControlType` is shared. (" ~ T.stringof ~ ")."
-        );
+    alias Result = ChangeElementType!(
+        Ptr,
+        ElementEncodingType!(Ptr.ElementType)
+    );
+
+    if(ptr == null)
+        return Result.init;
+
+    static if(isDynamicArray!(Ptr.ElementType) || isStaticArray!(Ptr.ElementType)){
+        return Result(ptr._control, ptr._element.ptr);
+    }
+    else static assert(0, "no impl");
+}
+
+/// ditto
+public auto first(Ptr)(scope Ptr ptr)@trusted
+if(isValidRcPtr!Ptr && is(Ptr.ElementType : T[], T)){
+    import std.traits : isDynamicArray, isStaticArray;
+    import std.range : ElementEncodingType;
+
+    alias Result = ChangeElementType!(
+        Ptr,
+        ElementEncodingType!(Ptr.ElementType)
+    );
+
+    if(ptr == null)
+        return Result.init;
+
+    static if(isDynamicArray!(Ptr.ElementType) || isStaticArray!(Ptr.ElementType)){
+        auto ptr_element = ptr._element.ptr;
+        ptr._const_reset();
+        return Result(ptr_element);
+    }
+    else static assert(0, "no impl");
+}
+
+///
+pure nothrow @nogc unittest{
+    //copy
+    {
+        auto x = RcPtr!(long[]).make(10, -1);
+        assert(x.length == 10);
+
+        auto y = first(x);
+        static assert(is(typeof(y) == RcPtr!long));
+        assert(*y == -1);
+        assert(x.useCount == 2);
     }
 
+    {
+        auto x = RcPtr!(long[10]).make(-1);
+        assert(x.get.length == 10);
+
+        auto y = first(x);
+        static assert(is(typeof(y) == RcPtr!long));
+        assert(*y == -1);
+        assert(x.useCount == 2);
+    }
+
+    //move
+    {
+        auto x = RcPtr!(long[]).make(10, -1);
+        assert(x.length == 10);
+
+        auto y = first(x.move);
+        static assert(is(typeof(y) == RcPtr!long));
+        assert(*y == -1);
+    }
+
+    {
+        auto x = RcPtr!(long[10]).make(-1);
+        assert(x.get.length == 10);
+
+        auto y = first(x.move);
+        static assert(is(typeof(y) == RcPtr!long));
+        assert(*y == -1);
+    }
 }
+
 
 
 //local traits:
@@ -2524,51 +2620,26 @@ private{
         enum needLock = (From.weakPtr && !To.weakPtr);
     }
 
-    template isOverlapable(From, To)
-    if(!isRcPtr!From && !isRcPtr!To){
-        import std.traits : Unqual;
-
-        static if(is(Unqual!From == Unqual!To))
-            enum bool isOverlapable = true;
-
-        else static if(isReferenceType!From && isReferenceType!To)
-            enum bool isOverlapable = true
-                && (__traits(getLinkage, From) == "D")
-                && (__traits(getLinkage, To) == "D");
-
-        else
-            enum bool isOverlapable = false;
-    }
-
-    /+template isAliasable(From, To)
-    if(isRcPtr!From && isRcPtr!To){
-        import std.traits : CopyTypeQualifiers, Unqual;
-
-        alias FromType = CopyTypeQualifiers!(
-            From,
-            CopyTypeQualifiers!(From.ElementType, void)
-        );
-        alias ToType = CopyTypeQualifiers!(
-            To,
-            CopyTypeQualifiers!(To.ElementType, void)
-        );
-
-        enum bool isAliasable = true
-            && isOverlapable!(From.ElementType, To.ElementType)
-            && is(FromType* : ToType*)
-            && is(From.DestructorType : To.DestructorType)
-            && is(From.ControlType == To.ControlType);
-    }+/
-
     template isConstructable(From, To)
     if((isRcPtr!From || isUniquePtr!From) && isRcPtr!To){
-        import std.traits : CopyTypeQualifiers;
+        import std.traits : Unqual, CopyTypeQualifiers;
 
         alias FromPtr = CopyTypeQualifiers!(From, From.ElementReferenceType);
         alias ToPtr = CopyTypeQualifiers!(To, To.ElementReferenceType);
 
+        static if(is(Unqual!(From.ElementType) == Unqual!(To.ElementType)))
+            enum bool overlapable = true;
+
+        else static if(isReferenceType!(From.ElementType) && isReferenceType!(To.ElementType))
+            enum bool overlapable = true
+                && (__traits(getLinkage, From.ElementType) == "D")
+                && (__traits(getLinkage, To.ElementType) == "D");
+
+        else
+            enum bool overlapable = false;
+
         enum bool isConstructable = true
-            && isOverlapable!(From.ElementType, To.ElementType) //&& is(Unqual!(From.ElementType) == Unqual!(To.ElementType))
+            && overlapable    //isOverlapable!(From.ElementType, To.ElementType) //&& is(Unqual!(From.ElementType) == Unqual!(To.ElementType))
             && is(FromPtr : ToPtr)
             && is(From.DestructorType : To.DestructorType)
             && is(From.ControlType == To.ControlType)            ;
