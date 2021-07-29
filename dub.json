@@ -1,23 +1,26 @@
 {
-	"name" : "autoptr",
-  	"authors" : [
-    		"Adam Búš"
-  	],
-
-	"buildTypes" : {
-		"unittest" : {
-			"buildOptions":["unittests", "debugMode", "debugInfo"],
-			"versions" : [
-				"autoptr_count_gc_ranges",
-				"autoptr_track_gc_ranges",
-				"autoptr_track_smart_ptr_lifecycle"
-			]
-		}
-	},
-	"dflags" : [
-		""
-	],
-	"copyright" : "Copyright © 2021, Adam Búš",
-	"description" : "Smart pointers.",
-	"license" : "Boost Software License - Version 1.0"
+  "name" : "autoptr",
+  "authors" : [
+    "Adam Búš"
+  ],
+  "buildTypes" : {
+    "unittest" : {
+      "buildOptions" : [
+        "unittests",
+        "debugMode",
+        "debugInfo"
+      ],
+      "versions" : [
+        "autoptr_count_gc_ranges",
+        "autoptr_track_gc_ranges",
+        "autoptr_track_smart_ptr_lifecycle"
+      ]
+    }
+  },
+  "dflags" : [
+    "-dip1000"
+  ],
+  "copyright" : "Copyright © 2021, Adam Búš",
+  "description" : "Smart pointers.",
+  "license" : "Boost Software License - Version 1.0"
 }

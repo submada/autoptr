@@ -727,7 +727,7 @@ unittest{
 }
 
 
-private size_t isIntrusiveClass(Type, bool ignoreBase)()pure nothrow @trusted @nogc
+private size_t isIntrusiveClass(Type, bool ignoreBase)()pure nothrow @safe @nogc
 if(is(Type == class)){
     import std.traits : BaseClassesTuple;
 
@@ -749,7 +749,7 @@ if(is(Type == class)){
 
 }
 
-private size_t isIntrusiveStruct(Type)()pure nothrow @trusted @nogc
+private size_t isIntrusiveStruct(Type)()pure nothrow @safe @nogc
 if(is(Type == struct)){
     static if(isControlBlock!Type){
         return 1;
@@ -810,7 +810,7 @@ import std.meta : AliasSeq;
     For example if control block is immutable, then return type can be immtuable(ControlBlock)* or shared(immutable(ControlBlock)*).
     If result pointer is shared then atomic ref counting is necessary.
 */
-package auto intrusivControlBlock(Type)(auto ref Type elm)pure nothrow @trusted @nogc{
+package auto intrusivControlBlock(Type)(scope return auto ref Type elm)pure nothrow @trusted @nogc{
     static assert(isIntrusive!(Unqual!Type) == 1);
 
     static if(is(Type == struct)){
@@ -878,100 +878,104 @@ package auto intrusivControlBlock(Type)(auto ref Type elm)pure nothrow @trusted 
 }
 
 //control block
-unittest{
+@system unittest{
+    import std.traits : lvalueOf;
     static struct Foo{
         ControlBlock!int c;
     }
 
     static assert(is(
-        typeof(intrusivControlBlock(Foo.init)) == ControlBlock!int*
+        typeof(intrusivControlBlock(lvalueOf!Foo)) == ControlBlock!int*
     ));
     static assert(is(
-        typeof(intrusivControlBlock(shared(Foo).init)) == shared ControlBlock!int*
+        typeof(intrusivControlBlock(lvalueOf!(shared Foo))) == shared ControlBlock!int*
     ));
     static assert(is(
-        typeof(intrusivControlBlock(const(Foo).init)) == const(ControlBlock!int)*
+        typeof(intrusivControlBlock(lvalueOf!(const Foo))) == const(ControlBlock!int)*
     ));
     static assert(is(
-        typeof(intrusivControlBlock(shared(const(Foo)).init)) == shared const(ControlBlock!int)*
+        typeof(intrusivControlBlock(lvalueOf!(shared const Foo))) == shared const(ControlBlock!int)*
     ));
     static assert(is(
-        typeof(intrusivControlBlock(immutable(Foo).init)) == immutable(ControlBlock!int)*
+        typeof(intrusivControlBlock(lvalueOf!(immutable Foo))) == immutable(ControlBlock!int)*
     ));
 }
 
 //shared control block
 unittest{
+    import std.traits : lvalueOf;
     static struct Foo{
         shared ControlBlock!int c;
     }
 
     static assert(is(
-        typeof(intrusivControlBlock(Foo.init)) == shared ControlBlock!int*
+        typeof(intrusivControlBlock(lvalueOf!Foo)) == shared ControlBlock!int*
     ));
     static assert(is(
-        typeof(intrusivControlBlock(shared(Foo).init)) == shared ControlBlock!int*
+        typeof(intrusivControlBlock(lvalueOf!(shared Foo))) == shared ControlBlock!int*
     ));
     static assert(is(
-        typeof(intrusivControlBlock(const(Foo).init)) == shared const(ControlBlock!int)*
+        typeof(intrusivControlBlock(lvalueOf!(const Foo))) == shared const(ControlBlock!int)*
     ));
     static assert(is(
-        typeof(intrusivControlBlock(shared(const(Foo)).init)) == shared const(ControlBlock!int)*
+        typeof(intrusivControlBlock(lvalueOf!(shared const Foo))) == shared const(ControlBlock!int)*
     ));
     static assert(is(
-        typeof(intrusivControlBlock(immutable(Foo).init)) == shared immutable(ControlBlock!int)*
+        typeof(intrusivControlBlock(lvalueOf!(immutable Foo))) == shared immutable(ControlBlock!int)*
     ));
 }
 
 //mutable control block
 unittest{
+    import std.traits : lvalueOf;
     static struct Foo{
         MutableControlBlock!int c;
     }
 
     static assert(is(
-        typeof(intrusivControlBlock(Foo.init)) == ControlBlock!int*
+        typeof(intrusivControlBlock(lvalueOf!Foo)) == ControlBlock!int*
     ));
     static assert(is(
-        typeof(intrusivControlBlock(shared(Foo).init)) == shared ControlBlock!int*
+        typeof(intrusivControlBlock(lvalueOf!(shared(Foo)))) == shared ControlBlock!int*
     ));
     static assert(is(
-        typeof(intrusivControlBlock(const(Foo).init)) == ControlBlock!int*
+        typeof(intrusivControlBlock(lvalueOf!(const Foo))) == ControlBlock!int*
     ));
     static assert(is(
-        typeof(intrusivControlBlock(shared(const(Foo)).init)) == shared ControlBlock!int*
+        typeof(intrusivControlBlock(lvalueOf!(shared const Foo))) == shared ControlBlock!int*
     ));
     static assert(is(
-        typeof(intrusivControlBlock(immutable(Foo).init)) == ControlBlock!int*
+        typeof(intrusivControlBlock(lvalueOf!(immutable Foo))) == ControlBlock!int*
     ));
 }
 
 //shared mutable control block
 unittest{
+    import std.traits : lvalueOf;
     static struct Foo{
         shared MutableControlBlock!int c;
     }
 
     static assert(is(
-        typeof(intrusivControlBlock(Foo.init)) == shared ControlBlock!int*
+        typeof(intrusivControlBlock(lvalueOf!Foo)) == shared ControlBlock!int*
     ));
     static assert(is(
-        typeof(intrusivControlBlock(shared(Foo).init)) == shared ControlBlock!int*
+        typeof(intrusivControlBlock(lvalueOf!(shared(Foo)))) == shared ControlBlock!int*
     ));
     static assert(is(
-        typeof(intrusivControlBlock(const(Foo).init)) == shared ControlBlock!int*
+        typeof(intrusivControlBlock(lvalueOf!(const Foo))) == shared ControlBlock!int*
     ));
     static assert(is(
-        typeof(intrusivControlBlock(shared(const(Foo)).init)) == shared ControlBlock!int*
+        typeof(intrusivControlBlock(lvalueOf!(shared const Foo))) == shared ControlBlock!int*
     ));
     static assert(is(
-        typeof(intrusivControlBlock(immutable(Foo).init)) == shared ControlBlock!int*
+        typeof(intrusivControlBlock(lvalueOf!(immutable Foo))) == shared ControlBlock!int*
     ));
 }
 
 
 //Return offset of intrusive control block in Type.
-package size_t intrusivControlBlockOffset(Type)(){
+package size_t intrusivControlBlockOffset(Type)()pure nothrow @safe @nogc{
     static assert(isIntrusive!(Unqual!Type) == 1);
     
     static if(is(Type == struct)){
@@ -1170,7 +1174,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
         static assert(control.offsetof + typeof(control).sizeof == data.offsetof);
 
         version(D_BetterC)
-            private static void shared_static_this()pure nothrow @trusted @nogc{
+            private static void shared_static_this()pure nothrow @safe @nogc{
                 assumePure((){
                     Vtable* vptr = cast(Vtable*)&vtable;
                     
@@ -1185,7 +1189,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
 
             }
         else
-            shared static this(){
+            shared static this()nothrow @safe @nogc{
                 static if(hasWeakCounter){
                     vtable = Vtable(
                         &virtual_on_zero_shared,
@@ -1205,12 +1209,12 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
             }
 
 
-        public @property _ControlType* base()pure nothrow @trusted @nogc{
+        public @property _ControlType* base()return scope pure nothrow @trusted @nogc{
             //static assert(this.control.offsetof == 0);
-            return function _ControlType*(ref _ControlType ct)@trusted{
+            /+return function _ControlType*(ref _ControlType ct)@trusted{
                 return &ct;
-            }(this.control);
-            //return &this.control;
+            }(this.control);+/
+            return &this.control;
         }
 
         public @property PtrOrRef!_Type get()pure nothrow @trusted @nogc{
@@ -1345,7 +1349,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
 
 
         static if(hasSharedCounter){
-            public static void virtual_on_zero_shared(Unqual!_ControlType* control)pure nothrow @nogc @safe{
+            public static void virtual_on_zero_shared(Unqual!_ControlType* control)pure nothrow @nogc @trusted{
                 auto self = get_offset_this(control);
                 self.destruct();
 
@@ -1355,13 +1359,13 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
         }
 
         static if(hasWeakCounter){
-            public static void virtual_on_zero_weak(Unqual!_ControlType* control)pure nothrow @nogc @safe{
+            public static void virtual_on_zero_weak(Unqual!_ControlType* control)pure nothrow @nogc @trusted{
                 auto self = get_offset_this(control);
                 self.deallocate();
             }
         }
 
-        public static void virtual_manual_destroy(Unqual!_ControlType* control, bool dealocate)pure nothrow @nogc @safe{
+        public static void virtual_manual_destroy(Unqual!_ControlType* control, bool dealocate)pure nothrow @nogc @trusted{
             auto self = get_offset_this(control);
             self.destruct();
             if(dealocate)
@@ -1369,14 +1373,14 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
 
         }
 
-        private static inout(MakeEmplace)* get_offset_this(inout(Unqual!_ControlType)* control)pure nothrow @trusted @nogc{
+        private static inout(MakeEmplace)* get_offset_this(inout(Unqual!_ControlType)* control)pure nothrow @system @nogc{
             assert(control !is null);
 
              return cast(typeof(return))((cast(void*)control) - MakeEmplace.control.offsetof);
         }
 
 
-        private void destruct()pure nothrow @trusted @nogc{
+        private void destruct()pure nothrow @system @nogc{
 
             static if(is(_Type == struct) || is(_Type == class)){
                 void* data_ptr = this.data.ptr;
@@ -1397,7 +1401,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
             smart_ptr_destruct();
         }
 
-        private void deallocate()pure nothrow @trusted @nogc{
+        private void deallocate()pure nothrow @system @nogc{
             void* self = cast(void*)&this;
             _destruct!(typeof(this), DestructorType!void)(self);
 
@@ -1474,14 +1478,14 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _Allocat
 
         static assert(control.offsetof + typeof(control).sizeof == data_impl.offsetof);
 
-        @property inout(ElementEncodingType!_Type)[] data()inout pure nothrow @trusted @nogc{
+        @property inout(ElementEncodingType!_Type)[] data()return scope inout pure nothrow @trusted @nogc{
             return data_impl.ptr[0 .. this.length];
         }
 
         private static immutable Vtable vtable;
 
         version(D_BetterC)
-            private static void shared_static_this()pure nothrow @trusted @nogc{
+            private static void shared_static_this()pure nothrow @safe @nogc{
                 assumePure((){
                     Vtable* vptr = cast(Vtable*)&vtable;
                     
@@ -1496,7 +1500,7 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _Allocat
 
             }
         else
-            shared static this(){
+            shared static this()nothrow @safe @nogc{
                 static if(hasWeakCounter){
                     vtable = Vtable(
                         &virtual_on_zero_shared,
@@ -1515,11 +1519,11 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _Allocat
                 );
             }
 
-        public @property _ControlType* base()pure nothrow @safe @nogc{
+        public @property _ControlType* base()return scope pure nothrow @trusted @nogc{
             return &this.control;
         }
 
-        public @property auto get()pure nothrow @trusted @nogc{
+        public @property auto get()return scope pure nothrow @trusted @nogc{
             return this.data;
         }
 
@@ -1601,7 +1605,7 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _Allocat
 
 
         static if(hasSharedCounter)
-        private static void virtual_on_zero_shared(Unqual!_ControlType* control)pure nothrow @nogc @safe{
+        private static void virtual_on_zero_shared(Unqual!_ControlType* control)pure nothrow @nogc @trusted{
             auto self = get_offset_this(control);
             self.destruct();
 
@@ -1610,7 +1614,7 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _Allocat
         }
 
         static if(hasWeakCounter)
-        private static void virtual_on_zero_weak(Unqual!_ControlType* control)pure nothrow @nogc @safe{
+        private static void virtual_on_zero_weak(Unqual!_ControlType* control)pure nothrow @nogc @trusted{
             auto self = get_offset_this(control);
             self.deallocate();
         }
@@ -1623,12 +1627,12 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _Allocat
                 self.deallocate();
         }
 
-        private static inout(MakeDynamicArray)* get_offset_this(inout(Unqual!_ControlType)* control)pure nothrow @trusted @nogc{
+        private static inout(MakeDynamicArray)* get_offset_this(inout(Unqual!_ControlType)* control)pure nothrow @system @nogc{
             assert(control !is null);
             return cast(typeof(return))((cast(void*)control) - MakeDynamicArray.control.offsetof);
         }
 
-        private void destruct()pure nothrow @trusted @nogc{
+        private void destruct()pure nothrow @system @nogc{
 
             static if(is(ElementEncodingType!_Type == struct)){
                 foreach(ref elm; this.data)
@@ -1642,7 +1646,7 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _Allocat
             smart_ptr_destruct();
         }
 
-        private void deallocate()pure nothrow @trusted @nogc{
+        private void deallocate()pure nothrow @system @nogc{
             const size_t data_length = ElementEncodingType!_Type.sizeof * this.data.length;
 
             void* self = cast(void*)&this;
@@ -1720,7 +1724,7 @@ if(isIntrusive!_Type == 1){
         private static immutable Vtable vtable;
 
 
-        private @property ref auto control()pure nothrow @trusted @nogc{
+        private @property ref auto control()scope return pure nothrow @trusted @nogc{
             static if(isReferenceType!_Type)
                 auto control = intrusivControlBlock(cast(_Type)this.data.ptr);
             else 
@@ -1743,7 +1747,7 @@ if(isIntrusive!_Type == 1){
             private _AllocatorType allocator;
 
         version(D_BetterC)
-            private static void shared_static_this()pure nothrow @trusted @nogc{
+            private static void shared_static_this()pure nothrow @safe @nogc{
                 assumePure((){
                     Vtable* vptr = cast(Vtable*)&vtable;
                     
@@ -1758,7 +1762,7 @@ if(isIntrusive!_Type == 1){
 
             }
         else
-            shared static this(){
+            shared static this()nothrow @safe @nogc{
                 static if(hasWeakCounter){
                     vtable = Vtable(
                         &virtual_on_zero_shared,
@@ -1777,7 +1781,7 @@ if(isIntrusive!_Type == 1){
                 );
             }
 
-        public @property PtrOrRef!_Type get()pure nothrow @trusted @nogc{
+        public @property PtrOrRef!_Type get()scope return pure nothrow @trusted @nogc{
             return cast(PtrOrRef!_Type)this.data.ptr;
         }
 
@@ -1868,7 +1872,7 @@ if(isIntrusive!_Type == 1){
 
 
         static if(hasSharedCounter){
-            public static void virtual_on_zero_shared(Unqual!ControlType* control)pure nothrow @nogc @safe{
+            public static void virtual_on_zero_shared(Unqual!ControlType* control)pure nothrow @nogc @trusted{
                 auto self = get_offset_this(control);
                 self.destruct();
 
@@ -1878,13 +1882,13 @@ if(isIntrusive!_Type == 1){
         }
 
         static if(hasWeakCounter){
-            public static void virtual_on_zero_weak(Unqual!ControlType* control)pure nothrow @nogc @safe{
+            public static void virtual_on_zero_weak(Unqual!ControlType* control)pure nothrow @nogc @trusted{
                 auto self = get_offset_this(control);
                 self.deallocate();
             }
         }
 
-        public static void virtual_manual_destroy(Unqual!ControlType* control, bool dealocate)pure nothrow @nogc @safe{
+        public static void virtual_manual_destroy(Unqual!ControlType* control, bool dealocate)pure nothrow @nogc @trusted{
             auto self = get_offset_this(control);
             self.destruct();
             if(dealocate)
@@ -1892,7 +1896,7 @@ if(isIntrusive!_Type == 1){
 
         }
 
-        private static inout(MakeIntrusive)* get_offset_this(inout(Unqual!ControlType)* control)pure nothrow @trusted @nogc{
+        private static inout(MakeIntrusive)* get_offset_this(inout(Unqual!ControlType)* control)pure nothrow @system @nogc{
             assert(control !is null);
 
             enum size_t offset = data.offsetof + intrusivControlBlockOffset!_Type;
@@ -1900,7 +1904,7 @@ if(isIntrusive!_Type == 1){
         }
 
 
-        private void destruct()pure nothrow @trusted @nogc{
+        private void destruct()pure nothrow @system @nogc{
 
             static if(is(_Type == struct) || is(_Type == class)){
                 void* data_ptr = this.data.ptr;
@@ -1921,7 +1925,7 @@ if(isIntrusive!_Type == 1){
             smart_ptr_destruct();
         }
 
-        private void deallocate()pure nothrow @trusted @nogc{
+        private void deallocate()pure nothrow @system @nogc{
             void* self = cast(void*)&this;
             _destruct!(typeof(this), DestructorType!void)(self);
 
@@ -2028,7 +2032,7 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
         private static immutable Vtable vtable;
 
         version(D_BetterC)
-            private static void shared_static_this()pure nothrow @trusted @nogc{
+            private static void shared_static_this()pure nothrow @safe @nogc{
                 assumePure((){
                     Vtable* vptr = cast(Vtable*)&vtable;
                     
@@ -2043,7 +2047,7 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
 
             }
         else
-            shared static this(){
+            shared static this()nothrow @safe @nogc{
                 static if(hasWeakCounter){
                     vtable = Vtable(
                         &virtual_on_zero_shared,
@@ -2175,7 +2179,7 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
 
 
         static if(hasSharedCounter){
-            public static void virtual_on_zero_shared(Unqual!_ControlType* control)pure nothrow @nogc @safe{
+            public static void virtual_on_zero_shared(Unqual!_ControlType* control)pure nothrow @nogc @trusted{
                 auto self = get_offset_this(control);
                 self.destruct();
 
@@ -2185,13 +2189,13 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
         }
 
         static if(hasWeakCounter){
-            public static void virtual_on_zero_weak(Unqual!_ControlType* control)pure nothrow @nogc @safe{
+            public static void virtual_on_zero_weak(Unqual!_ControlType* control)pure nothrow @nogc @trusted{
                 auto self = get_offset_this(control);
                 self.deallocate();
             }
         }
 
-        public static void virtual_manual_destroy(Unqual!_ControlType* control, bool dealocate)pure nothrow @nogc @safe{
+        public static void virtual_manual_destroy(Unqual!_ControlType* control, bool dealocate)pure nothrow @nogc @trusted{
             auto self = get_offset_this(control);
             self.destruct();
             if(dealocate)
@@ -2199,12 +2203,12 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
 
         }
         
-        private static inout(MakeDeleter)* get_offset_this(inout(Unqual!_ControlType)* control)pure nothrow @trusted @nogc{
+        private static inout(MakeDeleter)* get_offset_this(inout(Unqual!_ControlType)* control)pure nothrow @system @nogc{
             assert(control !is null);
             return cast(typeof(return))((cast(void*)control) - MakeDeleter.control.offsetof);
         }
 
-        private void destruct()pure nothrow @trusted @nogc{
+        private void destruct()pure nothrow @system @nogc{
             assumePureNoGcNothrow((ref DeleterType deleter, ElementReferenceType data){
                 deleter(data);
             })(this.deleter, this.data);
@@ -2218,7 +2222,7 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
             smart_ptr_destruct();
         }
 
-        private void deallocate()pure nothrow @trusted @nogc{
+        private void deallocate()pure nothrow @system @nogc{
             void* self = cast(void*)&this;
             _destruct!(typeof(this), DestructorType!void)(self);
 
@@ -2227,9 +2231,9 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
 
 
             static if(hasStatelessAllocator)
-                assumePureNoGcNothrow(function(void[] raw)@trusted => statelessAllcoator!AllocatorType.deallocate(raw))(raw);
+                assumePureNoGcNothrow(function(void[] raw) => statelessAllcoator!AllocatorType.deallocate(raw))(raw);
             else
-                assumePureNoGcNothrow(function(void[] raw, ref typeof(this.allocator) allo)@trusted => allo.deallocate(raw))(raw, this.allocator);
+                assumePureNoGcNothrow(function(void[] raw, ref typeof(this.allocator) allo) => allo.deallocate(raw))(raw, this.allocator);
 
 
 

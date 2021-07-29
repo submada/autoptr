@@ -455,7 +455,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 }
                 --------------------
         */
-        public this(Rhs, this This)(ref scope Rhs rhs)@trusted
+        public this(Rhs, this This)(ref scope Rhs rhs)@safe
         if(true
             && isSharedPtr!Rhs
             && !is(Unqual!This == Unqual!Rhs)   ///copy ctors
@@ -811,7 +811,9 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             }
             else{
                 this._release();
-                this._reset();
+                ()@trusted{
+                    this._reset();
+                }();
             }
         }
 
@@ -993,7 +995,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             auto m = MakeEmplace!(AllocatorType, supportGC).make(forward!(args));
 
-            if(m is null)
+            return (m is null)
+                ? SharedPtr(null)
+                : SharedPtr(m.base, m.get);
+            /+if(m is null)
                 return typeof(return).init;
 
 
@@ -1002,7 +1007,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             ptr._control = m.base;
             ptr._set_element(m.get);
 
-            return ptr.move;
+            return ptr.move;+/
         }
 
         /**
@@ -1035,7 +1040,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             auto m = MakeDeleter!(DeleterType, AllocatorType, supportGC).make(forward!(element, deleter));
 
-            if(m is null)
+            return (m is null)
+                ? SharedPtr(null)
+                : SharedPtr(m.base, m.get);
+
+            /+if(m is null)
                 return typeof(return).init;
 
 
@@ -1044,7 +1053,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             ptr._control = m.base;
             ptr._set_element(m.get);
 
-            return ptr.move;
+            return ptr.move;+/
         }
 
 
@@ -1085,7 +1094,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             auto m = MakeDynamicArray!(AllocatorType, supportGC).make(n, forward!(args));
 
-            if(m is null)
+            return (m is null)
+                ? SharedPtr(null)
+                : SharedPtr(m.base, m.get);
+
+            /+if(m is null)
                 return typeof(return).init;
 
             auto ptr = typeof(this).init;
@@ -1095,7 +1108,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             return ()@trusted{
                 return ptr.move;
-            }();
+            }();+/
         }
 
 
@@ -1160,15 +1173,20 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             auto m = MakeEmplace!(AllocatorType, supportGC).make(forward!(a, args));
 
-            if(m is null)
+            return (m is null)
+                ? SharedPtr(null)
+                : SharedPtr(m.base, m.get);
+
+            /+if(m is null)
                 return typeof(return).init;
 
+            return SharedPtr(m.base, m.get);
             auto ptr = typeof(this).init;
 
             ptr._control = m.base;
             ptr._set_element(m.get);
 
-            return ptr.move;
+            return ptr.move;+/
         }
 
 
@@ -1204,15 +1222,20 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             auto m = MakeDeleter!(DeleterType, AllocatorType, supportGC).make(forward!(element, deleter, allocator));
 
-            if(m is null)
+            return (m is null)
+                ? SharedPtr(null)
+                : SharedPtr(m.base, m.get);
+
+            /+if(m is null)
                 return typeof(return).init;
 
+            return SharedPtr(m.base, m.get);
             auto ptr = typeof(this).init;
 
             ptr._control = m.base;
             ptr._set_element(m.get);
 
-            return ptr.move;
+            return ptr.move;+/
         }
 
 
@@ -1255,7 +1278,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             auto m = MakeDynamicArray!(AllocatorType, supportGC).make(forward!(a, n, args));
 
-            if(m is null)
+            return (m is null)
+                ? SharedPtr(null)
+                : SharedPtr(m.base, m.get);
+            /+if(m is null)
                 return typeof(return).init;
 
             auto ptr = typeof(this).init;
@@ -1263,7 +1289,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             ptr._control = m.base;
             ptr._set_element(m.get);
 
-            return ptr.move;
+            return ptr.move;+/
         }
 
 
@@ -1299,7 +1325,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 assert(w1.useCount == 0);
                 --------------------
         */
-        public @property ControlType.Shared useCount(this This)()const scope nothrow @trusted @nogc{
+        public @property ControlType.Shared useCount(this This)()const scope nothrow @safe @nogc{
             static assert(isValidSharedPtr!This, "`This` is invalid `SharedPtr`");
 
             static if(is(This == shared)){
@@ -1706,7 +1732,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         */
         private bool compareExchange
             (MemoryOrder success = MemoryOrder.seq, MemoryOrder failure = success, E, D, this This)
-            (ref scope E expected, scope D desired)scope @trusted
+            (ref scope E expected, scope D desired)scope //@trusted
         if(true
             && isSharedPtr!E && !is(E == shared) 
             && isSharedPtr!D && !is(D == shared) 
@@ -1799,7 +1825,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(weakPtr)
-        public CopyConstness!(This, SharedType) lock(this This)()scope @trusted
+        public CopyConstness!(This, SharedType) lock(this This)()scope @safe
         if(!is(This == shared)){
             static assert(isValidSharedPtr!This, "`This` is invalid `SharedPtr`");
 
@@ -2194,14 +2220,14 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         private ControlType* _control;
         private ElementReferenceType _element;
 
-        private void _set_element(ElementReferenceType e)pure nothrow @trusted @nogc{
+        private void _set_element(ElementReferenceType e)pure nothrow @system @nogc{
             static if(isMutable!ElementReferenceType)
                 this._element = e;
             else
                 (*cast(Unqual!ElementReferenceType*)&this._element) = cast(Unqual!ElementReferenceType)e;
         }
 
-        private void _const_set_element(ElementReferenceType e)const pure nothrow @trusted @nogc{
+        private void _const_set_element(ElementReferenceType e)const pure nothrow @system @nogc{
             auto self = cast(Unqual!(typeof(this))*)&this;
 
             static if(isMutable!ElementReferenceType)
@@ -2210,7 +2236,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 (*cast(Unqual!ElementReferenceType*)&self._element) = cast(Unqual!ElementReferenceType)e;
         }
 
-        private void _const_set_counter(ControlType* c)const pure nothrow @trusted @nogc{
+        private void _const_set_counter(ControlType* c)const pure nothrow @system @nogc{
             auto self = cast(Unqual!(typeof(this))*)&this;
 
             self._control = c;
@@ -2231,7 +2257,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             this._control.release!weakPtr;
         }
 
-        private void _reset()scope pure nothrow @trusted @nogc{
+        private void _reset()scope pure nothrow @system @nogc{
             this._control = null;
             this._set_element(null);
         }
@@ -2613,7 +2639,7 @@ if(true
 
     static if(isDynamicArray!(Ptr.ElementType) || isStaticArray!(Ptr.ElementType)){
         auto ptr_element = ptr._element.ptr;
-        return Result(forward!ptr, ptr_element);
+        return Result(forward!ptr, (()@trusted => ptr_element )());
         //assert(0);
     }
     else static assert(0, "no impl");
@@ -2661,7 +2687,6 @@ pure nothrow @nogc unittest{
         assert(*y == -1);
     }
 }
-
 
 
 //local traits:

@@ -365,7 +365,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 }
                 --------------------
         */
-        public void opAssign(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs rhs)scope @safe
+        public void opAssign(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs rhs)scope
         if(true
             && isUniquePtr!Rhs
             && isAssignable!(Rhs, This)
@@ -450,7 +450,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             auto m = MakeEmplace!(AllocatorType, supportGC).make(forward!(args));
 
-            if(m is null)
+            return (m is null)
+                ? UniquePtr.init
+                : UniquePtr(m.get);
+
+            /+if(m is null)
                 return typeof(return).init;
 
 
@@ -460,6 +464,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             ptr._element = m.get;
 
             return ptr.move; //.move;
+            +/
         }
 
 
@@ -498,7 +503,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             auto m = MakeDynamicArray!(AllocatorType, supportGC).make(n, forward!(args));
 
-            if(m is null)
+            return (m is null)
+                ? UniquePtr.init
+                : UniquePtr(m.get);
+
+            /+if(m is null)
                 return typeof(return).init;
 
 
@@ -507,7 +516,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             //ptr._control = m.base;
             ptr._set_element(m.get);
 
-            return ptr.move;
+            return ptr.move;+/
         }
 
         /**
@@ -552,8 +561,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             auto m = MakeEmplace!(AllocatorType, supportGC).make(forward!(a, args));
 
-
-            if(m is null)
+            return (m is null)
+                ? UniquePtr.init
+                : UniquePtr(m.get);
+            /+if(m is null)
                 return typeof(return).init;
 
 
@@ -562,7 +573,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             //ptr._control = m.base;
             ptr._element = m.get;
 
-            return ptr.move; //.move;
+            return ptr.move; //.move;+/
         }
 
 
@@ -601,6 +612,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             auto m = MakeDynamicArray!(AllocatorType, supportGC).make(forward!(a, n, args));
 
+            return (m is null)
+                ? UniquePtr.init
+                : UniquePtr(m.get);
+
+            /+
             if(m is null)
                 return typeof(return).init;
 
@@ -608,7 +624,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             ptr._set_element(m.get);
 
-            return ptr.move;
+            return ptr.move;+/
         }
 
         /**
@@ -1124,7 +1140,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             import std.traits : hasIndirections;
             import core.memory : GC;
 
-            if(this._is_null)
+            if(this._element is null)
                 return;
 
             static if(hasSharedCounter)
@@ -1136,24 +1152,19 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         }
 
 
-        private void _set_element(ElementReferenceType e)pure nothrow @trusted @nogc{
+        private void _set_element(ElementReferenceType e)pure nothrow @system @nogc{
             (*cast(Unqual!ElementReferenceType*)&this._element) = cast(Unqual!ElementReferenceType)e;
         }
 
-        private void _reset()scope pure nothrow @trusted @nogc{
+        private void _reset()scope pure nothrow @system @nogc{
             this._set_element(null);
         }
 
-        package void _const_reset()scope const pure nothrow @trusted @nogc{
+        package void _const_reset()scope const pure nothrow @system @nogc{
             auto self = cast(Unqual!(typeof(this))*)&this;
 
             self._reset();
         }
-
-        private bool _is_null()scope const pure nothrow @safe @nogc{
-            return (this._element is null);
-        }
-
 
     }
 }

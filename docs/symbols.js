@@ -133,7 +133,7 @@ var symbols = [
 {name: 'autoptr.shared_ptr.SharedPtr.this', kind: "functiondeclaration", path: './autoptr/shared_ptr/SharedPtr.this.html', attributes: ["pure", "nothrow", "nogc", "safe"]},
 {name: 'autoptr.shared_ptr.SharedPtr.ThreadLocal', kind: "aliasdeclaration", path: './autoptr/shared_ptr/SharedPtr.ThreadLocal.html', attributes: []},
 {name: 'autoptr.shared_ptr.SharedPtr.toHash', kind: "functiondeclaration", path: './autoptr/shared_ptr/SharedPtr.toHash.html', attributes: ["const", "pure", "nothrow", "nogc", "property", "scope", "trusted"]},
-{name: 'autoptr.shared_ptr.SharedPtr.useCount', kind: "functiondeclaration", path: './autoptr/shared_ptr/SharedPtr.useCount.html', attributes: ["const", "nothrow", "nogc", "property", "scope", "trusted"]},
+{name: 'autoptr.shared_ptr.SharedPtr.useCount', kind: "functiondeclaration", path: './autoptr/shared_ptr/SharedPtr.useCount.html', attributes: ["const", "nothrow", "nogc", "property", "scope", "safe"]},
 {name: 'autoptr.shared_ptr.SharedPtr.weak', kind: "functiondeclaration", path: './autoptr/shared_ptr/SharedPtr.weak.html', attributes: ["scope", "safe"]},
 {name: 'autoptr.shared_ptr.SharedPtr.weakCount', kind: "functiondeclaration", path: './autoptr/shared_ptr/SharedPtr.weakCount.html', attributes: ["const", "nothrow", "nogc", "property", "scope", "safe"]},
 {name: 'autoptr.shared_ptr.SharedPtr.weakPtr', kind: "enummemberdeclaration", path: './autoptr/shared_ptr/SharedPtr.weakPtr.html', attributes: []},
