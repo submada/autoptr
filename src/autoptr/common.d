@@ -565,11 +565,11 @@ if(T.length == 1){
 }
 
 
-/**
-    TODO
-*/
 import std.traits : isIntegral;
 
+/**
+    Mutable intrusive control block, this control block can be modified even if is `const` / `immutable`.
+*/
 template MutableControlBlock(_Shared, _Weak = void)
 if(isIntegral!_Shared){
     import std.traits : Unqual, isUnsigned, isIntegral, isMutable;
@@ -583,6 +583,7 @@ if(isIntegral!_Shared){
     alias MutableControlBlock = MutableControlBlock!(ControlBlock!(_Shared, _Weak));
 }
 
+/// ditto
 template MutableControlBlock(_ControlType)
 if(isControlBlock!_ControlType){
     import std.traits : isMutable;
@@ -594,6 +595,75 @@ if(isControlBlock!_ControlType){
 
         private ControlType control;
     }
+}
+
+///
+unittest{
+    static class Foo{
+        ControlBlock!int c;
+    }
+
+    static assert(is(
+        IntrusivControlBlock!(Foo) == ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(const Foo) == const ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(shared Foo) == shared ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(const shared Foo) == const shared ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(immutable Foo) == immutable ControlBlock!int
+    ));
+
+
+
+    static class Bar{
+        MutableControlBlock!int c;
+    }
+
+    static assert(is(
+        IntrusivControlBlock!(Bar) == ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(const Bar) == ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(shared Bar) == shared ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(const shared Bar) == shared ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(immutable Bar) == ControlBlock!int
+    ));
+
+
+
+    static class Zee{
+        shared MutableControlBlock!int c;
+    }
+
+    static assert(is(
+        IntrusivControlBlock!(Zee) == shared ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(const Zee) == shared ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(shared Zee) == shared ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(const shared Zee) == shared ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(immutable Zee) == shared ControlBlock!int
+    ));
+
+
 }
 
 
@@ -660,7 +730,6 @@ if(is(Type == class)){
 
     size_t result = 0;
 
-    //pragma(msg, Type.stringof ~ ": " ~ typeof(ty.tupleof).stringof);
     static foreach(alias T; typeof(ty.tupleof)){
         static if(is(T == struct))
             result += isIntrusiveStruct!T;

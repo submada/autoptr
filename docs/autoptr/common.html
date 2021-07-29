@@ -83,6 +83,15 @@ $('#symbolSearchPane').show();</script>
 						<td>Type used as parameter for function pointer returned from <code class="lang-d"><a href="../autoptr/common/DestructorType.html"><span class="typ">DestructorType</span></a></code>.
 </td>
 					</tr>
+					<tr>
+						<td>
+							<code>
+								<a id="MutableControlBlock" class="public" href="../autoptr/common/MutableControlBlock.html">MutableControlBlock</a>
+							</code>
+						</td>
+						<td>Mutable intrusive control block, this control block can be modified even if is <code class="lang-d"><span class="kwd">const</span></code> / <code class="lang-d"><span class="kwd">immutable</span></code>.
+</td>
+					</tr>
 				</table>
 			</section>
 			<section>
@@ -179,6 +188,18 @@ $('#symbolSearchPane').show();</script>
 							<code class="prettyprint lang-d"><span class="pln">impl</span></code>
 						</td>
 						<td>Destructor type of destructors of types <code class="lang-d"><span class="typ">Types</span></code> ( void function(Evoid*)@destructor_attributes ).
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a id="MutableControlBlock" class="public" href="../autoptr/common/MutableControlBlock.html">
+								<code>MutableControlBlock</code>
+							</a>
+						</td>
+						<td>
+							<code class="prettyprint lang-d"><a href="../autoptr/common/MutableControlBlock.html"><span class="typ">MutableControlBlock</span></a>!(ControlBlock!(_Shared,_Weak))</code>
+						</td>
+						<td>Mutable intrusive control block, this control block can be modified even if is <code class="lang-d"><span class="kwd">const</span></code> / <code class="lang-d"><span class="kwd">immutable</span></code>.
 </td>
 					</tr>
 					<tr>

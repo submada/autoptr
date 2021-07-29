@@ -14,6 +14,7 @@ var symbols = [
 {name: 'autoptr.common.isDestructorType', kind: "enummemberdeclaration", path: './autoptr/common/isDestructorType.html', attributes: []},
 {name: 'autoptr.common.isIntrusive', kind: "enummemberdeclaration", path: './autoptr/common/isIntrusive.html', attributes: []},
 {name: 'autoptr.common.isMutableControlBlock', kind: "enummemberdeclaration", path: './autoptr/common/isMutableControlBlock.html', attributes: []},
+{name: 'autoptr.common.MutableControlBlock', kind: "aliasdeclaration", path: './autoptr/common/MutableControlBlock.html', attributes: []},
 {name: 'autoptr.common.ShallowDestructorType', kind: "aliasdeclaration", path: './autoptr/common/ShallowDestructorType.html', attributes: []},
 {name: 'autoptr.common.SharedControlType', kind: "aliasdeclaration", path: './autoptr/common/SharedControlType.html', attributes: []},
 {name: 'autoptr.common.UniqueControlType', kind: "aliasdeclaration", path: './autoptr/common/UniqueControlType.html', attributes: []},
