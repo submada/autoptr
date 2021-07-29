@@ -34,7 +34,7 @@ public alias UniqueControlType = ControlBlock!void;
 
 
 /**
-    Default allcoator for `SharedPtr.make` and `UniquePtr.make`.
+    Default allcoator for `SharedPtr.make`, `RcPtr.make`, `UniquePtr.make` and `IntrusivePtr.make`.
 */
 public alias DefaultAllocator = Mallocator;
 
@@ -256,7 +256,7 @@ unittest{
 
 
 /**
-    This template deduce `ControlType` shared qualifier in `SharedPtr` and `UniquePtr`.
+    This template deduce `ControlType` shared qualifier in `SharedPtr`, `RcPtr` and `UniquePtr`.
 
     If `Type` is shared then `ControlType` is shared too (atomic counting).
 */
@@ -568,7 +568,9 @@ if(T.length == 1){
 import std.traits : isIntegral;
 
 /**
-    Mutable intrusive control block, this control block can be modified even if is `const` / `immutable`.
+    Mutable intrusive `ControlBlock`, this control block can be modified even if is `const` / `immutable`.
+
+    Necessary for `IntrusivePtr`.
 */
 template MutableControlBlock(_Shared, _Weak = void)
 if(isIntegral!_Shared){
@@ -668,7 +670,9 @@ unittest{
 
 
 /**
-    Return number of ControlBlocks in type `Type`.
+    Return number of `ControlBlock`s in type `Type`.
+
+    `IntrusivePtr` need exact `1` control block.
 */
 public template isIntrusive(Type){
     static if(is(Type == struct)){
@@ -687,6 +691,7 @@ public template isIntrusive(Type){
 ///
 unittest{
     static assert(isIntrusive!long == 0);
+
     static assert(isIntrusive!(ControlBlock!int) == 1);
 
     static class Foo{

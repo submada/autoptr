@@ -89,7 +89,7 @@ $('#symbolSearchPane').show();</script>
 								<a id="MutableControlBlock" class="public" href="../autoptr/common/MutableControlBlock.html">MutableControlBlock</a>
 							</code>
 						</td>
-						<td>Mutable intrusive control block, this control block can be modified even if is <code class="lang-d"><span class="kwd">const</span></code> / <code class="lang-d"><span class="kwd">immutable</span></code>.
+						<td>Mutable intrusive <code class="lang-d"><a href="../autoptr/common/ControlBlock.html"><span class="typ">ControlBlock</span></a></code>, this control block can be modified even if is <code class="lang-d"><span class="kwd">const</span></code> / <code class="lang-d"><span class="kwd">immutable</span></code>.
 </td>
 					</tr>
 				</table>
@@ -131,7 +131,7 @@ $('#symbolSearchPane').show();</script>
 						</td>
 						<td>
 						</td>
-						<td>Return number of ControlBlocks in type <code class="lang-d"><span class="typ">Type</span></code>.
+						<td>Return number of <code class="lang-d"><a href="../autoptr/common/ControlBlock.html"><span class="typ">ControlBlock</span></a></code>s in type <code class="lang-d"><span class="typ">Type</span></code>.
 </td>
 					</tr>
 					<tr>
@@ -163,7 +163,7 @@ $('#symbolSearchPane').show();</script>
 						<td>
 							<code class="prettyprint lang-d"><span class="typ">Select</span>!(is(Type==shared),shared(ControlType),ControlType)</code>
 						</td>
-						<td>This template deduce <code class="lang-d"><span class="typ">ControlType</span></code> shared qualifier in <code class="lang-d"><span class="typ">SharedPtr</span></code> and <code class="lang-d"><span class="typ">UniquePtr</span></code>.
+						<td>This template deduce <code class="lang-d"><span class="typ">ControlType</span></code> shared qualifier in <code class="lang-d"><span class="typ">SharedPtr</span></code>, <code class="lang-d"><span class="typ">RcPtr</span></code> and <code class="lang-d"><span class="typ">UniquePtr</span></code>.
 </td>
 					</tr>
 					<tr>
@@ -175,7 +175,7 @@ $('#symbolSearchPane').show();</script>
 						<td>
 							<code class="prettyprint lang-d"><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">experimental<wbr/></span><span class="pun">.</span><span class="pln">allocator<wbr/></span><span class="pun">.</span><span class="pln">mallocator<wbr/></span><span class="pun">.</span><span class="typ">Mallocator</span></code>
 						</td>
-						<td>Default allcoator for <code class="lang-d"><span class="typ">SharedPtr<wbr/></span><span class="pun">.</span><span class="pln">make</span></code> and <code class="lang-d"><span class="typ">UniquePtr<wbr/></span><span class="pun">.</span><span class="pln">make</span></code>.
+						<td>Default allcoator for <code class="lang-d"><span class="typ">SharedPtr<wbr/></span><span class="pun">.</span><span class="pln">make</span></code>, <code class="lang-d"><span class="typ">RcPtr<wbr/></span><span class="pun">.</span><span class="pln">make</span></code>, <code class="lang-d"><span class="typ">UniquePtr<wbr/></span><span class="pun">.</span><span class="pln">make</span></code> and <code class="lang-d"><span class="typ">IntrusivePtr<wbr/></span><span class="pun">.</span><span class="pln">make</span></code>.
 </td>
 					</tr>
 					<tr>
@@ -199,7 +199,7 @@ $('#symbolSearchPane').show();</script>
 						<td>
 							<code class="prettyprint lang-d"><a href="../autoptr/common/MutableControlBlock.html"><span class="typ">MutableControlBlock</span></a>!(ControlBlock!(_Shared,_Weak))</code>
 						</td>
-						<td>Mutable intrusive control block, this control block can be modified even if is <code class="lang-d"><span class="kwd">const</span></code> / <code class="lang-d"><span class="kwd">immutable</span></code>.
+						<td>Mutable intrusive <code class="lang-d"><a href="../autoptr/common/ControlBlock.html"><span class="typ">ControlBlock</span></a></code>, this control block can be modified even if is <code class="lang-d"><span class="kwd">const</span></code> / <code class="lang-d"><span class="kwd">immutable</span></code>.
 </td>
 					</tr>
 					<tr>
