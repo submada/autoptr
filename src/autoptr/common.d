@@ -553,6 +553,51 @@ unittest{
 
 
 /**
+    Check if type `T` is of type `ControlBlock!(...)`.
+*/
+public template isMutableControlBlock(T...)
+if(T.length == 1){
+    import std.traits : Unqual;
+
+    enum bool isMutableControlBlock = is(
+        Unqual!(T[0]) == MutableControlBlock!Args, Args...
+    );
+}
+
+
+/**
+    TODO
+*/
+import std.traits : isIntegral;
+
+template MutableControlBlock(_Shared, _Weak = void)
+if(isIntegral!_Shared){
+    import std.traits : Unqual, isUnsigned, isIntegral, isMutable;
+
+    static assert(isIntegral!_Shared && !isUnsigned!_Shared || is(_Weak == void));
+    static assert(is(Unqual!_Shared == _Shared));
+
+    static assert((isIntegral!_Weak && !isUnsigned!_Weak) || is(_Weak == void));
+    static assert(is(Unqual!_Weak == _Weak));
+
+    alias MutableControlBlock = MutableControlBlock!(ControlBlock!(_Shared, _Weak));
+}
+
+template MutableControlBlock(_ControlType)
+if(isControlBlock!_ControlType){
+    import std.traits : isMutable;
+
+    static assert(isMutable!_ControlType);
+
+    struct MutableControlBlock{
+        public alias ControlType = _ControlType;
+
+        private ControlType control;
+    }
+}
+
+
+/**
     Return number of ControlBlocks in type `Type`.
 */
 public template isIntrusive(Type){
@@ -651,7 +696,7 @@ if(is(Type == struct)){
 }
 
 
-package template IntrusivControlBlock(Type, bool mutableControl = false)
+package template IntrusivControlBlock(Type)
 if(is(Type == class) || is(Type == struct)){
 
     static if(is(Type == class))
@@ -664,13 +709,7 @@ if(is(Type == class) || is(Type == struct)){
 
     import std.traits : CopyTypeQualifiers, PointerTarget, Unconst;
 
-    static if(mutableControl)
-        alias IntrusivControlBlock = CopyTypeQualifiers!(
-            PtrControlBlock, 
-            Unconst!(PointerTarget!PtrControlBlock)
-        );
-    else 
-        alias IntrusivControlBlock = PointerTarget!PtrControlBlock;
+    alias IntrusivControlBlock = PointerTarget!PtrControlBlock;
 }
 
 package template sharedIntrusiveControlBlock(Type)
@@ -688,7 +727,7 @@ if(is(Type == class) || is(Type == struct)){
 
 
 
-import std.traits : BaseClassesTuple, Unqual, CopyTypeQualifiers;
+import std.traits : BaseClassesTuple, Unqual, Unconst, CopyTypeQualifiers;
 import std.meta : AliasSeq;
 
 /*
@@ -706,6 +745,14 @@ package auto intrusivControlBlock(Type)(auto ref Type elm)pure nothrow @trusted 
                 return cast(CopyTypeQualifiers!(shared(void), Type*))&elm;
             else 
                 return &elm;
+        }
+        else static if(isMutableControlBlock!Type){
+            auto control = intrusivControlBlock(elm.control);
+
+            static if(is(Type == shared) || is(typeof(Unqual!Type.control) == shared))
+                return cast(shared(Unconst!(typeof(*control))*))control;
+            else
+                return cast(Unconst!(typeof(*control))*)control;
         }
         else{
             foreach(ref x; (*cast(Unqual!(typeof(elm))*)&elm).tupleof){
@@ -755,6 +802,99 @@ package auto intrusivControlBlock(Type)(auto ref Type elm)pure nothrow @trusted 
     else static assert(0, "no impl");
 
 }
+
+//control block
+unittest{
+    static struct Foo{
+        ControlBlock!int c;
+    }
+
+    static assert(is(
+        typeof(intrusivControlBlock(Foo.init)) == ControlBlock!int*
+    ));
+    static assert(is(
+        typeof(intrusivControlBlock(shared(Foo).init)) == shared ControlBlock!int*
+    ));
+    static assert(is(
+        typeof(intrusivControlBlock(const(Foo).init)) == const(ControlBlock!int)*
+    ));
+    static assert(is(
+        typeof(intrusivControlBlock(shared(const(Foo)).init)) == shared const(ControlBlock!int)*
+    ));
+    static assert(is(
+        typeof(intrusivControlBlock(immutable(Foo).init)) == immutable(ControlBlock!int)*
+    ));
+}
+
+//shared control block
+unittest{
+    static struct Foo{
+        shared ControlBlock!int c;
+    }
+
+    static assert(is(
+        typeof(intrusivControlBlock(Foo.init)) == shared ControlBlock!int*
+    ));
+    static assert(is(
+        typeof(intrusivControlBlock(shared(Foo).init)) == shared ControlBlock!int*
+    ));
+    static assert(is(
+        typeof(intrusivControlBlock(const(Foo).init)) == shared const(ControlBlock!int)*
+    ));
+    static assert(is(
+        typeof(intrusivControlBlock(shared(const(Foo)).init)) == shared const(ControlBlock!int)*
+    ));
+    static assert(is(
+        typeof(intrusivControlBlock(immutable(Foo).init)) == shared immutable(ControlBlock!int)*
+    ));
+}
+
+//mutable control block
+unittest{
+    static struct Foo{
+        MutableControlBlock!int c;
+    }
+
+    static assert(is(
+        typeof(intrusivControlBlock(Foo.init)) == ControlBlock!int*
+    ));
+    static assert(is(
+        typeof(intrusivControlBlock(shared(Foo).init)) == shared ControlBlock!int*
+    ));
+    static assert(is(
+        typeof(intrusivControlBlock(const(Foo).init)) == ControlBlock!int*
+    ));
+    static assert(is(
+        typeof(intrusivControlBlock(shared(const(Foo)).init)) == shared ControlBlock!int*
+    ));
+    static assert(is(
+        typeof(intrusivControlBlock(immutable(Foo).init)) == ControlBlock!int*
+    ));
+}
+
+//shared mutable control block
+unittest{
+    static struct Foo{
+        shared MutableControlBlock!int c;
+    }
+
+    static assert(is(
+        typeof(intrusivControlBlock(Foo.init)) == shared ControlBlock!int*
+    ));
+    static assert(is(
+        typeof(intrusivControlBlock(shared(Foo).init)) == shared ControlBlock!int*
+    ));
+    static assert(is(
+        typeof(intrusivControlBlock(const(Foo).init)) == shared ControlBlock!int*
+    ));
+    static assert(is(
+        typeof(intrusivControlBlock(shared(const(Foo)).init)) == shared ControlBlock!int*
+    ));
+    static assert(is(
+        typeof(intrusivControlBlock(immutable(Foo).init)) == shared ControlBlock!int*
+    ));
+}
+
 
 //Return offset of intrusive control block in Type.
 package size_t intrusivControlBlockOffset(Type)(){

@@ -99,9 +99,7 @@ unittest{
 
     `_Type` must contain one property of type `ControlBlock` (this property contains ref counting). If this property is `shared` then ref counting is atomic.
 
-    If `_Type` is const/immutable then ControlBlock cannot be modified => ref counting doesn't work and `IntrusivePtr` can be only moved. 
-    
-    If parameter `_mutableControl` is `true` then `const`/`immutable` qualifiers for intrusive control block in managed objects are ignored.
+    If `_Type` is const/immutable then ControlBlock cannot be modified => ref counting doesn't work and `IntrusivePtr` can be only moved.
 
     If multiple threads of execution access the same `IntrusivePtr` (`shared IntrusivePtr`) then only some methods can be called (`load`, `store`, `exchange`, `compareExchange`, `useCount`).
 
@@ -111,39 +109,25 @@ unittest{
 
         `_DestructorType` function pointer with attributes of destructor, to get attributes of destructor from type use `autoptr.common.DestructorType!T`. Destructor of type `_Type` must be compatible with `_DestructorType`
 
-        `_mutableControl` allow modify `const` / `immutable` intrusive control block
-
         `_weakPtr` if `true` then `IntrusivePtr` represent weak ptr
 
 */
 public template IntrusivePtr(
     _Type,
     _DestructorType = DestructorType!_Type,
-    bool _mutableControl = false,
     bool _weakPtr = false
 )
 if(isIntrusive!_Type && isDestructorType!_DestructorType){
     static assert(is(_Type == struct) || is(_Type == class));
     static assert(isIntrusive!_Type == 1);
 
-    alias _ControlType = IntrusivControlBlock!(_Type, _mutableControl);
+    alias _ControlType = IntrusivControlBlock!_Type;
 
     static assert(_ControlType.hasSharedCounter);
 
 
     static if(_weakPtr)
     static assert(_ControlType.hasWeakCounter);
-
-    /+static assert(!is(_Type == immutable),
-        "intrusive control block cannot be immutable."
-    );+/
-
-    /+static assert(!is(IntrusivControlBlock!_Type == immutable),
-        "intrusive control block cannot be immutable."
-    );+/
-
-
-
 
     static assert(is(DestructorType!void : _DestructorType),
         _Type.stringof ~ " wrong DestructorType " ~ DestructorType!void.stringof ~
@@ -172,8 +156,6 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
     enum bool hasWeakCounter = _ControlType.hasWeakCounter;
 
     enum bool hasSharedCounter = _ControlType.hasSharedCounter;
-
-    enum bool referenceElementType = isReferenceType!_Type;
 
     
     static assert(!is(_ControlType == immutable));
@@ -207,9 +189,9 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
 
         /**
-            TODO
+            `true` if `ElementType` has mutable intrusive control block even if `ElementType` is `const`/`immutable`.
         */
-        public enum bool mutableControl = _mutableControl;
+        public enum bool mutableControl = isMutable!(IntrusivControlBlock!(const ElementType));
 
 
         /**
@@ -248,7 +230,6 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         public alias WeakType = IntrusivePtr!(
             _Type,
             _DestructorType,
-            _mutableControl,
             true
         );
 
@@ -260,7 +241,6 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         public alias SharedType = IntrusivePtr!(
             _Type,
             _DestructorType,
-            _mutableControl,
             false
         );
 
@@ -1967,20 +1947,16 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                     static assert(is(typeof(y.get) == const long));
                     --------------------
             */
-            static if(referenceElementType)
+            static if(is(ElementType == class))
                 public @property inout(ElementType) get()inout scope return pure nothrow @system @nogc{
                     return this._element;
                 }
-            else static if(is(Unqual!ElementType == void))
-                /// ditto
-                public @property inout(ElementType) get()inout scope pure nothrow @system @nogc{
-                }
-            else
+            else static if(is(ElementType == struct))
                 /// ditto
                 public @property ref inout(ElementType) get()inout scope return pure nothrow @system @nogc{
                     return *cast(inout ElementType*)this._element;
                 }
-
+            else static assert(0, "no impl");
 
 
 
@@ -2369,7 +2345,7 @@ public template IntrusivePtr(
     _DestructorType = DestructorType!_Type
 )
 if(isIntrusive!_Type && isDestructorType!_DestructorType){
-    alias IntrusivePtr = .IntrusivePtr!(_Type, _DestructorType, _mutableControl, false);
+    alias IntrusivePtr = .IntrusivePtr!(_Type, _DestructorType, false);
 }
 
 /+
@@ -2730,12 +2706,12 @@ private{
 
         alias FromControlType = IntrusivControlBlock!(
             CopyTypeQualifiers!(From, From.ElementType), //GetElementReferenceType!From,
-            From.mutableControl
+            //From.mutableControl
         );
 
         alias ToControlType = IntrusivControlBlock!(
             CopyTypeQualifiers!(To, To.ElementType),    //GetElementReferenceType!To,
-            To.mutableControl
+            //To.mutableControl
         );
 
         enum bool isMovable = true
@@ -2752,10 +2728,8 @@ private{
         import std.traits : isMutable, CopyTypeQualifiers;
 
         static if(isMovable!(From, To)){
-            ///TODO restriction for const control blocks
             enum bool isCopyable = isMutable!(IntrusivControlBlock!(
-                CopyTypeQualifiers!(From, From.ElementType),    //GetElementReferenceType!From,
-                From.mutableControl
+                CopyTypeQualifiers!(From, From.ElementType)
             ));
         }
         else{
@@ -2774,7 +2748,6 @@ private{
             ResultType,
 
             Ptr.DestructorType,
-            Ptr.mutableControl,
             Ptr.weakPtr
         );
 
@@ -2867,7 +2840,7 @@ version(unittest){
 
 
         static struct Foo{
-            ControlBlock!(int, int) c;
+            MutableControlBlock!(int, int) c;
             int i;
 
             this(int i)pure nothrow @safe @nogc{
@@ -2877,7 +2850,7 @@ version(unittest){
 
         import std.meta : AliasSeq;
         static foreach(alias ControlType; AliasSeq!(SharedControlType, shared SharedControlType)){{
-            alias SPtr(T) = IntrusivePtr!(T, DestructorType!T, true);
+            alias SPtr(T) = IntrusivePtr!(T, DestructorType!T);
 
             //mutable:
             {
@@ -3095,7 +3068,7 @@ version(unittest){
     //opAssign(IntrusivePtr)
     pure nothrow @nogc unittest{
         static struct Foo{
-            ControlBlock!(int, int) c;
+            MutableControlBlock!(int, int) c;
             int i;
 
             this(int i)pure nothrow @safe @nogc{
@@ -3116,8 +3089,8 @@ version(unittest){
 
 
         {
-            IntrusivePtr!(Foo, true) px = IntrusivePtr!(Foo, true).make(1);
-            IntrusivePtr!(const Foo, true) pcx = IntrusivePtr!(Foo, true).make(2);
+            IntrusivePtr!(Foo) px = IntrusivePtr!(Foo).make(1);
+            IntrusivePtr!(const Foo) pcx = IntrusivePtr!(Foo).make(2);
 
             assert(px.useCount == 1);
             pcx = px;
@@ -3128,8 +3101,8 @@ version(unittest){
 
 
         {
-            const IntrusivePtr!(Foo, true) cpx = IntrusivePtr!(Foo, true).make(1);
-            IntrusivePtr!(const Foo, true) pcx = IntrusivePtr!(Foo, true).make(2);
+            const IntrusivePtr!(Foo) cpx = IntrusivePtr!(Foo).make(1);
+            IntrusivePtr!(const Foo) pcx = IntrusivePtr!(Foo).make(2);
 
             assert(pcx.useCount == 1);
             pcx = cpx;
@@ -3139,8 +3112,8 @@ version(unittest){
         }
 
         {
-            IntrusivePtr!(immutable Foo, true) pix = IntrusivePtr!(immutable Foo, true).make(123);
-            IntrusivePtr!(const Foo, true) pcx = IntrusivePtr!(Foo, true).make(2);
+            IntrusivePtr!(immutable Foo) pix = IntrusivePtr!(immutable Foo).make(123);
+            IntrusivePtr!(const Foo) pcx = IntrusivePtr!(Foo).make(2);
 
             assert(pix.useCount == 1);
             pcx = pix;
@@ -3381,7 +3354,7 @@ version(unittest){
     pure nothrow @nogc unittest{
         static class Foo{
             long i;
-            ControlBlock!(int, int) c;
+            MutableControlBlock!(int, int) c;
 
             this(long i)pure nothrow @safe @nogc{
                 this.i = i;
@@ -3399,9 +3372,9 @@ version(unittest){
         static foreach(enum bool weak; [true, false]){
             //fail
             {
-                IntrusivePtr!(Type, true) a = IntrusivePtr!(Type, true).make(123);
-                IntrusivePtr!(Type, true) b = IntrusivePtr!(Type, true).make(42);
-                IntrusivePtr!(Type, true) c = IntrusivePtr!(Type, true).make(666);
+                IntrusivePtr!Type a = IntrusivePtr!Type.make(123);
+                IntrusivePtr!Type b = IntrusivePtr!Type.make(42);
+                IntrusivePtr!Type c = IntrusivePtr!Type.make(666);
 
                 static if(weak)a.compareExchangeWeak(b, c);
                 else a.compareExchangeStrong(b, c);
@@ -3414,9 +3387,9 @@ version(unittest){
 
             //success
             {
-                IntrusivePtr!(Type, true) a = IntrusivePtr!(Type, true).make(123);
-                IntrusivePtr!(Type, true) b = a;
-                IntrusivePtr!(Type, true) c = IntrusivePtr!(Type, true).make(666);
+                IntrusivePtr!Type a = IntrusivePtr!Type.make(123);
+                IntrusivePtr!Type b = a;
+                IntrusivePtr!Type c = IntrusivePtr!Type.make(666);
 
                 static if(weak)a.compareExchangeWeak(b, c);
                 else a.compareExchangeStrong(b, c);
@@ -3428,9 +3401,9 @@ version(unittest){
 
             //shared fail
             {
-                shared IntrusivePtr!(shared Type, true) a = IntrusivePtr!(shared Type, true).make(123);
-                IntrusivePtr!(shared Type, true) b = IntrusivePtr!(shared Type, true).make(42);
-                IntrusivePtr!(shared Type, true) c = IntrusivePtr!(shared Type, true).make(666);
+                shared IntrusivePtr!(shared Type) a = IntrusivePtr!(shared Type).make(123);
+                IntrusivePtr!(shared Type) b = IntrusivePtr!(shared Type).make(42);
+                IntrusivePtr!(shared Type) c = IntrusivePtr!(shared Type).make(666);
 
                 static if(weak)a.compareExchangeWeak(b, c);
                 else a.compareExchangeStrong(b, c);
@@ -3443,9 +3416,9 @@ version(unittest){
 
             //shared success
             {
-                IntrusivePtr!(shared Type, true) b = IntrusivePtr!(shared Type, true).make(123);
-                shared IntrusivePtr!(shared Type, true) a = b;
-                IntrusivePtr!(shared Type, true) c = IntrusivePtr!(shared Type, true).make(666);
+                IntrusivePtr!(shared Type) b = IntrusivePtr!(shared Type).make(123);
+                shared IntrusivePtr!(shared Type) a = b;
+                IntrusivePtr!(shared Type) c = IntrusivePtr!(shared Type).make(666);
 
                 static if(weak)a.compareExchangeWeak(b, c);
                 else a.compareExchangeStrong(b, c);
@@ -3663,7 +3636,7 @@ version(unittest){
     //ctor
     pure nothrow @nogc @safe unittest{
         static struct Foo{
-            ControlBlock!(int, int) c;
+            MutableControlBlock!(int, int) c;
             int i;
 
             this(int i)pure nothrow @safe @nogc{
@@ -3672,19 +3645,19 @@ version(unittest){
         }
 
         {
-            IntrusivePtr!(Foo, true) x = IntrusivePtr!(Foo, true).make(123);
+            IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
             assert(x.useCount == 1);
 
-            IntrusivePtr!(Foo, true) a = x;         //lvalue copy ctor
+            IntrusivePtr!Foo a = x;         //lvalue copy ctor
             assert(a == x);
 
-            const IntrusivePtr!(Foo, true) b = x;   //lvalue copy ctor
+            const IntrusivePtr!Foo b = x;   //lvalue copy ctor
             assert(b == x);
 
-            IntrusivePtr!(const Foo, true) c = x; //lvalue ctor
+            IntrusivePtr!Foo c = x; //lvalue ctor
             assert(c == x);
 
-            const IntrusivePtr!(Foo, true) d = b;   //lvalue ctor
+            const IntrusivePtr!Foo d = b;   //lvalue ctor
             assert(d == x);
 
             assert(x.useCount == 5);
@@ -3692,19 +3665,19 @@ version(unittest){
 
         {
             import core.lifetime : move;
-            IntrusivePtr!(Foo, true) x = IntrusivePtr!(Foo, true).make(123);
+            IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
             assert(x.useCount == 1);
 
-            IntrusivePtr!(Foo, true) a = move(x);        //rvalue copy ctor
+            IntrusivePtr!Foo a = move(x);        //rvalue copy ctor
             assert(a.useCount == 1);
 
-            const IntrusivePtr!(Foo, true) b = move(a);  //rvalue copy ctor
+            const IntrusivePtr!Foo b = move(a);  //rvalue copy ctor
             assert(b.useCount == 1);
 
-            IntrusivePtr!(const Foo, true) c = b.load;  //rvalue ctor
+            IntrusivePtr!(const Foo) c = b.load;  //rvalue ctor
             assert(c.useCount == 2);
 
-            const IntrusivePtr!(Foo, true) d = move(c);  //rvalue ctor
+            const IntrusivePtr!Foo d = move(c);  //rvalue ctor
             assert(d.useCount == 2);
         }
 

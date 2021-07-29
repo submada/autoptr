@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="UTF-8"/>
-		<title>Alias IntrusivePtr.SharedType</title>
+		<title>Enum member isMutableControlBlock</title>
 		<link rel="stylesheet" type="text/css" href="../../styles/ddox.css"/>
 		<link rel="stylesheet" href="../../prettify/prettify.css" type="text/css"/>
 		<script type="text/javascript" src="../../scripts/jquery.js">/**/</script><script type="text/javascript" src="../../scripts/ddox.js">/**/</script>
@@ -25,12 +25,12 @@ $('#symbolSearchPane').show();</script>
 					</div>
 			<ul class="tree-view">
 				<li>
-					<div class="module ">
+					<div class="module selected">
 						<a href="../../autoptr/common.html">common</a>
 					</div>
 				</li>
 				<li>
-					<div class="module selected">
+					<div class="module ">
 						<a href="../../autoptr/intrusive_ptr.html">intrusive_ptr</a>
 					</div>
 				</li>
@@ -54,25 +54,13 @@ $('#symbolSearchPane').show();</script>
 			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>Alias IntrusivePtr.SharedType</h1><p>Type of non weak ptr (must have weak counter).
+			<h1>Enum member isMutableControlBlock</h1><p>Check if type <code class="lang-d"><span class="pln">T</span></code> is of type <code class="lang-d"><a href="../../autoptr/common/ControlBlock.html"><span class="typ">ControlBlock</span></a><span class="pun">!(...)</span></code>.
 </p>
 			<div class="prototype">
 				<code class="lang-d">
 					<div class="single-prototype">
-			<span class="kwd">struct</span> <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"><span class="typ">IntrusivePtr</span></a>
-			<br/>
-			<span class="pun">
-				{
-				<br/>
-			</span>
-			&nbsp;&nbsp;<span class="com">// ...</span>
-			<br/>
-			&nbsp;&nbsp;<span class="kwd">alias</span> <span class="pln">SharedType</span>
-			 <span class="pun">=</span> <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"><span class="typ">IntrusivePtr</span></a>!(_Type,_DestructorType,false)<span class="pun">;</span>
-			<br/>
-			&nbsp;&nbsp;<span class="com">// ...</span>
-			<br/>
-			<span class="pun">}</span>
+			<span class="kwd">enum</span> <span class="pln">isMutableControlBlock</span>(T...)
+			 <span class="pun">=</span> <span class="kwd">is</span><span class="pun">(</span><span class="typ">Unqual</span><span class="pun">!(</span><span class="pln">T</span><span class="pun">[</span><span class="lit">0</span><span class="pun">]) == </span><span class="typ">MutableControlBlock</span><span class="pun">!</span><span class="typ">Args</span><span class="pun">, </span><span class="typ">Args</span><span class="pun">...)</span><span class="pun">;</span>
 					</div>
 				</code>
 			</div>

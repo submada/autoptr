@@ -54,7 +54,7 @@ $('#symbolSearchPane').show();</script>
 			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>Enum member IntrusivePtr.mutableControl</h1><p>TODO
+			<h1>Enum member IntrusivePtr.mutableControl</h1><p><code class="lang-d"><span class="kwd">true</span></code> if <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.ElementType.html"><span class="typ">ElementType</span></a></code> has mutable intrusive control block even if <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.ElementType.html"><span class="typ">ElementType</span></a></code> is <code class="lang-d"><span class="kwd">const</span></code>/<code class="lang-d"><span class="kwd">immutable</span></code>.
 </p>
 			<div class="prototype">
 				<code class="lang-d">
@@ -68,7 +68,7 @@ $('#symbolSearchPane').show();</script>
 			&nbsp;&nbsp;<span class="com">// ...</span>
 			<br/>
 			&nbsp;&nbsp;<span class="kwd">enum</span> <span class="pln">mutableControl</span>
-			 <span class="pun">=</span> <span class="pln">_mutableControl</span><span class="pun">;</span>
+			 <span class="pun">=</span> <span class="pln">isMutable</span><span class="pun">!(</span><span class="typ">IntrusivControlBlock</span><span class="pun">!(</span><span class="kwd">const</span><span class="pun">(</span><span class="typ">ElementType</span><span class="pun">)))</span><span class="pun">;</span>
 			<br/>
 			&nbsp;&nbsp;<span class="com">// ...</span>
 			<br/>

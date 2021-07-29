@@ -14,6 +14,7 @@
 <url><loc>http://127.0.0.1/autoptr/common/isControlBlock.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/isDestructorType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/isIntrusive.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/common/isMutableControlBlock.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/ShallowDestructorType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/SharedControlType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/UniqueControlType.html</loc></url>
