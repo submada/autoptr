@@ -96,12 +96,12 @@ $('#symbolSearchPane').show();</script>
 
 <pre class="code"><code class="lang-d"><span class="kwd">import </span><span class="pln">core<wbr/></span><span class="pun">.</span><span class="pln">lifetime </span><span class="pun">: </span><span class="pln">move</span><span class="pun">;
 
-</span><span class="kwd">import <a href="../../autoptr/shared_ptr.html"></span><span class="pln">autoptr<wbr/></span><span class="pun">.</span><span class="pln">shared_ptr</span></a><span class="pln"> </span><span class="pun">: </span><span class="typ">SharedPtr</span><span class="pun">, </span><span class="typ">DefaultSharedControlBlock</span><span class="pun">;
+</span><span class="kwd">import <a href="../../autoptr/shared_ptr.html"></span><span class="pln">autoptr<wbr/></span><span class="pun">.</span><span class="pln">shared_ptr</span></a><span class="pln"> </span><span class="pun">: </span><span class="typ">SharedPtr</span><span class="pun">;
 
 </span><span class="kwd">alias </span><span class="typ">Uptr</span><span class="pun">(</span><span class="pln">T</span><span class="pun">) = <a href="../../autoptr/unique_ptr/UniquePtr.html"></span><span class="typ">UniquePtr</span></a><span class="pun">!(
     </span><span class="pln">T</span><span class="pun">,
     </span><span class="typ">DestructorType</span><span class="pun">!</span><span class="pln">T</span><span class="pun">,
-    </span><span class="kwd">shared </span><span class="typ">DefaultSharedControlBlock
+    </span><span class="kwd">shared </span><span class="typ">SharedControlType
 </span><span class="pun">);
 
 {

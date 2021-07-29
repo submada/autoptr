@@ -10,6 +10,7 @@ import std.stdio : writeln;
 import std.conv : to;
 
 import autoptr.internal.mallocator : Mallocator;
+import autoptr.internal.traits;
 
 import autoptr.common;
 import autoptr.unique_ptr : isUniquePtr, UniquePtr;
@@ -66,13 +67,6 @@ unittest{
 
 
 /**
-    Default `ControlBlock` for `SharedPtr`.
-*/
-public alias DefaultSharedControlBlock = ControlBlock!(int, int);
-
-
-
-/**
     `SharedPtr` is a smart pointer that retains shared ownership of an object through a pointer.
 
     Several `SharedPtr` objects may own the same object.
@@ -111,7 +105,7 @@ public alias DefaultSharedControlBlock = ControlBlock!(int, int);
 public template SharedPtr(
     _Type,
     _DestructorType = DestructorType!_Type,
-    _ControlType = ControlTypeDeduction!(_Type, DefaultSharedControlBlock),
+    _ControlType = ControlTypeDeduction!(_Type, SharedControlType),
     bool _weakPtr = false
 )
 if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
@@ -170,7 +164,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         supportGC
     );
 
-    alias MakeDeleter(DeleterType, AllocatorType, bool supportGC) = .SharedPtrMakeDeleter!(
+    alias MakeDeleter(DeleterType, AllocatorType, bool supportGC) = .MakeDeleter!(
         _Type, 
         _DestructorType, 
         _ControlType, 
@@ -214,7 +208,18 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
         /**
-            Type of weak ptr (must have weak counter).
+            Weak pointer
+
+            `SharedPtr.WeakType` is a smart pointer that holds a non-owning ("weak") reference to an object that is managed by `SharedPtr`.
+            It must be converted to `SharedPtr` in order to access the referenced object.
+
+            `SharedPtr.WeakType` models temporary ownership: when an object needs to be accessed only if it exists, and it may be deleted at any time by someone else,
+            `SharedPtr.WeakType` is used to track the object, and it is converted to `SharedPtr` to assume temporary ownership.
+            If the original `SharedPtr` is destroyed at this time, the object's lifetime is extended until the temporary `SharedPtr` is destroyed as well.
+
+            Another use for `SharedPtr.WeakType` is to break reference cycles formed by objects managed by `SharedPtr`.
+            If such cycle is orphaned (i,e. there are no outside shared pointers into the cycle), the `SharedPtr` reference counts cannot reach zero and the memory is leaked.
+            To prevent this, one of the pointers in the cycle can be made weak.
         */
         static if(hasWeakCounter && !weakPtr)
         public alias WeakType = SharedPtr!(
@@ -420,13 +425,13 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
                 {
                     import core.lifetime : move;
-                    auto u = UniquePtr!(long, DefaultSharedControlBlock).make(123);
+                    auto u = UniquePtr!(long, SharedControlType).make(123);
 
                     SharedPtr!long s = move(u);        //rvalue copy ctor
                     assert(s != null);
                     assert(s.useCount == 1);
 
-                    SharedPtr!long s2 = UniquePtr!(long, DefaultSharedControlBlock).init;
+                    SharedPtr!long s2 = UniquePtr!(long, SharedControlType).init;
                     assert(s2 == null);
                 }
 
@@ -1290,9 +1295,9 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
         /**
-            Returns the number of different `WeakPtr` instances
+            Returns the number of different `SharedPtr.WeakType` instances
 
-            Returns the number of different `WeakPtr` instances (`this` included) managing the current object or `0` if there is no managed object.
+            Returns the number of different `SharedPtr.WeakType` instances (`this` included) managing the current object or `0` if there is no managed object.
 
             Examples:
                 --------------------
@@ -1719,7 +1724,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
         /**
-            Creates a new non weak `SharedPtr` that shares ownership of the managed object (must be `WeakPtr`).
+            Creates a new non weak `SharedPtr` that shares ownership of the managed object (must be `SharedPtr.WeakType`).
 
             If there is no managed object, i.e. this is empty or this is `expired`, then the returned `SharedPtr` is empty.
             Method exists only if `SharedPtr` is `weakPtr`
@@ -1768,7 +1773,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
         /**
-            Equivalent to `useCount() == 0` (must be `WeakPtr`).
+            Equivalent to `useCount() == 0` (must be `SharedPtr.WeakType`).
 
             Method exists only if `SharedPtr` is `weakPtr`
 
@@ -2278,7 +2283,7 @@ pure nothrow @nogc unittest{
         assert(x.weakCount == 1);
         assert(*w.lock == 3.14);
 
-        WeakPtr!double w2 = x;
+        SharedPtr!double.WeakType w2 = x;
         assert(x.useCount == 1);
         assert(x.weakCount == 2);
 
@@ -2384,299 +2389,16 @@ nothrow unittest{
 }
 
 
-private template SharedPtrMakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, AllocatorType, bool supportGC){
-    alias AllocatorWithState = .AllocatorWithState!AllocatorType;
-
-    enum bool hasStatelessAllocator = (AllocatorWithState.length == 0);
-
-    static assert(false
-        || hasStatelessAllocator 
-        || isReferenceType!AllocatorType 
-        || is(.DestructorType!AllocatorType : _DestructorType),
-            "destructor of type '" ~ AllocatorType.stringof ~ 
-            "' doesn't support specified finalizer " ~ _DestructorType.stringof
-    );
-    static assert(false
-        || isReferenceType!DeleterType 
-        || is(.DestructorType!DeleterType : _DestructorType),
-            "destructor of type '" ~ DeleterType.stringof ~ 
-            "' doesn't support specified finalizer " ~ _DestructorType.stringof
-    );
-    
-    import std.traits: hasIndirections, isAbstractClass, isDynamicArray, Unqual;
-
-    enum bool hasWeakCounter = _ControlType.hasWeakCounter;
-
-    enum bool hasSharedCounter = _ControlType.hasSharedCounter;
-
-    enum bool allocatorGCRange = supportGC
-        && !hasStatelessAllocator
-        && hasIndirections!AllocatorType;
-
-    enum bool deleterGCRange = supportGC
-        && hasIndirections!DeleterType;
-
-    enum bool dataGCRange = supportGC;
-
-    alias Vtable = _ControlType.Vtable;
-
-    alias ElementReferenceType = ElementReferenceTypeImpl!_Type;
-
-    struct SharedPtrMakeDeleter{
-        static assert(control.offsetof == 0);
-
-        private _ControlType control;
-
-        static if(!hasStatelessAllocator)
-            private AllocatorType allocator;
-
-        private DeleterType deleter;
-        private ElementReferenceType data;
-
-        private static immutable Vtable vtable;
-
-        version(D_BetterC)
-            private static void shared_static_this()pure nothrow @trusted @nogc{
-                assumePure((){
-                    Vtable* vptr = cast(Vtable*)&vtable;
-                    
-                    static if(hasSharedCounter)
-                        vptr.on_zero_shared = &virtual_on_zero_shared;
-
-                    static if(hasWeakCounter)
-                        vptr.on_zero_weak = &virtual_on_zero_weak;
-
-                    vptr.manual_destroy = &virtual_manual_destroy;
-                })();
-
-            }
-        else
-            shared static this(){
-                static if(hasWeakCounter){
-                    vtable = Vtable(
-                        &virtual_on_zero_shared,
-                        &virtual_on_zero_weak,
-                        &virtual_manual_destroy
-                    );
-                }
-                else static if(hasSharedCounter){
-                    vtable = Vtable(
-                        &virtual_on_zero_shared,
-                        &virtual_manual_destroy
-                    );
-                }
-                else vtable = Vtable(
-                    &virtual_manual_destroy
-                );
-            }
-
-
-        public _ControlType* base()pure nothrow @safe @nogc{
-            return &this.control;
-        }
-
-        public alias get = data;
-
-
-        public static SharedPtrMakeDeleter* make
-            (Args...)
-            (ElementReferenceType data, DeleterType deleter, AllocatorWithState[0 .. $] a)
-        {
-            import std.traits: hasIndirections;
-            import core.lifetime : forward, emplace;
-
-            static assert(!isAbstractClass!_Type,
-                "cannot create object of abstract class" ~ Unqual!_Type.stringof
-            );
-            static assert(!is(_Type == interface),
-                "cannot create object of interface type " ~ Unqual!_Type.stringof
-            );
-
-
-            static if(hasStatelessAllocator)
-                void[] raw = statelessAllcoator!AllocatorType.allocate(typeof(this).sizeof);
-            else
-                void[] raw = a[0].allocate(typeof(this).sizeof);
-
-            if(raw.length == 0)
-                return null;
-
-
-            _log_ptr_allocate();
-
-            SharedPtrMakeDeleter* result = (()@trusted => cast(SharedPtrMakeDeleter*)raw.ptr)();
-
-            static if(allocatorGCRange){
-                static assert(supportGC);
-                static assert(typeof(this).data.offsetof >= typeof(this).deleter.offsetof);
-                static assert(typeof(this).deleter.offsetof >= typeof(this).allocator.offsetof);
-
-                static if(dataGCRange)
-                    enum size_t gc_range_size = typeof(this).data.offsetof
-                        - typeof(this).allocator.offsetof
-                        + typeof(this.data).sizeof;
-                else static if(deleterGCRange)
-                    enum size_t gc_range_size = typeof(this).deleter.offsetof
-                        - typeof(this).allocator.offsetof
-                        + typeof(this.deleter).sizeof;
-                else
-                    enum size_t gc_range_size = AllocatorType.sizeof;
-
-                gc_add_range(
-                    cast(void*)&result.allocator,
-                    gc_range_size
-                );
-            }
-            else static if(deleterGCRange){
-                static assert(supportGC);
-                static assert(!allocatorGCRange);
-                static assert(typeof(this).data.offsetof >= typeof(this).deleter.offsetof);
-
-                static if(dataGCRange)
-                    enum size_t gc_range_size = typeof(this).data.offsetof
-                        - typeof(this).deleter.offsetof
-                        + typeof(this.data).sizeof;
-                else
-                    enum size_t gc_range_size = _DeleterType.sizeof;
-
-                gc_add_range(
-                    cast(void*)&result.deleter,
-                    gc_range_size
-                );
-            }
-            else static if(dataGCRange){
-                static assert(supportGC);
-                static assert(!allocatorGCRange);
-                static assert(!deleterGCRange);
-
-                gc_add_range(
-                    &result.data,
-                    ElementReferenceType.sizeof
-                );
-            }
-
-            return emplace(result, forward!(deleter, a, data));
-        }
-
-
-        public this(Args...)(DeleterType deleter, AllocatorWithState[0 .. $] a, ElementReferenceType data){
-            import core.lifetime : forward, emplace;
-
-            _log_ptr_construct();
-
-            version(D_BetterC){
-                if(!vtable.initialized())
-                    shared_static_this();
-            }
-            else 
-                assert(vtable.initialized());
-                
-            this.control = _ControlType(&vtable);
-            assert(vtable.valid, "vtables are not initialized");
-
-            static if(!hasStatelessAllocator)
-                this.allocator = a[0];
-
-            this.deleter = forward!deleter;
-            this.data = data;
-        }
-
-
-        static if(hasSharedCounter){
-            public static void virtual_on_zero_shared(Unqual!_ControlType* control)pure nothrow @nogc @safe{
-                auto self = get_offset_this(control);
-                self.destruct();
-
-                static if(!hasWeakCounter)
-                    self.deallocate();
-            }
-        }
-
-        static if(hasWeakCounter){
-            public static void virtual_on_zero_weak(Unqual!_ControlType* control)pure nothrow @nogc @safe{
-                auto self = get_offset_this(control);
-                self.deallocate();
-            }
-        }
-
-        public static void virtual_manual_destroy(Unqual!_ControlType* control, bool dealocate)pure nothrow @nogc @safe{
-            auto self = get_offset_this(control);
-            self.destruct();
-            if(dealocate)
-                self.deallocate();
-
-        }
-        
-        private static inout(SharedPtrMakeDeleter)* get_offset_this(inout(Unqual!_ControlType)* control)pure nothrow @trusted @nogc{
-            assert(control !is null);
-            return cast(typeof(return))((cast(void*)control) - SharedPtrMakeDeleter.control.offsetof);
-        }
-
-        private void destruct()pure nothrow @trusted @nogc{
-            assumePureNoGcNothrow((ref DeleterType deleter, ElementReferenceType data){
-                deleter(data);
-            })(this.deleter, this.data);
-
-            static if(!allocatorGCRange && !deleterGCRange && dataGCRange){
-                static assert(supportGC);
-
-                gc_remove_range(&this.data);
-            }
-
-            _log_ptr_destruct();
-        }
-
-        private void deallocate()pure nothrow @trusted @nogc{
-            void* self = cast(void*)&this;
-            _destruct!(typeof(this), DestructorType!void)(self);
-
-
-            void[] raw = self[0 .. typeof(this).sizeof];
-
-
-            static if(hasStatelessAllocator)
-                assumePureNoGcNothrow(function(void[] raw)@trusted => statelessAllcoator!AllocatorType.deallocate(raw))(raw);
-            else
-                assumePureNoGcNothrow(function(void[] raw, ref typeof(this.allocator) allo)@trusted => allo.deallocate(raw))(raw, this.allocator);
-
-
-
-            static if(allocatorGCRange){
-                static assert(supportGC);
-
-                gc_remove_range(&this.allocator);
-            }
-            else static if(deleterGCRange){
-                static assert(supportGC);
-                static assert(!allocatorGCRange);
-
-                gc_remove_range(&this.deleter);
-            }
-
-            _log_ptr_deallocate();
-        }
-    }
-}
-
 
 /**
-    Weak pointer
+    Weak pointer.
 
-    `WeakPtr` is a smart pointer that holds a non-owning ("weak") reference to an object that is managed by `SharedPtr`.
-    It must be converted to `SharedPtr` in order to access the referenced object.
-
-    `WeakPtr` models temporary ownership: when an object needs to be accessed only if it exists, and it may be deleted at any time by someone else,
-    `WeakPtr` is used to track the object, and it is converted to `SharedPtr` to assume temporary ownership.
-    If the original `SharedPtr` is destroyed at this time, the object's lifetime is extended until the temporary `SharedPtr` is destroyed as well.
-
-    Another use for `WeakPtr` is to break reference cycles formed by objects managed by `SharedPtr`.
-    If such cycle is orphaned (i,e. there are no outside shared pointers into the cycle), the `SharedPtr` reference counts cannot reach zero and the memory is leaked.
-    To prevent this, one of the pointers in the cycle can be made weak.
+    Alias to `SharedPtr.WeakType`.
 */
 public template WeakPtr(
     _Type,
     _DestructorType = DestructorType!_Type,
-    _ControlType = ControlTypeDeduction!(_Type, DefaultSharedControlBlock),
+    _ControlType = ControlTypeDeduction!(_Type, SharedControlType),
 )
 if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
     alias WeakPtr = .SharedPtr!(_Type, _DestructorType, _ControlType, true);
@@ -3047,7 +2769,7 @@ version(unittest){
 
         import std.meta : AliasSeq;
         //alias Test = long;
-        static foreach(alias ControlType; AliasSeq!(DefaultSharedControlBlock, shared DefaultSharedControlBlock)){{
+        static foreach(alias ControlType; AliasSeq!(SharedControlType, shared SharedControlType)){{
             alias SPtr(T) = SharedPtr!(T, DestructorType!T, ControlType);
 
             //mutable:
@@ -3954,13 +3676,13 @@ version(unittest){
 
         {
             import core.lifetime : move;
-            auto u = UniquePtr!(long, DefaultSharedControlBlock).make(123);
+            auto u = UniquePtr!(long, SharedControlType).make(123);
 
             SharedPtr!long s = move(u);        //rvalue copy ctor
             assert(s != null);
             assert(s.useCount == 1);
 
-            SharedPtr!long s2 = UniquePtr!(long, DefaultSharedControlBlock).init;
+            SharedPtr!long s2 = UniquePtr!(long, SharedControlType).init;
             assert(s2 == null);
 
         }

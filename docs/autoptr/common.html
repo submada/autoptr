@@ -59,24 +59,6 @@ $('#symbolSearchPane').show();</script>
 
 			<section></section>
 			<section>
-				<h2>Functions</h2>
-				<table>
-					<col class="caption"/>
-					<tr>
-						<th>Name</th><th>Description</th>
-					</tr>
-					<tr>
-						<td>
-							<code>
-								<a id="isIntrusive" class="public" href="../autoptr/common/isIntrusive.html">isIntrusive</a><span class="tableEntryAnnotation">()</span>
-							</code>
-						</td>
-						<td>Return number of ControlBlocks in type <code class="lang-d"><span class="typ">Type</span></code>.
-</td>
-					</tr>
-				</table>
-			</section>
-			<section>
 				<h2>Structs</h2>
 				<table>
 					<col class="caption"/>
@@ -130,6 +112,17 @@ $('#symbolSearchPane').show();</script>
 						<td>
 						</td>
 						<td>Check if type <code class="lang-d"><span class="typ">Type</span></code> is of type destructor type (is(void function(Evoid* )pure nothrow @safe @nogc : Type))
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a id="isIntrusive" class="public" href="../autoptr/common/isIntrusive.html">
+								<code>isIntrusive</code>
+							</a>
+						</td>
+						<td>
+						</td>
+						<td>Return number of ControlBlocks in type <code class="lang-d"><span class="typ">Type</span></code>.
 </td>
 					</tr>
 				</table>
@@ -187,6 +180,30 @@ $('#symbolSearchPane').show();</script>
 							<code class="prettyprint lang-d"><span class="typ">Get</span>!(typeof(functionvoid(Evoid*){staticforeach(aliasType;Types){staticif(is(Unqual!Type==void)){}else{staticif(is(Type==class)){}else{staticif(isDynamicArray!Type){}else{staticif(is(voidfunction(Evoid*)purenothrow@nogc@safe:Unqual!Type)){{Unqual!Typefn;fn(null);}}else{{Unqual!Typetmp;}}}}}}}))</code>
 						</td>
 						<td>Same as <code class="lang-d"><a href="../autoptr/common/DestructorType.html"><span class="typ">DestructorType</span></a></code> but ignore classes and slices.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a id="SharedControlType" class="public" href="../autoptr/common/SharedControlType.html">
+								<code>SharedControlType</code>
+							</a>
+						</td>
+						<td>
+							<code class="prettyprint lang-d"><a href="../autoptr/common/ControlBlock.html"><span class="typ">ControlBlock</span></a>!(int,int)</code>
+						</td>
+						<td>Default <code class="lang-d"><a href="../autoptr/common/ControlBlock.html"><span class="typ">ControlBlock</span></a></code> for <code class="lang-d"><span class="typ">SharedPtr</span></code> and <code class="lang-d"><span class="typ">RcPtr</span></code>.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a id="UniqueControlType" class="public" href="../autoptr/common/UniqueControlType.html">
+								<code>UniqueControlType</code>
+							</a>
+						</td>
+						<td>
+							<code class="prettyprint lang-d"><a href="../autoptr/common/ControlBlock.html"><span class="typ">ControlBlock</span></a>!(void,void)</code>
+						</td>
+						<td>Default <code class="lang-d"><a href="../autoptr/common/ControlBlock.html"><span class="typ">ControlBlock</span></a></code> for <code class="lang-d"><span class="typ">UniquePtr</span></code>.
 </td>
 					</tr>
 				</table>

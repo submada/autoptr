@@ -7,6 +7,7 @@
 module autoptr.intrusive_ptr;
 
 import autoptr.internal.mallocator : Mallocator;
+import autoptr.internal.traits;
 
 import autoptr.common;
 import autoptr.unique_ptr : isUniquePtr, UniquePtr;
@@ -77,22 +78,6 @@ unittest{
 
 
 /**
-    Default `ControlBlock` for `IntrusivePtr`.
-*/
-public alias DefaultRcControlBlock = ControlBlock!(int, int);
-
-/+
-/**
-    TODO
-*/
-enum IntrusiveControl{
-    Auto        = 0,
-    Mutable     = 1,    //control block is mutable (ignore const qualifiers)
-    Shareable   = 2,    //same as Mutable but immutable qualifier is transformed to shared
-}+/
-
-
-/**
     `IntrusivePtr` is a smart pointer that retains shared ownership of an object through a pointer.
 
     Several `IntrusivePtr` objects may own the same object.
@@ -110,8 +95,11 @@ enum IntrusiveControl{
 
     A `IntrusivePtr` may also own no objects, in which case it is called empty.
 
-    If template parameter `_ControlType` is `shared`  then all member functions (including copy constructor and copy assignment)
-    can be called by multiple threads on different instances of `IntrusivePtr` without additional synchronization even if these instances are copies and share ownership of the same object.
+    `_Type` must contain one property of type `ControlBlock` (this property contains ref counting). If this property is `shared` then ref counting is atomic.
+
+    If `_Type` is const/immutable then ControlBlock cannot be modified => ref counting doesn't work and `IntrusivePtr` can be only moved. 
+    
+    If parameter `_mutableControl` is `true` then `const`/`immutable` qualifiers for intrusive control block in managed objects are ignored.
 
     If multiple threads of execution access the same `IntrusivePtr` (`shared IntrusivePtr`) then only some methods can be called (`load`, `store`, `exchange`, `compareExchange`, `useCount`).
 
@@ -121,7 +109,7 @@ enum IntrusiveControl{
 
         `_DestructorType` function pointer with attributes of destructor, to get attributes of destructor from type use `autoptr.common.DestructorType!T`. Destructor of type `_Type` must be compatible with `_DestructorType`
 
-        `_ControlType` represent type of counter, must by of type `autoptr.common.ControlBlock`. if is shared then ref counting is atomic.
+        `_mutableControl` allow modify `const` / `immutable` intrusive control block
 
         `_weakPtr` if `true` then `IntrusivePtr` represent weak ptr
 
@@ -187,10 +175,9 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
     
     static assert(!is(_ControlType == immutable));
-    alias MakeEmplace(AllocatorType, bool supportGC) = .MakeEmplace!(
+    alias MakeIntrusive(AllocatorType, bool supportGC) = .MakeIntrusive!(
         _Type,
         _DestructorType,
-        Unconst!_ControlType,   ///TODO what with immutable?
         AllocatorType,
         supportGC
     );
@@ -242,7 +229,18 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
 
         /**
-            Type of weak ptr (must have weak counter).
+            Weak pointer
+
+            `IntrusivePtr.WeakType` is a smart pointer that holds a non-owning ("weak") reference to an object that is managed by `IntrusivePtr`.
+            It must be converted to `IntrusivePtr` in order to access the referenced object.
+
+            `IntrusivePtr.WeakType` models temporary ownership: when an object needs to be accessed only if it exists, and it may be deleted at any time by someone else,
+            `IntrusivePtr.WeakType` is used to track the object, and it is converted to `IntrusivePtr` to assume temporary ownership.
+            If the original `IntrusivePtr` is destroyed at this time, the object's lifetime is extended until the temporary `IntrusivePtr` is destroyed as well.
+
+            Another use for `IntrusivePtr.WeakType` is to break reference cycles formed by objects managed by `IntrusivePtr`.
+            If such cycle is orphaned (i,e. there are no outside shared pointers into the cycle), the `IntrusivePtr` reference counts cannot reach zero and the memory is leaked.
+            To prevent this, one of the pointers in the cycle can be made weak.
         */
         static if(hasWeakCounter && !weakPtr)
         public alias WeakType = IntrusivePtr!(
@@ -1175,7 +1173,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             import core.lifetime : forward;
 
-            auto m = MakeEmplace!(AllocatorType, supportGC).make(forward!(args));
+            auto m = MakeIntrusive!(AllocatorType, supportGC).make(forward!(args));
 
             if(m is null)
                 return typeof(return).init;
@@ -1249,7 +1247,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             import core.lifetime : forward;
 
-            auto m = MakeEmplace!(AllocatorType, supportGC).make(forward!(a, args));
+            auto m = MakeIntrusive!(AllocatorType, supportGC).make(forward!(a, args));
 
             if(m is null)
                 return typeof(return).init;
@@ -1315,9 +1313,9 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
 
         /**
-            Returns the number of different `WeakIntrusivePtr` instances
+            Returns the number of different `IntrusivePtr.WeakType` instances
 
-            Returns the number of different `WeakIntrusivePtr` instances (`this` included) managing the current object or `0` if there is no managed object.
+            Returns the number of different `IntrusivePtr.WeakType` instances (`this` included) managing the current object or `0` if there is no managed object.
 
             Examples:
                 --------------------
@@ -1853,7 +1851,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
 
         /**
-            Creates a new non weak `IntrusivePtr` that shares ownership of the managed object (must be `WeakIntrusivePtr`).
+            Creates a new non weak `IntrusivePtr` that shares ownership of the managed object (must be `IntrusivePtr.WeakType`).
 
             If there is no managed object, i.e. this is empty or this is `expired`, then the returned `IntrusivePtr` is empty.
             Method exists only if `IntrusivePtr` is `weakPtr`
@@ -1903,7 +1901,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
 
         /**
-            Equivalent to `useCount() == 0` (must be `WeakIntrusivePtr`).
+            Equivalent to `useCount() == 0` (must be `IntrusivePtr.WeakType`).
 
             Method exists only if `IntrusivePtr` is `weakPtr`
 
@@ -2601,41 +2599,6 @@ unittest{
 
 
 /**
-    Weak pointer
-
-    `WeakIntrusivePtr` is a smart pointer that holds a non-owning ("weak") reference to an object that is managed by `SharedPtr`.
-    It must be converted to `SharedPtr` in order to access the referenced object.
-
-    `WeakIntrusivePtr` models temporary ownership: when an object needs to be accessed only if it exists, and it may be deleted at any time by someone else,
-    `WeakIntrusivePtr` is used to track the object, and it is converted to `SharedPtr` to assume temporary ownership.
-    If the original `SharedPtr` is destroyed at this time, the object's lifetime is extended until the temporary `SharedPtr` is destroyed as well.
-
-    Another use for `WeakIntrusivePtr` is to break reference cycles formed by objects managed by `SharedPtr`.
-    If such cycle is orphaned (i,e. there are no outside shared pointers into the cycle), the `SharedPtr` reference counts cannot reach zero and the memory is leaked.
-    To prevent this, one of the pointers in the cycle can be made weak.
-*/
-public template WeakIntrusivePtr(
-    _Type,
-    _DestructorType = DestructorType!_Type,
-    _ControlType = ControlTypeDeduction!(_Type, DefaultRcControlBlock),
-)
-if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
-    alias WeakIntrusivePtr = .IntrusivePtr!(_Type, _DestructorType, _ControlType, true);
-}
-
-/// ditto
-public template WeakIntrusivePtr(
-    _Type,
-    _ControlType,
-    _DestructorType = DestructorType!_Type,
-)
-if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
-    alias WeakIntrusivePtr = .IntrusivePtr!(_Type, _DestructorType, _ControlType, true);
-}
-
-
-
-/**
     Return `shared IntrusivePtr` pointing to same managed object like parameter `ptr`.
 
     Type of parameter `ptr` must be `IntrusivePtr` with `shared(ControlType)` and `shared`/`immutable` `ElementType` .
@@ -2763,39 +2726,40 @@ private{
             enum bool aliasable = false;
         
 
+        alias FromControlType = IntrusivControlBlock!(
+            CopyTypeQualifiers!(From, From.ElementType), //GetElementReferenceType!From,
+            From.mutableControl
+        );
+
+        alias ToControlType = IntrusivControlBlock!(
+            CopyTypeQualifiers!(To, To.ElementType),    //GetElementReferenceType!To,
+            To.mutableControl
+        );
+
         enum bool isMovable = true
             && aliasable
             //&& isOverlapable!(From.ElementType, To.ElementType) //&& is(Unqual!(From.ElementType) == Unqual!(To.ElementType))
             //&& is(FromPtr : ToPtr)
             && is(From.DestructorType : To.DestructorType)
-            && is(From.ControlType : To.ControlType)
+            && is(FromControlType : ToControlType)
             && (From.mutableControl == To.mutableControl);
     }
 
     template isCopyable(From, To)
     if(isIntrusivePtr!From && isIntrusivePtr!To){
-        import std.traits : isMutable;
+        import std.traits : isMutable, CopyTypeQualifiers;
 
         static if(isMovable!(From, To)){
             ///TODO restriction for const control blocks
-            enum bool isCopyable = true;
+            enum bool isCopyable = isMutable!(IntrusivControlBlock!(
+                CopyTypeQualifiers!(From, From.ElementType),    //GetElementReferenceType!From,
+                From.mutableControl
+            ));
         }
         else{
             enum bool isCopyable = false;
         }
-        
     }
-
-    //alias isMovable = isConstructable;
-
-    /+template isAssignable(From, To)
-    if(isIntrusivePtr!From && isIntrusivePtr!To){
-        import std.traits : isMutable;
-
-        enum bool isAssignable = true
-            && isConstructable!(From, To)
-            && isMutable!To;
-    }+/
 
     template ChangeElementType(Ptr, T)
     if(isIntrusivePtr!Ptr){
@@ -2910,7 +2874,7 @@ version(unittest){
         }
 
         import std.meta : AliasSeq;
-        static foreach(alias ControlType; AliasSeq!(DefaultRcControlBlock, shared DefaultRcControlBlock)){{
+        static foreach(alias ControlType; AliasSeq!(SharedControlType, shared SharedControlType)){{
             alias SPtr(T) = IntrusivePtr!(T, DestructorType!T, true);
 
             //mutable:

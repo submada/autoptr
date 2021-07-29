@@ -15,8 +15,9 @@
 <url><loc>http://127.0.0.1/autoptr/common/isDestructorType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/isIntrusive.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/ShallowDestructorType.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/common/SharedControlType.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/common/UniqueControlType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/intrusive_ptr/DefaultRcControlBlock.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/dynCast.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/dynCast.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.html</loc></url>
@@ -73,10 +74,7 @@
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/isValidIntrusivePtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/share.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/validateIntrusivePtr.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/intrusive_ptr/WeakIntrusivePtr.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/intrusive_ptr/WeakIntrusivePtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/rc_ptr/DefaultRcControlBlock.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/dynCast.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/dynCast.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/isRcPtr.html</loc></url>
@@ -133,10 +131,7 @@
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/share.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/validateRcPtr.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/rc_ptr/WeakRcPtr.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/rc_ptr/WeakRcPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/shared_ptr/DefaultSharedControlBlock.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/dynCast.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/isSharedPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/isValidSharedPtr.html</loc></url>
@@ -200,7 +195,6 @@
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/WeakPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/WeakPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/unique_ptr.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/unique_ptr/DefaultUniqueControlBlock.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/unique_ptr/dynCast.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/unique_ptr/dynCastMove.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/unique_ptr/first.html</loc></url>

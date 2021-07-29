@@ -93,8 +93,13 @@ $('#symbolSearchPane').show();</script>
 <p>    A <code class="lang-d"><span class="typ">IntrusivePtr</span></code> may also own no objects, in which case it is called empty.
 </p>
 
-<p>    If template parameter <code class="lang-d"><span class="pln">_ControlType</span></code> is <code class="lang-d"><span class="kwd">shared</span></code>  then all member functions (including copy constructor and copy assignment)
-    can be called by multiple threads on different instances of <code class="lang-d"><span class="typ">IntrusivePtr</span></code> without additional synchronization even if these instances are copies and share ownership of the same object.
+<p>    <code class="lang-d"><span class="pln">_Type</span></code> must contain one property of type <code class="lang-d"><span class="typ">ControlBlock</span></code> (this property contains ref counting). If this property is <code class="lang-d"><span class="kwd">shared</span></code> then ref counting is atomic.
+</p>
+
+<p>    If <code class="lang-d"><span class="pln">_Type</span></code> is const/immutable then ControlBlock cannot be modified =&gt; ref counting doesn't work and <code class="lang-d"><span class="typ">IntrusivePtr</span></code> can be only moved.
+</p>
+
+<p>    If parameter <code class="lang-d"><span class="pln">_mutableControl</span></code> is <code class="lang-d"><span class="kwd">true</span></code> then <code class="lang-d"><span class="kwd">const</span></code>/<code class="lang-d"><span class="kwd">immutable</span></code> qualifiers for intrusive control block in managed objects are ignored.
 </p>
 
 <p>    If multiple threads of execution access the same <code class="lang-d"><span class="typ">IntrusivePtr</span></code> (<code class="lang-d"><span class="kwd">shared </span><span class="typ">IntrusivePtr</span></code>) then only some methods can be called (<code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.load.html"><span class="pln">load</span></a></code>, <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.store.html"><span class="pln">store</span></a></code>, <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.exchange.html"><span class="pln">exchange</span></a></code>, <code class="lang-d"><span class="pln">compareExchange</span></code>, <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.useCount.html"><span class="pln">useCount</span></a></code>).
@@ -109,7 +114,7 @@ $('#symbolSearchPane').show();</script>
 <p>        <code class="lang-d"><span class="pln">_DestructorType</span></code> function pointer with attributes of destructor, to get attributes of destructor from type use <code class="lang-d"><a href="../../autoptr/common/DestructorType.html" title="autoptr.common.DestructorType"><span class="typ">DestructorType</span></a><span class="pun">!</span><span class="pln">T</span></code>. Destructor of type <code class="lang-d"><span class="pln">_Type</span></code> must be compatible with <code class="lang-d"><span class="pln">_DestructorType</span></code>
 </p>
 
-<p>        <code class="lang-d"><span class="pln">_ControlType</span></code> represent type of counter, must by of type <code class="lang-d"><a href="../../autoptr/common/ControlBlock.html" title="autoptr.common.ControlBlock"><span class="typ">ControlBlock</span></a></code>. if is shared then ref counting is atomic.
+<p>        <code class="lang-d"><span class="pln">_mutableControl</span></code> allow modify <code class="lang-d"><span class="kwd">const</span></code> / <code class="lang-d"><span class="kwd">immutable</span></code> intrusive control block
 </p>
 
 <p>        <code class="lang-d"><span class="pln">_weakPtr</span></code> if <code class="lang-d"><span class="kwd">true</span></code> then <code class="lang-d"><span class="typ">IntrusivePtr</span></code> represent weak ptr
@@ -161,7 +166,7 @@ $('#symbolSearchPane').show();</script>
 						<td>
 							<a href="../../autoptr/intrusive_ptr/IntrusivePtr.expired.html" class="public property"><code>expired</code></a><span class="tableEntryAnnotation">[get]</span>
 						</td>
-						<td class="typecol"><code class="prettyprint lang-d"><span class="typ">bool</span></code></td><td>Equivalent to <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.useCount.html"><span class="pln">useCount</span></a><span class="pun">() == </span><span class="lit">0</span></code> (must be <code class="lang-d"><a href="../../autoptr/intrusive_ptr/WeakIntrusivePtr.html"><span class="typ">WeakIntrusivePtr</span></a></code>).
+						<td class="typecol"><code class="prettyprint lang-d"><span class="typ">bool</span></code></td><td>Equivalent to <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.useCount.html"><span class="pln">useCount</span></a><span class="pun">() == </span><span class="lit">0</span></code> (must be <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.WeakType.html"><span class="typ">IntrusivePtr<wbr/></span><span class="pun">.</span><span class="typ">WeakType</span></a></code>).
 </td>
 					</tr>
 					<tr>
@@ -196,7 +201,7 @@ $('#symbolSearchPane').show();</script>
 						<td>
 							<a href="../../autoptr/intrusive_ptr/IntrusivePtr.weakCount.html" class="public property"><code>weakCount</code></a><span class="tableEntryAnnotation">[get]</span>
 						</td>
-						<td class="typecol"><code class="prettyprint lang-d"><span class="typ">ControlType<wbr/></span><span class="pun">.</span><span class="typ">Weak</span></code></td><td>Returns the number of different <code class="lang-d"><a href="../../autoptr/intrusive_ptr/WeakIntrusivePtr.html"><span class="typ">WeakIntrusivePtr</span></a></code> instances
+						<td class="typecol"><code class="prettyprint lang-d"><span class="typ">ControlType<wbr/></span><span class="pun">.</span><span class="typ">Weak</span></code></td><td>Returns the number of different <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.WeakType.html"><span class="typ">IntrusivePtr<wbr/></span><span class="pun">.</span><span class="typ">WeakType</span></a></code> instances
 </td>
 					</tr>
 				</table>
@@ -264,7 +269,7 @@ $('#symbolSearchPane').show();</script>
 							</a>
 							<span class="tableEntryAnnotation">()</span>
 						</td>
-						<td>Creates a new non weak <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"><span class="typ">IntrusivePtr</span></a></code> that shares ownership of the managed object (must be <code class="lang-d"><a href="../../autoptr/intrusive_ptr/WeakIntrusivePtr.html"><span class="typ">WeakIntrusivePtr</span></a></code>).
+						<td>Creates a new non weak <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"><span class="typ">IntrusivePtr</span></a></code> that shares ownership of the managed object (must be <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.WeakType.html"><span class="typ">IntrusivePtr<wbr/></span><span class="pun">.</span><span class="typ">WeakType</span></a></code>).
 </td>
 					</tr>
 					<tr>
@@ -455,7 +460,7 @@ $('#symbolSearchPane').show();</script>
 								<code>WeakType</code>
 							</a>
 						</td>
-						<td>Type of weak ptr (must have weak counter).
+						<td>Weak pointer
 </td>
 					</tr>
 				</table>

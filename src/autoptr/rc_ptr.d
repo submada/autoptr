@@ -7,6 +7,7 @@
 module autoptr.rc_ptr;
 
 import autoptr.internal.mallocator : Mallocator;
+import autoptr.internal.traits;
 
 import autoptr.common;
 import autoptr.unique_ptr : isUniquePtr, UniquePtr;
@@ -61,14 +62,6 @@ unittest{
 
 
 /**
-    Default `ControlBlock` for `RcPtr`.
-*/
-public alias DefaultRcControlBlock = ControlBlock!(int, int);
-
-
-
-
-/**
     `RcPtr` is a smart pointer that retains shared ownership of an object through a pointer.
 
     Several `RcPtr` objects may own the same object.
@@ -105,7 +98,7 @@ public alias DefaultRcControlBlock = ControlBlock!(int, int);
 public template RcPtr(
     _Type,
     _DestructorType = DestructorType!_Type,
-    _ControlType = ControlTypeDeduction!(_Type, DefaultRcControlBlock),
+    _ControlType = ControlTypeDeduction!(_Type, SharedControlType),
     bool _weakPtr = false
 )
 if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
@@ -200,7 +193,18 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
         /**
-            Type of weak ptr (must have weak counter).
+            Weak pointer
+
+            `RcPtr.WeakType` is a smart pointer that holds a non-owning ("weak") reference to an object that is managed by `RcPtr`.
+            It must be converted to `RcPtr` in order to access the referenced object.
+
+            `RcPtr.WeakType` models temporary ownership: when an object needs to be accessed only if it exists, and it may be deleted at any time by someone else,
+            `RcPtr.WeakType` is used to track the object, and it is converted to `RcPtr` to assume temporary ownership.
+            If the original `RcPtr` is destroyed at this time, the object's lifetime is extended until the temporary `RcPtr` is destroyed as well.
+
+            Another use for `RcPtr.WeakType` is to break reference cycles formed by objects managed by `RcPtr`.
+            If such cycle is orphaned (i,e. there are no outside shared pointers into the cycle), the `RcPtr` reference counts cannot reach zero and the memory is leaked.
+            To prevent this, one of the pointers in the cycle can be made weak.
         */
         static if(hasWeakCounter && !weakPtr)
         public alias WeakType = RcPtr!(
@@ -371,13 +375,13 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
                 {
                     import core.lifetime : move;
-                    auto u = UniquePtr!(long, DefaultRcControlBlock).make(123);
+                    auto u = UniquePtr!(long, SharedControlType).make(123);
 
                     RcPtr!long s = move(u);        //rvalue copy ctor
                     assert(s != null);
                     assert(s.useCount == 1);
 
-                    RcPtr!long s2 = UniquePtr!(long, DefaultRcControlBlock).init;
+                    RcPtr!long s2 = UniquePtr!(long, SharedControlType).init;
                     assert(s2 == null);
                 }
                 --------------------
@@ -1158,9 +1162,9 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
         /**
-            Returns the number of different `WeakRcPtr` instances
+            Returns the number of different `RcPtr.WeakType` instances
 
-            Returns the number of different `WeakRcPtr` instances (`this` included) managing the current object or `0` if there is no managed object.
+            Returns the number of different `RcPtr.WeakType` instances (`this` included) managing the current object or `0` if there is no managed object.
 
             Examples:
                 --------------------
@@ -1675,7 +1679,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
         /**
-            Creates a new non weak `RcPtr` that shares ownership of the managed object (must be `WeakRcPtr`).
+            Creates a new non weak `RcPtr` that shares ownership of the managed object (must be `RcPtr.WeakType`).
 
             If there is no managed object, i.e. this is empty or this is `expired`, then the returned `RcPtr` is empty.
             Method exists only if `RcPtr` is `weakPtr`
@@ -1724,7 +1728,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
         /**
-            Equivalent to `useCount() == 0` (must be `WeakRcPtr`).
+            Equivalent to `useCount() == 0` (must be `RcPtr.WeakType`).
 
             Method exists only if `RcPtr` is `weakPtr`
 
@@ -2236,7 +2240,7 @@ pure nothrow @nogc unittest{
         assert(x.weakCount == 1);
         assert(*w.lock == 3.14);
 
-        WeakRcPtr!double w2 = x;
+        RcPtr!double.WeakType w2 = x;
         assert(x.useCount == 1);
         assert(x.weakCount == 2);
 
@@ -2427,41 +2431,6 @@ unittest{
         assert(zee == null);
         static assert(is(typeof(zee) == RcPtr!(const Zee)));
     }
-}
-
-
-
-/**
-    Weak pointer
-
-    `WeakRcPtr` is a smart pointer that holds a non-owning ("weak") reference to an object that is managed by `SharedPtr`.
-    It must be converted to `SharedPtr` in order to access the referenced object.
-
-    `WeakRcPtr` models temporary ownership: when an object needs to be accessed only if it exists, and it may be deleted at any time by someone else,
-    `WeakRcPtr` is used to track the object, and it is converted to `SharedPtr` to assume temporary ownership.
-    If the original `SharedPtr` is destroyed at this time, the object's lifetime is extended until the temporary `SharedPtr` is destroyed as well.
-
-    Another use for `WeakRcPtr` is to break reference cycles formed by objects managed by `SharedPtr`.
-    If such cycle is orphaned (i,e. there are no outside shared pointers into the cycle), the `SharedPtr` reference counts cannot reach zero and the memory is leaked.
-    To prevent this, one of the pointers in the cycle can be made weak.
-*/
-public template WeakRcPtr(
-    _Type,
-    _DestructorType = DestructorType!_Type,
-    _ControlType = ControlTypeDeduction!(_Type, DefaultRcControlBlock),
-)
-if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
-    alias WeakRcPtr = .RcPtr!(_Type, _DestructorType, _ControlType, true);
-}
-
-/// ditto
-public template WeakRcPtr(
-    _Type,
-    _ControlType,
-    _DestructorType = DestructorType!_Type,
-)
-if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
-    alias WeakRcPtr = .RcPtr!(_Type, _DestructorType, _ControlType, true);
 }
 
 
@@ -2719,7 +2688,7 @@ version(unittest){
 
         import std.meta : AliasSeq;
         //alias Test = long;
-        static foreach(alias ControlType; AliasSeq!(DefaultRcControlBlock, shared DefaultRcControlBlock)){{
+        static foreach(alias ControlType; AliasSeq!(SharedControlType, shared SharedControlType)){{
             alias SPtr(T) = RcPtr!(T, DestructorType!T, ControlType);
 
             //mutable:
@@ -3607,13 +3576,13 @@ version(unittest){
 
         {
             import core.lifetime : move;
-            auto u = UniquePtr!(long, DefaultRcControlBlock).make(123);
+            auto u = UniquePtr!(long, SharedControlType).make(123);
 
             RcPtr!long s = move(u);        //rvalue copy ctor
             assert(s != null);
             assert(s.useCount == 1);
 
-            RcPtr!long s2 = UniquePtr!(long, DefaultRcControlBlock).init;
+            RcPtr!long s2 = UniquePtr!(long, SharedControlType).init;
             assert(s2 == null);
 
         }

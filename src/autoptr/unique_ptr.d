@@ -8,6 +8,7 @@ module autoptr.unique_ptr;
 
 
 import autoptr.internal.mallocator : Mallocator;
+import autoptr.internal.traits;
 
 import autoptr.common;
 
@@ -58,12 +59,6 @@ unittest{
 }
 
 
-/**
-    Default `ControlBlock` for `UniquePtr`.
-*/
-public alias DefaultUniqueControlBlock = ControlBlock!(void, void);
-
-
 
 /**
     `UniquePtr` is a smart pointer that owns and manages object through a pointer and disposes of that object when the `UniquePtr` goes out of scope.
@@ -89,7 +84,7 @@ public alias DefaultUniqueControlBlock = ControlBlock!(void, void);
 template UniquePtr(
     _Type,
     _DestructorType = DestructorType!_Type,
-    _ControlType = shared(DefaultUniqueControlBlock),
+    _ControlType = shared(UniqueControlType),   ///TODO make _ControlType isMutable!_ControlType and alow cast to shares.
 )
 if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
     static assert(isMutable!_ControlType);
@@ -1218,12 +1213,12 @@ unittest{
 pure nothrow @nogc unittest{
     import core.lifetime : move;
 
-    import autoptr.shared_ptr : SharedPtr, DefaultSharedControlBlock;
+    import autoptr.shared_ptr : SharedPtr;
 
     alias Uptr(T) = UniquePtr!(
         T,
         DestructorType!T,
-        shared DefaultSharedControlBlock
+        shared SharedControlType
     );
 
     {
