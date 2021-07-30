@@ -2473,6 +2473,9 @@ unittest{
 
     auto s2 = sharedPtr(x.move);
     assert(s.useCount == 2);
+
+    auto y = sharedPtr(RcPtr!long.init);
+    assert(y == null);
 }
 
 

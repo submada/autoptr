@@ -97,6 +97,9 @@ $('#symbolSearchPane').show();</script>
 
 </span><span class="kwd">auto </span><span class="pln">s2 </span><span class="pun">= </span><span class="pln">sharedPtr</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">move</span><span class="pun">);
 </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">s<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
+
+</span><span class="kwd">auto </span><span class="pln">y </span><span class="pun">= </span><span class="pln">sharedPtr</span><span class="pun">(<a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">init</span><span class="pun">);
+</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">y </span><span class="pun">== </span><span class="kwd">null</span><span class="pun">);
 </span></code></pre>
 </section>
 

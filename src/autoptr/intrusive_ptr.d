@@ -2430,6 +2430,9 @@ unittest{
 
     auto s2 = sharedPtr(x.move);
     assert(s.useCount == 2);
+
+    auto y = sharedPtr(IntrusivePtr!Foo.init);
+    assert(y == null);
 }
 
 

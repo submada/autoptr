@@ -1170,6 +1170,9 @@ unittest{
     static assert(isRcPtr!(typeof(s)));
     static assert(is(typeof(s).ControlType == ControlType));
 
+    auto y = rcPtr(UniquePtr!(long, ControlType).init);
+    assert(y == null);
+
 }
 
 
@@ -1184,22 +1187,14 @@ if(true
     && !is(Ptr == shared)
 ){
     import std.traits : CopyTypeQualifiers;
+    import core.lifetime : forward;
     import autoptr.shared_ptr : SharedPtr;
 
-    alias ResultPtr = SharedPtr!(
+    return SharedPtr!(
         CopyTypeQualifiers!(Ptr, Ptr.ElementType),
         Ptr.DestructorType,
-        Ptr.ControlType
-    );
-
-    if(ptr == null)
-        return ResultPtr.init;
-
-    auto result = ResultPtr(ptr._control, ptr.element);
-    ptr._const_reset();
-
-    import core.lifetime : move;
-    return (()@trusted => move(result) )();
+        Ptr.ControlType,
+    )(forward!ptr);
 }
 
 
@@ -1207,52 +1202,20 @@ if(true
 unittest{
     alias ControlType = ControlBlock!(int, void);
 
-    alias UPtr(T) = UniquePtr!(
-        T,
-        DestructorType!T,
-        shared ControlType
-    );
 
-    auto x = UPtr!long.make(42);
+    auto x = UniquePtr!(long, ControlType).make(42);
     assert(*x == 42);
 
     auto s = sharedPtr(x.move);
     import autoptr.shared_ptr : isSharedPtr;
 
     static assert(isSharedPtr!(typeof(s)));
-    static assert(is(typeof(s).ControlType == shared ControlType));
+    static assert(is(typeof(s).ControlType == ControlType));
 
-}
 
-///
-pure nothrow @nogc unittest{
-    import core.lifetime : move;
+    auto y = sharedPtr(UniquePtr!(long, ControlType).init);
+    assert(y == null);
 
-    import autoptr.shared_ptr : SharedPtr;
-
-    alias Uptr(T) = UniquePtr!(
-        T,
-        DestructorType!T,
-        shared SharedControlType
-    );
-
-    {
-        auto u = Uptr!long.make(42);
-
-        auto s = sharedPtr(move(u));
-        assert(u == null);
-        assert(s != null);
-    }
-
-    {
-        auto u = Uptr!long.make(42);
-
-        SharedPtr!long.ThreadLocal!false s = sharedPtr(move(u));
-        assert(u == null);
-        assert(s != null);
-        assert(s.useCount == 1);
-        assert(*s == 42);
-    }
 }
 
 

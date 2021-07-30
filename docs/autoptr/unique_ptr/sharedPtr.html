@@ -75,52 +75,20 @@ $('#symbolSearchPane').show();</script>
 
 <pre class="code"><code class="lang-d"><span class="kwd">alias </span><span class="typ">ControlType </span><span class="pun">= </span><span class="typ">ControlBlock</span><span class="pun">!(</span><span class="typ">int</span><span class="pun">, </span><span class="typ">void</span><span class="pun">);
 
-</span><span class="kwd">alias </span><span class="typ">UPtr</span><span class="pun">(</span><span class="pln">T</span><span class="pun">) = <a href="../../autoptr/unique_ptr/UniquePtr.html"></span><span class="typ">UniquePtr</span></a><span class="pun">!(
-    </span><span class="pln">T</span><span class="pun">,
-    </span><span class="typ">DestructorType</span><span class="pun">!</span><span class="pln">T</span><span class="pun">,
-    </span><span class="kwd">shared </span><span class="typ">ControlType
-</span><span class="pun">);
 
-</span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= </span><span class="typ">UPtr</span><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
+</span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/unique_ptr/UniquePtr.html"></span><span class="typ">UniquePtr</span></a><span class="pun">!(</span><span class="typ">long</span><span class="pun">, </span><span class="typ">ControlType</span><span class="pun">)<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
 </span><span class="kwd">assert</span><span class="pun">(*</span><span class="pln">x </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
 
 </span><span class="kwd">auto </span><span class="pln">s </span><span class="pun">= </span><span class="pln">sharedPtr</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">move</span><span class="pun">);
 </span><span class="kwd">import <a href="../../autoptr/shared_ptr.html"></span><span class="pln">autoptr<wbr/></span><span class="pun">.</span><span class="pln">shared_ptr</span></a><span class="pln"> </span><span class="pun">: </span><span class="pln">isSharedPtr</span><span class="pun">;
 
 </span><span class="kwd">static assert</span><span class="pun">(</span><span class="pln">isSharedPtr</span><span class="pun">!(</span><span class="kwd">typeof</span><span class="pun">(</span><span class="pln">s</span><span class="pun">)));
-</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(</span><span class="kwd">typeof</span><span class="pun">(</span><span class="pln">s</span><span class="pun">)<wbr/>.</span><span class="typ">ControlType </span><span class="pun">== </span><span class="kwd">shared </span><span class="typ">ControlType</span><span class="pun">));
+</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(</span><span class="kwd">typeof</span><span class="pun">(</span><span class="pln">s</span><span class="pun">)<wbr/>.</span><span class="typ">ControlType </span><span class="pun">== </span><span class="typ">ControlType</span><span class="pun">));
 
-</span></code></pre>
-</section>
-<section><h2>Example</h2>
 
-<pre class="code"><code class="lang-d"><span class="kwd">import </span><span class="pln">core<wbr/></span><span class="pun">.</span><span class="pln">lifetime </span><span class="pun">: </span><span class="pln">move</span><span class="pun">;
+</span><span class="kwd">auto </span><span class="pln">y </span><span class="pun">= </span><span class="pln">sharedPtr</span><span class="pun">(<a href="../../autoptr/unique_ptr/UniquePtr.html"></span><span class="typ">UniquePtr</span></a><span class="pun">!(</span><span class="typ">long</span><span class="pun">, </span><span class="typ">ControlType</span><span class="pun">)<wbr/>.</span><span class="pln">init</span><span class="pun">);
+</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">y </span><span class="pun">== </span><span class="kwd">null</span><span class="pun">);
 
-</span><span class="kwd">import <a href="../../autoptr/shared_ptr.html"></span><span class="pln">autoptr<wbr/></span><span class="pun">.</span><span class="pln">shared_ptr</span></a><span class="pln"> </span><span class="pun">: </span><span class="typ">SharedPtr</span><span class="pun">;
-
-</span><span class="kwd">alias </span><span class="typ">Uptr</span><span class="pun">(</span><span class="pln">T</span><span class="pun">) = <a href="../../autoptr/unique_ptr/UniquePtr.html"></span><span class="typ">UniquePtr</span></a><span class="pun">!(
-    </span><span class="pln">T</span><span class="pun">,
-    </span><span class="typ">DestructorType</span><span class="pun">!</span><span class="pln">T</span><span class="pun">,
-    </span><span class="kwd">shared </span><span class="typ">SharedControlType
-</span><span class="pun">);
-
-{
-    </span><span class="kwd">auto </span><span class="pln">u </span><span class="pun">= </span><span class="typ">Uptr</span><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
-
-    </span><span class="kwd">auto </span><span class="pln">s </span><span class="pun">= </span><span class="pln">sharedPtr</span><span class="pun">(</span><span class="pln">move</span><span class="pun">(</span><span class="pln">u</span><span class="pun">));
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">u </span><span class="pun">== </span><span class="kwd">null</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">s </span><span class="pun">!= </span><span class="kwd">null</span><span class="pun">);
-}
-
-{
-    </span><span class="kwd">auto </span><span class="pln">u </span><span class="pun">= </span><span class="typ">Uptr</span><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
-
-    </span><span class="typ">SharedPtr</span><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="typ">ThreadLocal</span><span class="pun">!</span><span class="kwd">false </span><span class="pln">s </span><span class="pun">= </span><span class="pln">sharedPtr</span><span class="pun">(</span><span class="pln">move</span><span class="pun">(</span><span class="pln">u</span><span class="pun">));
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">u </span><span class="pun">== </span><span class="kwd">null</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">s </span><span class="pun">!= </span><span class="kwd">null</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">s<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(*</span><span class="pln">s </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
-}
 </span></code></pre>
 </section>
 

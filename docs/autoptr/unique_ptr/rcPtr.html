@@ -85,6 +85,9 @@ $('#symbolSearchPane').show();</script>
 </span><span class="kwd">static assert</span><span class="pun">(</span><span class="pln">isRcPtr</span><span class="pun">!(</span><span class="kwd">typeof</span><span class="pun">(</span><span class="pln">s</span><span class="pun">)));
 </span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(</span><span class="kwd">typeof</span><span class="pun">(</span><span class="pln">s</span><span class="pun">)<wbr/>.</span><span class="typ">ControlType </span><span class="pun">== </span><span class="typ">ControlType</span><span class="pun">));
 
+</span><span class="kwd">auto </span><span class="pln">y </span><span class="pun">= </span><span class="pln">rcPtr</span><span class="pun">(<a href="../../autoptr/unique_ptr/UniquePtr.html"></span><span class="typ">UniquePtr</span></a><span class="pun">!(</span><span class="typ">long</span><span class="pun">, </span><span class="typ">ControlType</span><span class="pun">)<wbr/>.</span><span class="pln">init</span><span class="pun">);
+</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">y </span><span class="pun">== </span><span class="kwd">null</span><span class="pun">);
+
 </span></code></pre>
 </section>
 
