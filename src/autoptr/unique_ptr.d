@@ -1139,7 +1139,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
     Create `SharedPtr` from parameter `ptr` if `ControlType` of `ptr` has shared counter.
 */
 auto sharedPtr(Ptr)(scope Ptr ptr)@trusted
-if(isUniquePtr!Ptr && Ptr.ControlType.hasSharedCounter){
+if(true
+    && isUniquePtr!Ptr
+    && Ptr.ControlType.hasSharedCounter
+    && !is(Ptr == shared)
+){
     import std.traits : CopyTypeQualifiers;
     import autoptr.shared_ptr : SharedPtr;
 

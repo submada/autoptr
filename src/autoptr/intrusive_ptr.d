@@ -2386,6 +2386,55 @@ unittest{
 
 
 /**
+    Create `SharedPtr` from parameter `ptr` of type `IntrusivePtr`.
+
+    `Ptr` must have `mutableControl == true`.
+*/
+auto sharedPtr(Ptr)(auto ref scope Ptr ptr)@trusted
+if(isIntrusivePtr!Ptr && !is(Ptr == shared)){
+    static assert(Ptr.mutableControl);
+
+    import std.traits : CopyTypeQualifiers;
+    import core.lifetime : forward;
+    import autoptr.shared_ptr : SharedPtr;
+
+    return SharedPtr!(
+        CopyTypeQualifiers!(Ptr, Ptr.ElementType),
+        Ptr.DestructorType,
+        Ptr.ControlType,
+        Ptr.weakPtr
+    )(forward!ptr);
+}
+
+
+///
+unittest{
+    static class Foo{
+        MutableControlBlock!(int, int) c;
+        int i;
+
+        this(int i)pure nothrow @safe @nogc{
+            this.i = i;
+        }
+    }
+
+    auto x = IntrusivePtr!Foo.make(42);
+    assert(x.get.i == 42);
+    assert(x.useCount == 1);
+
+    auto s = sharedPtr(x);
+    assert(x.useCount == 2);
+
+    import autoptr.shared_ptr : isSharedPtr;
+    static assert(isSharedPtr!(typeof(s)));
+
+    auto s2 = sharedPtr(x.move);
+    assert(s.useCount == 2);
+}
+
+
+
+/**
     Return `shared IntrusivePtr` pointing to same managed object like parameter `ptr`.
 
     Type of parameter `ptr` must be `IntrusivePtr` with `shared(ControlType)` and `shared`/`immutable` `ElementType` .
