@@ -136,13 +136,13 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
     import std.experimental.allocator : stateSize;
     import std.meta : AliasSeq;
-    import core.atomic : MemoryOrder;
     import std.range : ElementEncodingType;
     import std.traits: Unqual, CopyTypeQualifiers, CopyConstness,
         hasIndirections, hasElaborateDestructor,
         isMutable, isAbstractClass, isDynamicArray, isStaticArray, isCallable, Select, isArray;
 
-
+    import core.atomic : MemoryOrder;
+    import core.lifetime : forward;
 
     enum bool hasWeakCounter = _ControlType.hasWeakCounter;
 
@@ -291,7 +291,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
 
-        //necesary for autoptr.unique_ptr.sharedPtr
+        //necessary for autoptr.unique_ptr.sharedPtr
         package this(C, Elm, this This)(C* control, Elm element)pure nothrow @safe @nogc
         if(true
             && is(C* : ControlType*)
@@ -381,6 +381,19 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             //rhs._const_set_element(null);
         }
 
+        //copy ctor
+        private this(Rhs, this This)(ref scope Rhs rhs, Evoid ctor)@safe //pure @nogc nothrow
+        if(true
+            && isSharedPtr!Rhs
+            && isConstructable!(Rhs, This)
+            && !needLock!(Rhs, This)
+            && !is(Rhs == shared)
+        ){
+            static assert(isValidSharedPtr!This, "`This` is invalid `SharedPtr`");
+            static assert(isValidSharedPtr!Rhs, "`Rhs` is invalid `SharedPtr`");
+
+            this(rhs, rhs._element);
+        }
         /**
             Constructs a `SharedPtr` which shares ownership of the object managed by `rhs`.
 
@@ -466,6 +479,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             static assert(isValidSharedPtr!This, "`This` is invalid `SharedPtr`");
             static assert(isValidSharedPtr!Rhs, "`Rhs` is invalid `SharedPtr`");
 
+            //this(rhs, Evoid.init);
             this(rhs, rhs._element);
         }
 
@@ -511,8 +525,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         if(true
             && isUniquePtr!Rhs
             && isConstructable!(Rhs, This)
+            && (weakPtr == false)
             && !is(Rhs == shared)
         ){
+            static assert(!weakPtr);
             static assert(isValidSharedPtr!This, "`This` is invalid `SharedPtr`");
             static assert(isValidUniquePtr!Rhs, "`Rhs` is invalid `UniquePtr`");
 
@@ -532,6 +548,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && isConstructable!(Rhs, This)
             && !is(Rhs == shared)
         ){
+            static assert(weakPtr == Rhs.weakPtr);
             static assert(isValidSharedPtr!This, "`This` is invalid `SharedPtr`");
             static assert(isValidRcPtr!Rhs, "`Rhs` is invalid `RcPtr`");
 
@@ -551,6 +568,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && isConstructable!(Rhs, This)
             && !is(Rhs == shared)
         ){
+            static assert(weakPtr == Rhs.weakPtr);
             static assert(Rhs.mutableControl, "`rhs` must contains `MutableControlBlock`");
             static assert(isValidSharedPtr!This, "`This` is invalid `SharedPtr`");
             static assert(isValidIntrusivePtr!Rhs, "`Rhs` is invalid `IntrusivePtr`");
@@ -934,6 +952,22 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             }
         }
 
+        ///ditto
+        public void opAssign(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs desired)scope
+        if(true
+            && (isRcPtr!Rhs || isIntrusivePtr!Rhs || isUniquePtr!Rhs)
+            && isAssignable!(Rhs, This)
+            //&& !needLock!(Rhs, This)
+            && !is(Rhs == shared)
+        ){
+            static assert(isValidSharedPtr!This, "`This` is invalid `SharedPtr`");
+            static assert(isValidRcPtr!Rhs || isValidIntrusivePtr!Rhs || isValidUniquePtr!Rhs, 
+                "`Rhs` is not valid `RcPtr`, `IntrusivePtr` or `UniquePtr`"
+            );
+
+            this.opAssign!order(ChangeElementType!(This, ElementType)(forward!desired));
+        }
+
 
 
         /**
@@ -991,23 +1025,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         if(stateSize!AllocatorType == 0 && !isDynamicArray!ElementType){
             static assert(!weakPtr);
 
-            import core.lifetime : forward;
-
             auto m = MakeEmplace!(AllocatorType, supportGC).make(forward!(args));
 
             return (m is null)
                 ? SharedPtr(null)
                 : SharedPtr(m.base, m.get);
-            /+if(m is null)
-                return typeof(return).init;
-
-
-            auto ptr = typeof(this).init;
-
-            ptr._control = m.base;
-            ptr._set_element(m.get);
-
-            return ptr.move;+/
         }
 
         /**
@@ -1036,24 +1058,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         if(stateSize!AllocatorType == 0 && isCallable!DeleterType){
             static assert(!weakPtr);
 
-            import core.lifetime : forward;
-
             auto m = MakeDeleter!(DeleterType, AllocatorType, supportGC).make(forward!(element, deleter));
 
             return (m is null)
                 ? SharedPtr(null)
                 : SharedPtr(m.base, m.get);
-
-            /+if(m is null)
-                return typeof(return).init;
-
-
-            auto ptr = typeof(this).init;
-
-            ptr._control = m.base;
-            ptr._set_element(m.get);
-
-            return ptr.move;+/
         }
 
 
@@ -1090,25 +1099,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         if(stateSize!AllocatorType == 0 && isDynamicArray!ElementType){
             static assert(!weakPtr);
 
-            import core.lifetime : forward;
-
             auto m = MakeDynamicArray!(AllocatorType, supportGC).make(n, forward!(args));
 
             return (m is null)
                 ? SharedPtr(null)
                 : SharedPtr(m.base, m.get);
-
-            /+if(m is null)
-                return typeof(return).init;
-
-            auto ptr = typeof(this).init;
-
-            ptr._control = m.base;
-            ptr._set_element(m.get);
-
-            return ()@trusted{
-                return ptr.move;
-            }();+/
         }
 
 
@@ -1169,24 +1164,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         if(stateSize!AllocatorType >= 0 && !isDynamicArray!ElementType){
             static assert(!weakPtr);
 
-            import core.lifetime : forward;
-
             auto m = MakeEmplace!(AllocatorType, supportGC).make(forward!(a, args));
 
             return (m is null)
                 ? SharedPtr(null)
                 : SharedPtr(m.base, m.get);
-
-            /+if(m is null)
-                return typeof(return).init;
-
-            return SharedPtr(m.base, m.get);
-            auto ptr = typeof(this).init;
-
-            ptr._control = m.base;
-            ptr._set_element(m.get);
-
-            return ptr.move;+/
         }
 
 
@@ -1218,24 +1200,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         if(stateSize!AllocatorType >= 0 && isCallable!DeleterType){
             static assert(!weakPtr);
 
-            import core.lifetime : forward;
-
             auto m = MakeDeleter!(DeleterType, AllocatorType, supportGC).make(forward!(element, deleter, allocator));
 
             return (m is null)
                 ? SharedPtr(null)
                 : SharedPtr(m.base, m.get);
-
-            /+if(m is null)
-                return typeof(return).init;
-
-            return SharedPtr(m.base, m.get);
-            auto ptr = typeof(this).init;
-
-            ptr._control = m.base;
-            ptr._set_element(m.get);
-
-            return ptr.move;+/
         }
 
 
@@ -1274,22 +1243,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         if(stateSize!AllocatorType >= 0 && isDynamicArray!ElementType){
             static assert(!weakPtr);
 
-            import core.lifetime : forward;
-
             auto m = MakeDynamicArray!(AllocatorType, supportGC).make(forward!(a, n, args));
 
             return (m is null)
                 ? SharedPtr(null)
                 : SharedPtr(m.base, m.get);
-            /+if(m is null)
-                return typeof(return).init;
-
-            auto ptr = typeof(this).init;
-
-            ptr._control = m.base;
-            ptr._set_element(m.get);
-
-            return ptr.move;+/
         }
 
 
@@ -1518,7 +1476,22 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             static assert(isValidSharedPtr!This, "`This` is invalid `SharedPtr`");
             static assert(isValidSharedPtr!Rhs, "`Rhs` is invalid `SharedPtr`");
 
-            import core.lifetime : forward;
+            this.opAssign!order(forward!desired);
+        }
+
+        /// ditto
+        public void store(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs desired)scope
+        if(true
+            && (isRcPtr!Rhs || isIntrusivePtr!Rhs || isUniquePtr!Rhs)
+            //&& !needLock!(Rhs, This)
+            && isAssignable!(Rhs, This)
+            && !is(Rhs == shared) 
+        ){
+            static assert(isValidSharedPtr!This, "`This` is invalid `SharedPtr`");
+            static assert(isValidRcPtr!Rhs || isValidIntrusivePtr!Rhs || isValidUniquePtr!Rhs, 
+                "`Rhs` is not valid `RcPtr`, `IntrusivePtr` or `UniquePtr`"
+            );
+
             this.opAssign!order(forward!desired);
         }
 
@@ -2483,6 +2456,80 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 /**
     Dynamic cast for shared pointers if `ElementType` is class with D linkage.
 
+    Move instance of `SharedPtr` whose stored pointer is obtained from `ptr`'s stored pointer using a dynaic cast expression.
+
+    If `ptr` is null or dynamic cast fail then result `SharedPtr` is null.
+    Otherwise, the new `SharedPtr` will share ownership with the initial value of `ptr`.
+*/
+public ChangeElementType!(Ptr, T) dynCastMove(T, Ptr)(auto ref scope Ptr ptr)
+if(true
+    && isSharedPtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
+    && isReferenceType!T && __traits(getLinkage, T) == "D"
+    && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
+){
+    static assert(isValidSharedPtr!Ptr, "`Ptr` is invalid `SharedPtr`");
+
+    import std.traits : CopyTypeQualifiers;
+    import core.lifetime : forward, move;
+
+    alias Return = typeof(return);
+
+    if(ptr == null)
+        return Return.init;
+
+    if(auto element = cast(Return.ElementType)ptr._element){
+        return (()@trusted => Return(move(ptr), element) )();
+
+    }
+
+    return Return.init;
+}
+
+
+///
+unittest{
+    static class Foo{
+        int i;
+
+        this(int i)pure nothrow @safe @nogc{
+            this.i = i;
+        }
+    }
+
+    static class Bar : Foo{
+        double d;
+
+        this(int i, double d)pure nothrow @safe @nogc{
+            super(i);
+            this.d = d;
+        }
+    }
+
+    static class Zee{
+    }
+
+    {
+        SharedPtr!(const Foo) foo = SharedPtr!Bar.make(42, 3.14);
+        assert(foo.get.i == 42);
+
+        auto bar = dynCastMove!Bar(foo);
+        assert(foo == null);
+        assert(bar != null);
+        assert(bar.get.d == 3.14);
+        static assert(is(typeof(bar) == SharedPtr!(const Bar)));
+
+        auto zee = dynCastMove!Zee(bar);
+        assert(zee == null);
+        assert(bar != null);
+        static assert(is(typeof(zee) == SharedPtr!(const Zee)));
+    }
+}
+
+
+
+/**
+    Dynamic cast for shared pointers if `ElementType` is class with D linkage.
+
     Creates a new instance of `SharedPtr` whose stored pointer is obtained from `ptr`'s stored pointer using a dynaic cast expression.
 
     If `ptr` is null or dynamic cast fail then result `SharedPtr` is null.
@@ -2500,11 +2547,6 @@ if(true
     import core.lifetime : forward;
 
     alias Return = typeof(return);
-
-    static assert(is(
-        CopyTypeQualifiers!(GetElementReferenceType!Ptr, void*) 
-            : CopyTypeQualifiers!(GetElementReferenceType!Return, void*) 
-    ));
 
     if(ptr == null)
         return Return.init;
@@ -2718,28 +2760,26 @@ private{
     }
 
     template isConstructable(From, To)
-    if((isSharedPtr!From || isUniquePtr!From || isRcPtr!From) && isSharedPtr!To){
+    if((isSharedPtr!From || isUniquePtr!From || isRcPtr!From || isIntrusivePtr!From) && isSharedPtr!To){
         import std.traits : CopyTypeQualifiers;
 
         alias FromPtr = CopyTypeQualifiers!(From, From.ElementReferenceType);
         alias ToPtr = CopyTypeQualifiers!(To, To.ElementReferenceType);
 
-        /+static if(isRcPtr!From){
-            static if(From.intrusive){
+        /+static if(isIntrusivePtr!From)
+            enum bool valid = is(From.mutableControl);
+        else 
+            enum bool valid = true;+/
 
-            }
-            else
-            enum bool other = if(!From.intrusive || is(FromPtr))
-
-        }+/
         enum bool isConstructable = true
+            //&& valid
             && is(FromPtr : ToPtr)
             && is(From.DestructorType : To.DestructorType)
             && is(From.ControlType == To.ControlType)            ;
     }
 
     template isAssignable(From, To)
-    if(isSharedPtr!From && isSharedPtr!To){
+    if((isSharedPtr!From || isUniquePtr!From || isRcPtr!From || isIntrusivePtr!From) && isSharedPtr!To){
         import std.traits : isMutable;
 
         enum bool isAssignable = true
@@ -3417,10 +3457,10 @@ version(unittest){
 
             assert(y == null);
         }
-        /+{
-            shared SharedPtr!long x = SharedPtr!(shared long).make(123);
+        {
+            shared SharedPtr!(shared long) x = SharedPtr!(shared long).make(123);
 
-            shared SharedPtr!long.WeakType w = x.weak;    //weak ptr
+            shared SharedPtr!(shared long).WeakType w = x.load.weak;    //weak ptr
 
             assert(w.expired == false);
 
@@ -3428,10 +3468,10 @@ version(unittest){
 
             assert(w.expired == true);
 
-            SharedPtr!(shared long) y = w.lock;
+            SharedPtr!(shared long) y = w.load.lock;
 
             assert(y == null);
-        }+/
+        }
     }
 
     //expired

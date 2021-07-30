@@ -81,10 +81,10 @@ $('#symbolSearchPane').show();</script>
 </span><span class="kwd">static assert</span><span class="pun">(</span><span class="pln">isValidIntrusivePtr</span><span class="pun">!(<a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!(</span><span class="kwd">const shared </span><span class="typ">Foo</span><span class="pun">)));
 
 
-</span><span class="com">/+static assert(!isValidIntrusivePtr!(immutable IntrusivePtr!Foo));
-static assert(!isValidIntrusivePtr!(immutable IntrusivePtr!(const Foo)));
-static assert(!isValidIntrusivePtr!(immutable IntrusivePtr!(shared Foo)));
-static assert(!isValidIntrusivePtr!(immutable IntrusivePtr!(const shared Foo)));+/
+</span><span class="kwd">static assert</span><span class="pun">(</span><span class="pln">isValidIntrusivePtr</span><span class="pun">!(</span><span class="kwd">immutable <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Foo</span><span class="pun">));
+</span><span class="kwd">static assert</span><span class="pun">(</span><span class="pln">isValidIntrusivePtr</span><span class="pun">!(</span><span class="kwd">immutable <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!(</span><span class="kwd">const </span><span class="typ">Foo</span><span class="pun">)));
+</span><span class="kwd">static assert</span><span class="pun">(</span><span class="pln">isValidIntrusivePtr</span><span class="pun">!(</span><span class="kwd">immutable <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!(</span><span class="kwd">shared </span><span class="typ">Foo</span><span class="pun">)));
+</span><span class="kwd">static assert</span><span class="pun">(</span><span class="pln">isValidIntrusivePtr</span><span class="pun">!(</span><span class="kwd">immutable <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!(</span><span class="kwd">const shared </span><span class="typ">Foo</span><span class="pun">)));
 
 </span></code></pre>
 </section>

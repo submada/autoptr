@@ -23,7 +23,7 @@ else{
 
 
 
-package(autoptr) static auto getMutex(Ptr)(scope ref shared Ptr ptr)nothrow @trusted @nogc
+public static auto getMutex(Ptr)(scope ref shared Ptr ptr)nothrow @trusted @nogc
 out(ret; ret !is null){
 
     static assert(supportMutex, "this platform doesn't support mutexes");

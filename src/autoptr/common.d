@@ -404,7 +404,7 @@ public template ControlBlock(_Shared, _Weak = void){
             this.vptr = vptr;
         }
 
-        package final auto count(bool weak)()const pure nothrow @safe @nogc{
+        package final auto count(bool weak)()scope const pure nothrow @safe @nogc{
             static if(weak){
                 static if(hasWeakCounter)
                     return this.weak_count;
@@ -419,7 +419,7 @@ public template ControlBlock(_Shared, _Weak = void){
             }
 
         }
-        package final auto count(bool weak)()shared const pure nothrow @safe @nogc{
+        package final auto count(bool weak)()scope shared const pure nothrow @safe @nogc{
             static if(weak){
                 static if(hasWeakCounter)
                     return atomicLoad(this.weak_count);
@@ -436,7 +436,7 @@ public template ControlBlock(_Shared, _Weak = void){
         }
 
 
-        package final void add(bool weak, this This)()@trusted pure nothrow @nogc
+        package final void add(bool weak, this This)()scope @trusted pure nothrow @nogc
         if(isMutable!This){
             enum bool atomic = is(This == shared);
 
@@ -571,6 +571,8 @@ import std.traits : isIntegral;
     Mutable intrusive `ControlBlock`, this control block can be modified even if is `const` / `immutable`.
 
     Necessary for `IntrusivePtr`.
+    
+    Examples are in `IntrusivControlBlock`.
 */
 template MutableControlBlock(_Shared, _Weak = void)
 if(isIntegral!_Shared){
@@ -597,75 +599,6 @@ if(isControlBlock!_ControlType){
 
         private ControlType control;
     }
-}
-
-///
-unittest{
-    static class Foo{
-        ControlBlock!int c;
-    }
-
-    static assert(is(
-        IntrusivControlBlock!(Foo) == ControlBlock!int
-    ));
-    static assert(is(
-        IntrusivControlBlock!(const Foo) == const ControlBlock!int
-    ));
-    static assert(is(
-        IntrusivControlBlock!(shared Foo) == shared ControlBlock!int
-    ));
-    static assert(is(
-        IntrusivControlBlock!(const shared Foo) == const shared ControlBlock!int
-    ));
-    static assert(is(
-        IntrusivControlBlock!(immutable Foo) == immutable ControlBlock!int
-    ));
-
-
-
-    static class Bar{
-        MutableControlBlock!int c;
-    }
-
-    static assert(is(
-        IntrusivControlBlock!(Bar) == ControlBlock!int
-    ));
-    static assert(is(
-        IntrusivControlBlock!(const Bar) == ControlBlock!int
-    ));
-    static assert(is(
-        IntrusivControlBlock!(shared Bar) == shared ControlBlock!int
-    ));
-    static assert(is(
-        IntrusivControlBlock!(const shared Bar) == shared ControlBlock!int
-    ));
-    static assert(is(
-        IntrusivControlBlock!(immutable Bar) == ControlBlock!int
-    ));
-
-
-
-    static class Zee{
-        shared MutableControlBlock!int c;
-    }
-
-    static assert(is(
-        IntrusivControlBlock!(Zee) == shared ControlBlock!int
-    ));
-    static assert(is(
-        IntrusivControlBlock!(const Zee) == shared ControlBlock!int
-    ));
-    static assert(is(
-        IntrusivControlBlock!(shared Zee) == shared ControlBlock!int
-    ));
-    static assert(is(
-        IntrusivControlBlock!(const shared Zee) == shared ControlBlock!int
-    ));
-    static assert(is(
-        IntrusivControlBlock!(immutable Zee) == shared ControlBlock!int
-    ));
-
-
 }
 
 
@@ -770,8 +703,13 @@ if(is(Type == struct)){
 }
 
 
-package template IntrusivControlBlock(Type)
-if(is(Type == class) || is(Type == struct)){
+/**
+    Alias to `ControlBlock` including qualifiers contained by `Type`.
+
+    If `mutable` is `true`, then result type alias is mutable (can be shared).
+*/
+public template IntrusivControlBlock(Type, bool mutable = false)
+if(isIntrusive!Type && is(Type == class) || is(Type == struct)){
 
     static if(is(Type == class))
         alias PtrControlBlock = typeof(intrusivControlBlock(Type.init));
@@ -783,22 +721,81 @@ if(is(Type == class) || is(Type == struct)){
 
     import std.traits : CopyTypeQualifiers, PointerTarget, Unconst;
 
-    alias IntrusivControlBlock = PointerTarget!PtrControlBlock;
+    static if(mutable && is(PtrControlBlock == shared))
+        alias IntrusivControlBlock = shared(Unconst!(PointerTarget!PtrControlBlock));
+    else
+        alias IntrusivControlBlock = PointerTarget!PtrControlBlock;
+    
 }
 
-package template sharedIntrusiveControlBlock(Type)
-if(is(Type == class) || is(Type == struct)){
+///
+unittest{
+    static class Foo{
+        ControlBlock!int c;
+    }
 
-    static if(is(Type == class))
-        alias PtrControlBlock = typeof(intrusivControlBlock(Type.init));
-    else static if(is(Type == struct))
-        alias PtrControlBlock = typeof(intrusivControlBlock(*cast(Type*)null));
-    else 
-        static assert(0, "no impl");
+    static assert(is(
+        IntrusivControlBlock!(Foo) == ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(const Foo) == const ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(shared Foo) == shared ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(const shared Foo) == const shared ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(immutable Foo) == immutable ControlBlock!int
+    ));
 
-    enum bool sharedIntrusiveControlBlock = is(PtrControlBlock == shared);
+
+
+    static class Bar{
+        MutableControlBlock!int c;
+    }
+
+    static assert(is(
+        IntrusivControlBlock!(Bar) == ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(const Bar) == ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(shared Bar) == shared ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(const shared Bar) == shared ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(immutable Bar) == ControlBlock!int
+    ));
+
+
+
+    static class Zee{
+        shared MutableControlBlock!int c;
+    }
+
+    static assert(is(
+        IntrusivControlBlock!(Zee) == shared ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(const Zee) == shared ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(shared Zee) == shared ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(const shared Zee) == shared ControlBlock!int
+    ));
+    static assert(is(
+        IntrusivControlBlock!(immutable Zee) == shared ControlBlock!int
+    ));
+
+
 }
-
 
 
 import std.traits : BaseClassesTuple, Unqual, Unconst, CopyTypeQualifiers;

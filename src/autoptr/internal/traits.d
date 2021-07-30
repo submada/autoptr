@@ -36,6 +36,8 @@ in(isFunctionPointer!T || isDelegate!T){
     return cast(SetFunctionAttributes!(T, functionLinkage!T, attrs)) t;
 }
 
+public alias Unshared(T) = T;
+public alias Unshared(T: shared U, U) = U;
 
 //Same as `std.traits.hasIndirections` but for classes.
 public template classHasIndirections(T){

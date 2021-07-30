@@ -54,7 +54,7 @@ $('#symbolSearchPane').show();</script>
 			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>Enum member IntrusivePtr.sharedControl</h1><p>TODO
+			<h1>Enum member IntrusivePtr.sharedControl</h1><p><code class="lang-d"><span class="kwd">true</span></code> if <code class="lang-d"><span class="typ">ControlBlock</span></code> is shared
 </p>
 			<div class="prototype">
 				<code class="lang-d">
@@ -68,7 +68,7 @@ $('#symbolSearchPane').show();</script>
 			&nbsp;&nbsp;<span class="com">// ...</span>
 			<br/>
 			&nbsp;&nbsp;<span class="kwd">enum</span> <span class="pln">sharedControl</span>
-			 <span class="pun">=</span> <span class="pln">sharedIntrusiveControlBlock</span><span class="pun">!</span><span class="typ">ElementType</span><span class="pun">;</span>
+			 <span class="pun">=</span> <span class="kwd">is</span><span class="pun">(</span><span class="typ">IntrusivControlBlock</span><span class="pun">!(</span><span class="typ">ElementType</span><span class="pun">, </span><span class="kwd">true</span><span class="pun">) == </span><span class="kwd">shared</span><span class="pun">)</span><span class="pun">;</span>
 			<br/>
 			&nbsp;&nbsp;<span class="com">// ...</span>
 			<br/>

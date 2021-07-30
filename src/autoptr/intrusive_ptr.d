@@ -48,10 +48,10 @@ unittest{
     static assert(isValidIntrusivePtr!(IntrusivePtr!(const shared Foo)));
 
 
-    /+static assert(!isValidIntrusivePtr!(immutable IntrusivePtr!Foo));
-    static assert(!isValidIntrusivePtr!(immutable IntrusivePtr!(const Foo)));
-    static assert(!isValidIntrusivePtr!(immutable IntrusivePtr!(shared Foo)));
-    static assert(!isValidIntrusivePtr!(immutable IntrusivePtr!(const shared Foo)));+/
+    static assert(isValidIntrusivePtr!(immutable IntrusivePtr!Foo));
+    static assert(isValidIntrusivePtr!(immutable IntrusivePtr!(const Foo)));
+    static assert(isValidIntrusivePtr!(immutable IntrusivePtr!(shared Foo)));
+    static assert(isValidIntrusivePtr!(immutable IntrusivePtr!(const shared Foo)));
 
 }
 
@@ -145,27 +145,25 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
     import std.experimental.allocator : stateSize;
     import std.meta : AliasSeq;
-    import core.atomic : MemoryOrder;
     import std.range : ElementEncodingType;
     import std.traits: Unqual, Unconst, CopyTypeQualifiers, CopyConstness, PointerTarget,
         hasIndirections, hasElaborateDestructor,
         isMutable, isAbstractClass, isDynamicArray, isStaticArray, isCallable, Select, isArray;
 
-
+    import core.atomic : MemoryOrder;
+    import core.lifetime : forward;
 
     enum bool hasWeakCounter = _ControlType.hasWeakCounter;
 
     enum bool hasSharedCounter = _ControlType.hasSharedCounter;
 
     
-    static assert(!is(_ControlType == immutable));
     alias MakeIntrusive(AllocatorType, bool supportGC) = .MakeIntrusive!(
         _Type,
         _DestructorType,
         AllocatorType,
         supportGC
     );
-
 
     enum bool _isLockFree = true;
 
@@ -195,9 +193,9 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
 
         /**
-            TODO
+            `true` if `ControlBlock` is shared
         */
-        public enum bool sharedControl = sharedIntrusiveControlBlock!ElementType;
+        public enum bool sharedControl = is(IntrusivControlBlock!(ElementType, true) == shared);
 
 
         /**
@@ -269,27 +267,12 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
         //necesary for autoptr.unique_ptr.sharedPtr
         package this(Elm, this This)(Elm element)pure nothrow @safe @nogc
-        if(is(Elm : GetElementReferenceType!This) && !is(Unqual!Elm == typeof(null))){
-            this._element = element;
-        }
-
-        //
-        /+package this(C, Elm, this This)(C* control, Elm element)pure nothrow @safe @nogc
         if(true
-            && isControlBlock!C
-            && is(Elm : GetElementReferenceType!This) 
+            && is(Elm : GetElementReferenceType!This)
             && !is(Unqual!Elm == typeof(null))
         ){
-            assert(control !is null);
-            assert((control is null) == (element is null));
-
-            this(element);
-            //if(control !is null){
-                ///TODO tests
-            //pragma(msg, C);
-                control.add!weakPtr;
-            //}
-        }+/
+            this._element = element;
+        }
 
         //copy ctor
         package this(Rhs, this This)(ref scope Rhs rhs, Evoid ctor)@trusted
@@ -997,24 +980,11 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         if(stateSize!AllocatorType == 0 && !isDynamicArray!ElementType){
             static assert(!weakPtr);
 
-            import core.lifetime : forward;
-
             auto m = MakeIntrusive!(AllocatorType, supportGC).make(forward!(args));
 
             return (m is null)
                 ? IntrusivePtr.init
                 : IntrusivePtr(m.get);
-
-            /+if(m is null)
-                return typeof(return).init;
-
-
-            auto ptr = typeof(this).init;
-
-            //ptr._control = m.base;
-            ptr._set_element(m.get);
-
-            return ptr.move;+/
         }
 
 
@@ -1075,22 +1045,11 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         if(stateSize!AllocatorType >= 0 && !isDynamicArray!ElementType){
             static assert(!weakPtr);
 
-            import core.lifetime : forward;
-
             auto m = MakeIntrusive!(AllocatorType, supportGC).make(forward!(a, args));
 
             return (m is null)
                 ? IntrusivePtr.init
                 : IntrusivePtr(m.get);
-            /+if(m is null)
-                return typeof(return).init;
-
-            auto ptr = typeof(this).init;
-
-            //ptr._control = m.base;
-            ptr._set_element(m.get);
-
-            return ptr.move;+/
         }
 
 
@@ -1229,8 +1188,8 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                 --------------------
         */
         public ChangeElementType!(This, CopyTypeQualifiers!(This, ElementType))
-        load(MemoryOrder order = MemoryOrder.seq, this This)()scope return{  ///TODO remove return
-            ///TODO test copyable from this => return.
+            load(MemoryOrder order = MemoryOrder.seq, this This)()scope return{  //TODO remove return
+            static assert(isCopyable!(Unshared!This, typeof(return)));
             static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
 
             static if(is(This == shared)){
@@ -1312,7 +1271,6 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
             static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
             static assert(isValidIntrusivePtr!Rhs, "`Rhs` is invalid `IntrusivePtr`");
 
-            import core.lifetime : forward;
             this.opAssign!order(forward!desired);
         }
 
@@ -1327,7 +1285,6 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
             static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
             static assert(isValidIntrusivePtr!Rhs, "`Rhs` is invalid `IntrusivePtr`");
 
-            import core.lifetime : forward;
             this.opAssign!order(forward!desired);
         }
 
@@ -1734,7 +1691,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         static if(weakPtr)
         public CopyConstness!(This, SharedType) lock(this This)()scope @safe
         if(!is(This == shared)){
-            ///TODO copy this -> return
+            static assert(isCopyable!(This, typeof(return)));
             static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
 
             static assert(needLock!(This, typeof(return)));
@@ -1885,7 +1842,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         static if(hasWeakCounter)
         public CopyTypeQualifiers!(This, WeakType) weak(this This)()scope @safe
         if(!is(This == shared)){
-            ///TODO copy this -> return
+            static assert(isCopyable!(This, typeof(return)));
             static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
 
             return typeof(return)(this);
@@ -2125,7 +2082,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         private ElementReferenceType _element;
 
 
-        package auto _control(this This)()pure nothrow @trusted @nogc
+        package auto _control(this This)()scope return pure nothrow @trusted @nogc
         in(this._element !is null){
             static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
 
@@ -2201,22 +2158,12 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
 }
 
-/// ditto
-public template IntrusivePtr(
-    _Type,
-    bool _mutableControl,
-    _DestructorType = DestructorType!_Type
-)
-if(isIntrusive!_Type && isDestructorType!_DestructorType){
-    alias IntrusivePtr = .IntrusivePtr!(_Type, _DestructorType, false);
-}
 
-/+
 ///
 pure nothrow @nogc unittest{
 
     static class Foo{
-        ControlBlock!(int, int) c;
+        MutableControlBlock!(int, int) c;   //or MutableControlBlock!(ControlBlock!(int, int)) c;
         int i;
 
         this(int i)pure nothrow @safe @nogc{
@@ -2235,11 +2182,11 @@ pure nothrow @nogc unittest{
 
     //implicit qualifier cast
     {
-        IntrusivePtr!(const Foo, true) foo =  IntrusivePtr!(Foo, true).make(42);
+        IntrusivePtr!(const Foo) foo =  IntrusivePtr!Foo.make(42);
         assert(foo.get.i == 42);
         assert(foo.useCount == 1);
 
-        const IntrusivePtr!(Foo, true) foo2 = foo;
+        const IntrusivePtr!Foo foo2 = foo;
         assert(foo2.get.i == 42);
         assert(foo.useCount == 2);
 
@@ -2323,7 +2270,7 @@ nothrow unittest{
         auto x = IntrusivePtr!Foo.alloc(allocator, 42);
     }
 
-}+/
+}
 
 
 
@@ -2335,72 +2282,71 @@ nothrow unittest{
     If `ptr` is null or dynamic cast fail then result `IntrusivePtr` is null.
     Otherwise, the new `IntrusivePtr` will share ownership with the initial value of `ptr`.
 */
-public auto dynCast(T, Ptr)(ref scope Ptr ptr)
+public ChangeElementType!(Ptr, T) dynCast(T, Ptr)(ref scope Ptr ptr)
 if(true
     && isIntrusive!T
     && isIntrusivePtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){
+    static assert(isCopyable!(Ptr, ChangeElementType!(Ptr, Ptr.ElementType)));
     static assert(isValidIntrusivePtr!Ptr, "`Ptr` is invalid `IntrusivePtr`");
 
     import std.traits : CopyTypeQualifiers;
     import core.lifetime : forward;
 
-    alias Result = ChangeElementType!(Ptr, T);
-
-    /+static assert(is(
-        CopyTypeQualifiers!(GetElementReferenceType!Ptr, void*)
-            : CopyTypeQualifiers!(GetElementReferenceType!Result, void*)
-    ));+/
-
     if(ptr == null)
-        return Result.init;
+        return typeof(return).init;
 
-    if(auto element = cast(Result.ElementType)ptr._element){
+    if(auto element = cast(CopyTypeQualifiers!(Ptr, T))ptr._element){
         ptr._control.add!false;
-        return Result(element);
-
+        return typeof(return)(element);
     }
 
-    return Result.init;
+    return typeof(return).init;
 }
 
 /// ditto
 public ChangeElementType!(Ptr, T) dynCast(T, Ptr)(scope Ptr ptr)
 if(true
+    && isIntrusive!T
     && isIntrusivePtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){
+    static assert(isMovable!(Ptr, ChangeElementType!(Ptr, Ptr.ElementType)));
     static assert(isValidIntrusivePtr!Ptr, "`Ptr` is invalid `IntrusivePtr`");
 
-    import std.traits : CopyTypeQualifiers;
-    import core.lifetime : forward;
+    return dynCastMove(ptr);
+}
 
-    alias Result = typeof(return);
-
-    /+static assert(is(
-        CopyTypeQualifiers!(GetElementReferenceType!Ptr, void*)
-            : CopyTypeQualifiers!(GetElementReferenceType!Result, void*)
-    ));+/
+/// ditto
+public ChangeElementType!(Ptr, T) dynCastMove(T, Ptr)(auto ref scope Ptr ptr)
+if(true
+    && isIntrusive!T
+    && isIntrusivePtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
+    && isReferenceType!T && __traits(getLinkage, T) == "D"
+    && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
+){
+    static assert(isMovable!(Ptr, ChangeElementType!(Ptr, Ptr.ElementType)));
+    static assert(isValidIntrusivePtr!Ptr, "`Ptr` is invalid `IntrusivePtr`");
 
     if(ptr == null)
-        return Result.init;
+        return typeof(return).init;
 
     if(auto element = cast(Result.ElementType)ptr._element){
         ptr._const_set_counter(null);
-        return Result(element);
+        return typeof(return)(element);
     }
 
-    return Result.init;
+    return typeof(return).init;
 }
 
-/+
+
 ///
 unittest{
     static class Base{
-        ControlBlock!(int, int) c;
+        MutableControlBlock!(int, int) c;
     }
     static class Foo : Base{
         int i;
@@ -2423,19 +2369,19 @@ unittest{
     }
 
     {
-        IntrusivePtr!(const Foo, true) foo = IntrusivePtr!(Bar, true).make(42, 3.14);
+        IntrusivePtr!(const Foo) foo = IntrusivePtr!Bar.make(42, 3.14);
         assert(foo.get.i == 42);
 
         auto bar = dynCast!Bar(foo);
         assert(bar != null);
         assert(bar.get.d == 3.14);
-        static assert(is(typeof(bar) == IntrusivePtr!(const Bar, true)));
+        static assert(is(typeof(bar) == IntrusivePtr!(const Bar)));
 
         auto zee = dynCast!Zee(foo);
         assert(zee == null);
-        static assert(is(typeof(zee) == IntrusivePtr!(const Zee, true)));
+        static assert(is(typeof(zee) == IntrusivePtr!(const Zee)));
     }
-}+/
+}
 
 
 
@@ -3307,21 +3253,21 @@ version(unittest){
 
             assert(y == null);
         }
-        /+{
-            shared IntrusivePtr!long x = IntrusivePtr!(shared long).make(123);
+        {
+            shared IntrusivePtr!(shared Foo) x = IntrusivePtr!(shared Foo).make(123);
 
-            shared IntrusivePtr!long.WeakType w = x.weak;    //weak ptr
+            shared IntrusivePtr!(shared Foo).WeakType w = x.load.weak;    //weak ptr
 
             assert(w.expired == false);
 
-            x = IntrusivePtr!(shared long).make(321);
+            x = IntrusivePtr!(shared Foo).make(321);
 
             assert(w.expired == true);
 
-            IntrusivePtr!(shared long) y = w.lock;
+            IntrusivePtr!(shared Foo) y = w.load.lock;
 
             assert(y == null);
-        }+/
+        }
     }
 
     //expired

@@ -128,12 +128,13 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
     import std.experimental.allocator : stateSize;
     import std.meta : AliasSeq;
-    import core.atomic : MemoryOrder;
     import std.range : ElementEncodingType;
     import std.traits: Unqual, Unconst, CopyTypeQualifiers, CopyConstness,
         hasIndirections, hasElaborateDestructor,
         isMutable, isAbstractClass, isDynamicArray, isStaticArray, isCallable, Select, isArray;
 
+    import core.atomic : MemoryOrder;
+    import core.lifetime : forward;
 
 
     enum bool hasWeakCounter = _ControlType.hasWeakCounter;
@@ -277,21 +278,24 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
         //necesary for autoptr.unique_ptr.sharedPtr
         package this(Elm, this This)(Elm element)pure nothrow @safe @nogc
-        if(is(Elm : GetElementReferenceType!This) && !is(Unqual!Elm == typeof(null))){
+        if(true
+            && is(Elm : GetElementReferenceType!This) 
+            && !is(Unqual!Elm == typeof(null))
+        ){
             this._element = element;
         }
 
         //
         package this(Elm, this This)(ControlType* control, Elm element)pure nothrow @safe @nogc
-        if(is(Elm : GetElementReferenceType!This) && !is(Unqual!Elm == typeof(null))){
+        if(true
+            && is(Elm : GetElementReferenceType!This) 
+            && !is(Unqual!Elm == typeof(null))
+        ){
             assert(control !is null);
             assert((control is null) == (element is null));
 
             this(element);
-            //if(control !is null){
-                ///TODO tests
-                control.add!weakPtr;
-            //}
+            control.add!weakPtr;
         }
 
         //copy ctor
@@ -925,20 +929,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         if(stateSize!AllocatorType == 0 && !isDynamicArray!ElementType){
             static assert(!weakPtr);
 
-            import core.lifetime : forward;
-
             auto m = MakeEmplace!(AllocatorType, supportGC).make(forward!(args));
 
-            if(m is null)
-                return typeof(return).init;
-
-
-            auto ptr = typeof(this).init;
-
-            //ptr._control = m.base;
-            ptr._set_element(m.get);
-
-            return ptr.move;
+            return (m is null)
+                ? RcPtr.init
+                : RcPtr(m.get);
         }
 
 
@@ -975,21 +970,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         if(stateSize!AllocatorType == 0 && isDynamicArray!ElementType){
             static assert(!weakPtr);
 
-            import core.lifetime : forward;
-
             auto m = MakeDynamicArray!(AllocatorType, supportGC).make(n, forward!(args));
 
-            if(m is null)
-                return typeof(return).init;
-
-            auto ptr = typeof(this).init;
-
-            //ptr._control = m.base;
-            ptr._set_element(m.get);
-
-            return ()@trusted{
-                return ptr.move;
-            }();
+            return (m is null)
+                ? RcPtr.init
+                : RcPtr(m.get);
         }
 
 
@@ -1050,19 +1035,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         if(stateSize!AllocatorType >= 0 && !isDynamicArray!ElementType){
             static assert(!weakPtr);
 
-            import core.lifetime : forward;
-
             auto m = MakeEmplace!(AllocatorType, supportGC).make(forward!(a, args));
 
-            if(m is null)
-                return typeof(return).init;
-
-            auto ptr = typeof(this).init;
-
-            //ptr._control = m.base;
-            ptr._set_element(m.get);
-
-            return ptr.move;
+            return (m is null)
+                ? RcPtr.init
+                : RcPtr(m.get);
         }
 
 
@@ -1101,19 +1078,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         if(stateSize!AllocatorType >= 0 && isDynamicArray!ElementType){
             static assert(!weakPtr);
 
-            import core.lifetime : forward;
-
             auto m = MakeDynamicArray!(AllocatorType, supportGC).make(forward!(a, n, args));
 
-            if(m is null)
-                return typeof(return).init;
-
-            auto ptr = typeof(this).init;
-
-            //ptr._control = m.base;
-            ptr._set_element(m.get);
-
-            return ptr.move;
+            return (m is null)
+                ? RcPtr.init
+                : RcPtr(m.get);
         }
 
 
@@ -1333,7 +1302,6 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
             static assert(isValidRcPtr!Rhs, "`Rhs` is invalid `RcPtr`");
 
-            import core.lifetime : forward;
             this.opAssign!order(forward!desired);
         }
 
@@ -2367,20 +2335,14 @@ if(true
 ){
     static assert(isValidRcPtr!Ptr, "`Ptr` is invalid `RcPtr`");
 
-    import std.traits : CopyTypeQualifiers;
-    import core.lifetime : forward;
-
-    alias Result = typeof(return);
-
     if(ptr == null)
-        return Result.init;
+        return typeof(return).init;
 
-    if(auto element = cast(Result.ElementType)ptr._element){
-        return Result(ptr._control, element);
-
+    if(auto element = cast(typeof(return).ElementType)ptr._element){
+        return typeof(return)(ptr._control, element);
     }
 
-    return Result.init;
+    return typeof(return).init;
 }
 
 /// ditto
@@ -2392,25 +2354,30 @@ if(true
 ){
     static assert(isValidRcPtr!Ptr, "`Ptr` is invalid `RcPtr`");
 
-    import std.traits : CopyTypeQualifiers;
-    import core.lifetime : forward;
+    return dynCastMove!T(ptr);
+}
 
-    alias Result = typeof(return);
+/// ditto
+public ChangeElementType!(Ptr, T) dynCastMove(T, Ptr)(auto ref scope Ptr ptr)
+if(true
+    && isRcPtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
+    && isReferenceType!T && __traits(getLinkage, T) == "D"
+    && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
+){
+    static assert(isValidRcPtr!Ptr, "`Ptr` is invalid `RcPtr`");
 
-    /+static assert(is(
-        CopyTypeQualifiers!(GetElementReferenceType!Ptr, void*)
-            : CopyTypeQualifiers!(GetElementReferenceType!Result, void*)
-    ));+/
+
+    alias Return = typeof(return);
 
     if(ptr == null)
-        return Result.init;
+        return Return.init;
 
-    if(auto element = cast(Result.ElementType)ptr._element){
+    if(auto element = cast(Return.ElementType)ptr._element){
         ptr._const_reset();
-        return Result(element);
+        return Return(element);
     }
 
-    return Result.init;
+    return Return.init;
 }
 
 
@@ -2455,6 +2422,17 @@ unittest{
         assert(foo.get.i == 42);
 
         auto bar = dynCast!Bar(foo.move);
+        assert(bar != null);
+        assert(bar.get.d == 3.14);
+        static assert(is(typeof(bar) == RcPtr!(const Bar)));
+    }
+
+    {
+        RcPtr!(const Foo) foo = RcPtr!Bar.make(42, 3.14);
+        assert(foo.get.i == 42);
+
+        auto bar = dynCastMove!Bar(foo);
+        assert(foo == null);
         assert(bar != null);
         assert(bar.get.d == 3.14);
         static assert(is(typeof(bar) == RcPtr!(const Bar)));
@@ -3305,10 +3283,10 @@ version(unittest){
 
             assert(y == null);
         }
-        /+{
-            shared RcPtr!long x = RcPtr!(shared long).make(123);
+        {
+            shared RcPtr!(shared long) x = RcPtr!(shared long).make(123);
 
-            shared RcPtr!long.WeakType w = x.weak;    //weak ptr
+            shared RcPtr!(shared long).WeakType w = x.load.weak;    //weak ptr
 
             assert(w.expired == false);
 
@@ -3316,10 +3294,10 @@ version(unittest){
 
             assert(w.expired == true);
 
-            RcPtr!(shared long) y = w.lock;
+            RcPtr!(shared long) y = w.load.lock;
 
             assert(y == null);
-        }+/
+        }
     }
 
     //expired

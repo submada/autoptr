@@ -106,12 +106,14 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
     import std.experimental.allocator : stateSize;
     import std.meta : AliasSeq;
-    import core.atomic : MemoryOrder;
     import std.range : ElementEncodingType;
     import std.traits: Unqual, CopyTypeQualifiers, CopyConstness,
         hasIndirections, hasElaborateDestructor,
         isMutable, isAbstractClass, isDynamicArray, isStaticArray, isPointer, isCallable,
         Select;
+
+    import core.atomic : MemoryOrder;
+    import core.lifetime : forward;
 
 
 
@@ -446,25 +448,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             (auto ref Args args)
         if(stateSize!AllocatorType == 0 && !isDynamicArray!ElementType){
 
-            import core.lifetime : forward;
-
             auto m = MakeEmplace!(AllocatorType, supportGC).make(forward!(args));
 
             return (m is null)
                 ? UniquePtr.init
                 : UniquePtr(m.get);
-
-            /+if(m is null)
-                return typeof(return).init;
-
-
-            auto ptr = typeof(this).init;
-
-            //ptr._control = m.base;
-            ptr._element = m.get;
-
-            return ptr.move; //.move;
-            +/
         }
 
 
@@ -499,24 +487,12 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             (AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)
             (const size_t n, auto ref Args args)
         if(stateSize!AllocatorType == 0 && isDynamicArray!ElementType){
-            import core.lifetime : forward;
 
             auto m = MakeDynamicArray!(AllocatorType, supportGC).make(n, forward!(args));
 
             return (m is null)
                 ? UniquePtr.init
                 : UniquePtr(m.get);
-
-            /+if(m is null)
-                return typeof(return).init;
-
-
-            auto ptr = typeof(this).init;
-
-            //ptr._control = m.base;
-            ptr._set_element(m.get);
-
-            return ptr.move;+/
         }
 
         /**
@@ -557,23 +533,12 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             (AllocatorType, bool supportGC = platformSupportGC, Args...)
             (AllocatorType a, auto ref Args args)
         if(stateSize!AllocatorType >= 0 && !isDynamicArray!ElementType){
-            import core.lifetime : forward;
 
             auto m = MakeEmplace!(AllocatorType, supportGC).make(forward!(a, args));
 
             return (m is null)
                 ? UniquePtr.init
                 : UniquePtr(m.get);
-            /+if(m is null)
-                return typeof(return).init;
-
-
-            auto ptr = typeof(this).init;
-
-            //ptr._control = m.base;
-            ptr._element = m.get;
-
-            return ptr.move; //.move;+/
         }
 
 
@@ -608,23 +573,12 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             (AllocatorType, bool supportGC = platformSupportGC, Args...)
             (AllocatorType a, const size_t n, auto ref Args args)
         if(stateSize!AllocatorType >= 0 && isDynamicArray!ElementType){
-            import core.lifetime : forward;
 
             auto m = MakeDynamicArray!(AllocatorType, supportGC).make(forward!(a, n, args));
 
             return (m is null)
                 ? UniquePtr.init
                 : UniquePtr(m.get);
-
-            /+
-            if(m is null)
-                return typeof(return).init;
-
-            auto ptr = typeof(this).init;
-
-            ptr._set_element(m.get);
-
-            return ptr.move;+/
         }
 
         /**
@@ -1429,12 +1383,9 @@ if(true
     && isReferenceType!T && (__traits(getLinkage, T) == "D")
     && isReferenceType!(Ptr.ElementType) && (__traits(getLinkage, Ptr.ElementType) == "D")
 ){
-
-    import std.traits : CopyTypeQualifiers;
+    //static assert(is(CopyTypeQualifiers!(GetElementReferenceType!Ptr, void*) : CopyTypeQualifiers!(GetElementReferenceType!Return, void*) ));
 
     alias Return = typeof(return);
-
-    //static assert(is(CopyTypeQualifiers!(GetElementReferenceType!Ptr, void*) : CopyTypeQualifiers!(GetElementReferenceType!Return, void*) ));
 
     if(ptr == null)
         return Return.init;
@@ -1442,7 +1393,6 @@ if(true
     if(auto element = cast(Return.ElementType)ptr._element){
         assert(element is ptr._element);
         return (()@trusted => Return(ptr.move, Evoid.init) )();
-
     }
 
     return Return.init;
