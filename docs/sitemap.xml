@@ -210,6 +210,7 @@
 <url><loc>http://127.0.0.1/autoptr/unique_ptr/first.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/unique_ptr/isUniquePtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/unique_ptr/isValidUniquePtr.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/unique_ptr/rcPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/unique_ptr/share.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/unique_ptr/sharedPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/unique_ptr/UniquePtr.html</loc></url>

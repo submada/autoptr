@@ -1136,6 +1136,45 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
 /**
+    Create `RcPtr` from parameter `ptr` if `ControlType` of `ptr` has shared counter.
+*/
+auto rcPtr(Ptr)(scope Ptr ptr)@trusted
+if(true
+    && isUniquePtr!Ptr
+    && Ptr.ControlType.hasSharedCounter
+    && !is(Ptr == shared)
+){
+    import std.traits : CopyTypeQualifiers;
+    import core.lifetime : forward;
+    import autoptr.rc_ptr : RcPtr;
+
+    return RcPtr!(
+        CopyTypeQualifiers!(Ptr, Ptr.ElementType),
+        Ptr.DestructorType,
+        Ptr.ControlType,
+    )(forward!ptr);
+}
+
+
+///
+unittest{
+    alias ControlType = ControlBlock!(int, void);
+
+
+    auto x = UniquePtr!(long, ControlType).make(42);
+    assert(*x == 42);
+
+    auto s = rcPtr(x.move);
+    import autoptr.rc_ptr : isRcPtr;
+
+    static assert(isRcPtr!(typeof(s)));
+    static assert(is(typeof(s).ControlType == ControlType));
+
+}
+
+
+
+/**
     Create `SharedPtr` from parameter `ptr` if `ControlType` of `ptr` has shared counter.
 */
 auto sharedPtr(Ptr)(scope Ptr ptr)@trusted

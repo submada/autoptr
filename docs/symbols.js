@@ -151,6 +151,7 @@ var symbols = [
 {name: 'autoptr.unique_ptr.first', kind: "functiondeclaration", path: './autoptr/unique_ptr/first.html', attributes: ["auto", "trusted"]},
 {name: 'autoptr.unique_ptr.isUniquePtr', kind: "enummemberdeclaration", path: './autoptr/unique_ptr/isUniquePtr.html', attributes: []},
 {name: 'autoptr.unique_ptr.isValidUniquePtr', kind: "enummemberdeclaration", path: './autoptr/unique_ptr/isValidUniquePtr.html', attributes: []},
+{name: 'autoptr.unique_ptr.rcPtr', kind: "functiondeclaration", path: './autoptr/unique_ptr/rcPtr.html', attributes: ["auto", "trusted"]},
 {name: 'autoptr.unique_ptr.share', kind: "functiondeclaration", path: './autoptr/unique_ptr/share.html', attributes: []},
 {name: 'autoptr.unique_ptr.sharedPtr', kind: "functiondeclaration", path: './autoptr/unique_ptr/sharedPtr.html', attributes: ["auto", "trusted"]},
 {name: 'autoptr.unique_ptr.UniquePtr', kind: "structdeclaration", path: './autoptr/unique_ptr/UniquePtr.html', attributes: []},
