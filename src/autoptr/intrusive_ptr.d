@@ -93,11 +93,10 @@ unittest{
     The object is destroyed using destructor of type `_Type`.
 
     A `IntrusivePtr` can not share ownership of an object while storing a pointer to another object (use `SharedPtr` for that).
-    The stored pointer is the one accessed by `get()`, the dereference and the comparison operators.
 
     A `IntrusivePtr` may also own no objects, in which case it is called empty.
 
-    `_Type` must contain one property of type `ControlBlock` (this property contains ref counting). If this property is `shared` then ref counting is atomic.
+    `_Type` must contain one property of type `ControlBlock` or `MutableControlBlock` (this property contains ref counting). If this property is `shared` then ref counting is atomic.
 
     If `_Type` is const/immutable then ControlBlock cannot be modified => ref counting doesn't work and `IntrusivePtr` can be only moved.
 
@@ -300,10 +299,16 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
-                IntrusivePtr!long x = null;
+                static struct Foo{
+                    ControlBlock!(int, int) c;
+                }
 
-                assert(x == null);
-                assert(x == IntrusivePtr!long.init);
+                {
+                    IntrusivePtr!Foo x = null;
+
+                    assert(x == null);
+                    assert(x == IntrusivePtr!Foo.init);
+                }
                 --------------------
         */
         public this(this This)(typeof(null) nil)pure nothrow @safe @nogc{
@@ -322,20 +327,29 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
+                static struct Foo{
+                    MutableControlBlock!(int, int) c;
+                    int i;
+
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
+                }
+
                 {
-                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
+                    IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
                     assert(x.useCount == 1);
 
-                    IntrusivePtr!long a = x;         //lvalue copy ctor
+                    IntrusivePtr!Foo a = x;         //lvalue copy ctor
                     assert(a == x);
 
-                    const IntrusivePtr!long b = x;   //lvalue copy ctor
+                    const IntrusivePtr!Foo b = x;   //lvalue copy ctor
                     assert(b == x);
 
-                    IntrusivePtr!(const long) c = x; //lvalue ctor
+                    IntrusivePtr!Foo c = x; //lvalue ctor
                     assert(c == x);
 
-                    const IntrusivePtr!long d = b;   //lvalue ctor
+                    const IntrusivePtr!Foo d = b;   //lvalue ctor
                     assert(d == x);
 
                     assert(x.useCount == 5);
@@ -343,32 +357,20 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
                 {
                     import core.lifetime : move;
-                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
+                    IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
                     assert(x.useCount == 1);
 
-                    IntrusivePtr!long a = move(x);        //rvalue copy ctor
+                    IntrusivePtr!Foo a = move(x);        //rvalue copy ctor
                     assert(a.useCount == 1);
 
-                    const IntrusivePtr!long b = move(a);  //rvalue copy ctor
+                    const IntrusivePtr!Foo b = move(a);  //rvalue copy ctor
                     assert(b.useCount == 1);
 
-                    IntrusivePtr!(const long) c = b.load;  //rvalue ctor
+                    IntrusivePtr!(const Foo) c = b.load;  //rvalue ctor
                     assert(c.useCount == 2);
 
-                    const IntrusivePtr!long d = move(c);  //rvalue ctor
+                    const IntrusivePtr!Foo d = move(c);  //rvalue ctor
                     assert(d.useCount == 2);
-                }
-
-                {
-                    import core.lifetime : move;
-                    auto u = UniquePtr!(long, DefaultRcControlBlock).make(123);
-
-                    IntrusivePtr!long s = move(u);        //rvalue copy ctor
-                    assert(s != null);
-                    assert(s.useCount == 1);
-
-                    IntrusivePtr!long s2 = UniquePtr!(long, DefaultRcControlBlock).init;
-                    assert(s2 == null);
                 }
                 --------------------
         */
@@ -712,8 +714,17 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
+                static struct Foo{
+                    ControlBlock!(int, int) c;
+                    int i;
+
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
+                }
+
                 {
-                    IntrusivePtr!long x = IntrusivePtr!long.make(1);
+                    IntrusivePtr!Foo x = IntrusivePtr!Foo.make(1);
 
                     assert(x.useCount == 1);
                     x = null;
@@ -722,7 +733,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                 }
 
                 {
-                    IntrusivePtr!(shared long) x = IntrusivePtr!(shared long).make(1);
+                    IntrusivePtr!(shared Foo) x = IntrusivePtr!(shared Foo).make(1);
 
                     assert(x.useCount == 1);
                     x = null;
@@ -731,12 +742,13 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                 }
 
                 {
-                    shared IntrusivePtr!(long).ThreadLocal!false x = IntrusivePtr!(shared long).ThreadLocal!false.make(1);
+                    shared IntrusivePtr!(shared Foo) x = IntrusivePtr!(shared Foo).make(1);
 
                     assert(x.useCount == 1);
                     x = null;
                     assert(x.useCount == 0);
-                    assert(x == null);
+                    assert(x.load == null);
+
                 }
                 --------------------
         */
@@ -779,49 +791,55 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
+                static struct Foo{
+                    MutableControlBlock!(int, int) c;
+                    int i;
+
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
+                }
+
                 {
-                    IntrusivePtr!long px1 = IntrusivePtr!long.make(1);
-                    IntrusivePtr!long px2 = IntrusivePtr!long.make(2);
+                    IntrusivePtr!Foo px1 = IntrusivePtr!Foo.make(1);
+                    IntrusivePtr!Foo px2 = IntrusivePtr!Foo.make(2);
 
                     assert(px2.useCount == 1);
                     px1 = px2;
-                    assert(*px1 == 2);
+                    assert(px1.get.i == 2);
                     assert(px2.useCount == 2);
                 }
 
 
                 {
-                    IntrusivePtr!long px = IntrusivePtr!long.make(1);
-                    IntrusivePtr!(const long) pcx = IntrusivePtr!long.make(2);
+                    IntrusivePtr!(Foo) px = IntrusivePtr!(Foo).make(1);
+                    IntrusivePtr!(const Foo) pcx = IntrusivePtr!(Foo).make(2);
 
                     assert(px.useCount == 1);
                     pcx = px;
-                    assert(*pcx == 1);
+                    assert(pcx.get.i == 1);
                     assert(pcx.useCount == 2);
-
                 }
 
 
                 {
-                    const IntrusivePtr!long cpx = IntrusivePtr!long.make(1);
-                    IntrusivePtr!(const long) pcx = IntrusivePtr!long.make(2);
+                    const IntrusivePtr!(Foo) cpx = IntrusivePtr!(Foo).make(1);
+                    IntrusivePtr!(const Foo) pcx = IntrusivePtr!(Foo).make(2);
 
                     assert(pcx.useCount == 1);
                     pcx = cpx;
-                    assert(*pcx == 1);
+                    assert(pcx.get.i == 1);
                     assert(pcx.useCount == 2);
-
                 }
 
                 {
-                    IntrusivePtr!(immutable long) pix = IntrusivePtr!(immutable long).make(123);
-                    IntrusivePtr!(const long) pcx = IntrusivePtr!long.make(2);
+                    IntrusivePtr!(immutable Foo) pix = IntrusivePtr!(immutable Foo).make(123);
+                    IntrusivePtr!(const Foo) pcx = IntrusivePtr!(Foo).make(2);
 
                     assert(pix.useCount == 1);
                     pcx = pix;
-                    assert(*pcx == 123);
+                    assert(pcx.get.i == 123);
                     assert(pcx.useCount == 2);
-
                 }
                 --------------------
         */
@@ -933,16 +951,26 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
-                {
-                    IntrusivePtr!long a = IntrusivePtr!long.make();
-                    assert(a.get == 0);
+                static struct Foo{
+                    ControlBlock!(int, int) c;
+                    int i;
 
-                    IntrusivePtr!(const long) b = IntrusivePtr!long.make(2);
-                    assert(b.get == 2);
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
+                }
+
+                {
+                    IntrusivePtr!Foo a = IntrusivePtr!Foo.make();
+                    assert(a.get.i == 0);
+
+                    IntrusivePtr!(const Foo) b = IntrusivePtr!Foo.make(2);
+                    assert(b.get.i == 2);
                 }
 
                 {
                     static struct Struct{
+                        ControlBlock!int c;
                         int i = 7;
 
                         this(int i)pure nothrow @safe @nogc{
@@ -955,21 +983,6 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
                     IntrusivePtr!Struct s2 = IntrusivePtr!Struct.make(123);
                     assert(s2.get.i == 123);
-                }
-
-                {
-                    static interface Interface{
-                    }
-                    static class Class : Interface{
-                        int i;
-
-                        this(int i)pure nothrow @safe @nogc{
-                            this.i = i;
-                        }
-                    }
-
-                    IntrusivePtr!Interface x = IntrusivePtr!Class.make(3);
-                    //assert(x.dynTo!Class.get.i == 3);
                 }
                 --------------------
         */
@@ -997,44 +1010,44 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
-                auto a = allocatorObject(Mallocator.instance);
-                {
-                    IntrusivePtr!long a = IntrusivePtr!long.alloc(a);
-                    assert(a.get == 0);
+                static struct Foo{
+                    ControlBlock!(int, int) c;
+                    int i;
 
-                    IntrusivePtr!(const long) b = IntrusivePtr!long.alloc(a, 2);
-                    assert(b.get == 2);
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
                 }
 
                 {
-                    static struct Struct{
-                        int i = 7;
+                    import std.experimental.allocator : allocatorObject;
 
-                        this(int i)pure nothrow @safe @nogc{
-                            this.i = i;
+                    auto a = allocatorObject(Mallocator.instance);
+                    {
+                        IntrusivePtr!Foo x = IntrusivePtr!Foo.alloc(a);
+                        assert(x.get.i == 0);
+
+                        IntrusivePtr!(const Foo) y = IntrusivePtr!Foo.alloc(a, 2);
+                        assert(y.get.i == 2);
+                    }
+
+                    {
+                        static struct Struct{
+                            ControlBlock!(int) c;
+                            int i = 7;
+
+                            this(int i)pure nothrow @safe @nogc{
+                                this.i = i;
+                            }
                         }
+
+                        IntrusivePtr!Struct s1 = IntrusivePtr!Struct.alloc(a);
+                        assert(s1.get.i == 7);
+
+                        IntrusivePtr!Struct s2 = IntrusivePtr!Struct.alloc(a, 123);
+                        assert(s2.get.i == 123);
                     }
 
-                    IntrusivePtr!Struct s1 = IntrusivePtr!Struct.alloc(a);
-                    assert(s1.get.i == 7);
-
-                    IntrusivePtr!Struct s2 = IntrusivePtr!Struct.alloc(a, 123);
-                    assert(s2.get.i == 123);
-                }
-
-                {
-                    static interface Interface{
-                    }
-                    static class Class : Interface{
-                        int i;
-
-                        this(int i)pure nothrow @safe @nogc{
-                            this.i = i;
-                        }
-                    }
-
-                    IntrusivePtr!Interface x = IntrusivePtr!Class.alloc(a, 3);
-                    //assert(x.dynTo!Class.get.i == 3);
                 }
                 --------------------
         */
@@ -1061,11 +1074,21 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
-                IntrusivePtr!long x = null;
+                static struct Foo{
+                    ControlBlock!(int, int) c;
+                    int i;
+
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
+                }
+
+
+                IntrusivePtr!Foo x = null;
 
                 assert(x.useCount == 0);
 
-                x = IntrusivePtr!long.make(123);
+                x = IntrusivePtr!Foo.make(123);
                 assert(x.useCount == 1);
 
                 auto y = x;
@@ -1074,7 +1097,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                 auto w1 = x.weak;    //weak ptr
                 assert(x.useCount == 2);
 
-                IntrusivePtr!long.WeakType w2 = x;   //weak ptr
+                IntrusivePtr!Foo.WeakType w2 = x;   //weak ptr
                 assert(x.useCount == 2);
 
                 y = null;
@@ -1111,11 +1134,20 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
-                IntrusivePtr!long x = null;
+                static struct Foo{
+                    ControlBlock!(int, int) c;
+                    int i;
+
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
+                }
+
+                IntrusivePtr!Foo x = null;
                 assert(x.useCount == 0);
                 assert(x.weakCount == 0);
 
-                x = IntrusivePtr!long.make(123);
+                x = IntrusivePtr!Foo.make(123);
                 assert(x.useCount == 1);
                 assert(x.weakCount == 0);
 
@@ -1149,16 +1181,27 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
+                static struct Foo{
+                    ControlBlock!(int, int) c;
+                    int i;
+
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
+                }
+
                 {
-                    IntrusivePtr!long a = IntrusivePtr!long.make(1);
-                    IntrusivePtr!long b = IntrusivePtr!long.make(2);
+                    IntrusivePtr!Foo a = IntrusivePtr!Foo.make(1);
+                    IntrusivePtr!Foo b = IntrusivePtr!Foo.make(2);
                     a.proxySwap(b);
-                    assert(*a == 2);
-                    assert(*b == 1);
+                    assert(a != null);
+                    assert(b != null);
+                    assert(a.get.i == 2);
+                    assert(b.get.i == 1);
                     import std.algorithm : swap;
                     swap(a, b);
-                    assert(*a == 1);
-                    assert(*b == 2);
+                    assert(a.get.i == 1);
+                    assert(b.get.i == 2);
                     assert(a.useCount == 1);
                     assert(b.useCount == 1);
                 }
@@ -1177,18 +1220,27 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
-                shared IntrusivePtr!(long).ThreadLocal!false x = IntrusivePtr!(shared long).ThreadLocal!false.make(123);
+                static struct Foo{
+                    ControlBlock!(int, int) c;
+                    int i;
+
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
+                }
+
+                shared IntrusivePtr!(shared Foo) x = IntrusivePtr!(shared Foo).make(123);
 
                 {
-                    IntrusivePtr!(shared long) y = x.load();
+                    IntrusivePtr!(shared Foo) y = x.load();
                     assert(y.useCount == 2);
 
-                    assert(y.get == 123);
+                    assert(y.get.i == 123);
                 }
                 --------------------
         */
         public ChangeElementType!(This, CopyTypeQualifiers!(This, ElementType))
-            load(MemoryOrder order = MemoryOrder.seq, this This)()scope return{  //TODO remove return
+        load(MemoryOrder order = MemoryOrder.seq, this This)()scope return{  //TODO remove return
             static assert(isCopyable!(Unshared!This, typeof(return)));
             static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
 
@@ -1200,12 +1252,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                 )();
             }
             else{
-                alias Result = ChangeElementType!(
-                    This,
-                    CopyTypeQualifiers!(This, ElementType)
-                );
-
-                return Result(this);
+                return typeof(return)(this);
             }
         }
 
@@ -1220,10 +1267,19 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
+                static struct Foo{
+                    ControlBlock!(int, int) c;
+                    int i;
+
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
+                }
+
                 //null store:
                 {
-                    shared x = IntrusivePtr!(shared long).make(123);
-                    assert(x.load.get == 123);
+                    shared x = IntrusivePtr!(shared Foo).make(123);
+                    assert(x.load.get.i == 123);
 
                     x.store(null);
                     assert(x.useCount == 0);
@@ -1232,23 +1288,23 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
                 //rvalue store:
                 {
-                    shared x = IntrusivePtr!(shared long).make(123);
-                    assert(x.load.get == 123);
+                    shared x = IntrusivePtr!(shared Foo).make(123);
+                    assert(x.load.get.i == 123);
 
-                    x.store(IntrusivePtr!(shared long).make(42));
-                    assert(x.load.get == 42);
+                    x.store(IntrusivePtr!(shared Foo).make(42));
+                    assert(x.load.get.i == 42);
                 }
 
                 //lvalue store:
                 {
-                    shared x = IntrusivePtr!(shared long).make(123);
-                    auto y = IntrusivePtr!(shared long).make(42);
+                    shared x = IntrusivePtr!(shared Foo).make(123);
+                    auto y = IntrusivePtr!(shared Foo).make(42);
 
-                    assert(x.load.get == 123);
-                    assert(y.load.get == 42);
+                    assert(x.load.get.i == 123);
+                    assert(y.load.get.i == 42);
 
                     x.store(y);
-                    assert(x.load.get == 42);
+                    assert(x.load.get.i == 42);
                     assert(x.useCount == 2);
                 }
                 --------------------
@@ -1295,50 +1351,59 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
+                static struct Foo{
+                    ControlBlock!(int, int) c;
+                    int i;
+
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
+                }
+
                 //lvalue exchange
                 {
-                    shared x = IntrusivePtr!(shared long).make(123);
-                    auto y = IntrusivePtr!(shared long).make(42);
+                    shared x = IntrusivePtr!(shared Foo).make(123);
+                    auto y = IntrusivePtr!(shared Foo).make(42);
 
                     auto z = x.exchange(y);
 
-                    assert(x.load.get == 42);
-                    assert(y.get == 42);
-                    assert(z.get == 123);
+                    assert(x.load.get.i == 42);
+                    assert(y.get.i == 42);
+                    assert(z.get.i == 123);
                 }
 
                 //rvalue exchange
                 {
-                    shared x = IntrusivePtr!(shared long).make(123);
-                    auto y = IntrusivePtr!(shared long).make(42);
+                    shared x = IntrusivePtr!(shared Foo).make(123);
+                    auto y = IntrusivePtr!(shared Foo).make(42);
 
                     auto z = x.exchange(y.move);
 
-                    assert(x.load.get == 42);
+                    assert(x.load.get.i == 42);
                     assert(y == null);
-                    assert(z.get == 123);
+                    assert(z.get.i == 123);
                 }
 
                 //null exchange (same as move)
                 {
-                    shared x = IntrusivePtr!(shared long).make(123);
+                    shared x = IntrusivePtr!(shared Foo).make(123);
 
                     auto z = x.exchange(null);
 
                     assert(x.load == null);
-                    assert(z.get == 123);
+                    assert(z.get.i == 123);
                 }
 
                 //swap:
                 {
-                    shared x = IntrusivePtr!(shared long).make(123);
-                    auto y = IntrusivePtr!(shared long).make(42);
+                    shared x = IntrusivePtr!(shared Foo).make(123);
+                    auto y = IntrusivePtr!(shared Foo).make(42);
 
                     //opAssign is same as store
                     y = x.exchange(y.move);
 
-                    assert(x.load.get == 42);
-                    assert(y.get == 123);
+                    assert(x.load.get.i == 42);
+                    assert(y.get.i == 123);
                 }
                 --------------------
         */
@@ -1430,12 +1495,29 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
+                static class Foo{
+                    long i;
+                    MutableControlBlock!(int, int) c;
+
+                    this(long i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
+
+                    bool opEquals(this This)(long i)const @trusted{
+                        import std.traits : Unqual;
+                        auto self = cast(Unqual!This)this;
+                        return (self.i == i);
+                    }
+                }
+
+                alias Type = const Foo;
+
                 static foreach(enum bool weak; [true, false]){
                     //fail
                     {
-                        IntrusivePtr!long a = IntrusivePtr!long.make(123);
-                        IntrusivePtr!long b = IntrusivePtr!long.make(42);
-                        IntrusivePtr!long c = IntrusivePtr!long.make(666);
+                        IntrusivePtr!Type a = IntrusivePtr!Type.make(123);
+                        IntrusivePtr!Type b = IntrusivePtr!Type.make(42);
+                        IntrusivePtr!Type c = IntrusivePtr!Type.make(666);
 
                         static if(weak)a.compareExchangeWeak(b, c);
                         else a.compareExchangeStrong(b, c);
@@ -1448,9 +1530,9 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
                     //success
                     {
-                        IntrusivePtr!long a = IntrusivePtr!long.make(123);
-                        IntrusivePtr!long b = a;
-                        IntrusivePtr!long c = IntrusivePtr!long.make(666);
+                        IntrusivePtr!Type a = IntrusivePtr!Type.make(123);
+                        IntrusivePtr!Type b = a;
+                        IntrusivePtr!Type c = IntrusivePtr!Type.make(666);
 
                         static if(weak)a.compareExchangeWeak(b, c);
                         else a.compareExchangeStrong(b, c);
@@ -1462,9 +1544,9 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
                     //shared fail
                     {
-                        shared IntrusivePtr!(shared long) a = IntrusivePtr!(shared long).make(123);
-                        IntrusivePtr!(shared long) b = IntrusivePtr!(shared long).make(42);
-                        IntrusivePtr!(shared long) c = IntrusivePtr!(shared long).make(666);
+                        shared IntrusivePtr!(shared Type) a = IntrusivePtr!(shared Type).make(123);
+                        IntrusivePtr!(shared Type) b = IntrusivePtr!(shared Type).make(42);
+                        IntrusivePtr!(shared Type) c = IntrusivePtr!(shared Type).make(666);
 
                         static if(weak)a.compareExchangeWeak(b, c);
                         else a.compareExchangeStrong(b, c);
@@ -1477,9 +1559,9 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
                     //shared success
                     {
-                        IntrusivePtr!(shared long) b = IntrusivePtr!(shared long).make(123);
-                        shared IntrusivePtr!(shared long) a = b;
-                        IntrusivePtr!(shared long) c = IntrusivePtr!(shared long).make(666);
+                        IntrusivePtr!(shared Type) b = IntrusivePtr!(shared Type).make(123);
+                        shared IntrusivePtr!(shared Type) a = b;
+                        IntrusivePtr!(shared Type) c = IntrusivePtr!(shared Type).make(666);
 
                         static if(weak)a.compareExchangeWeak(b, c);
                         else a.compareExchangeStrong(b, c);
@@ -1659,30 +1741,55 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
-                {
-                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
+                static struct Foo{
+                    ControlBlock!(int, int) c;
+                    int i;
 
-                    auto w = x.weak;    //weak ptr
-
-                    IntrusivePtr!long y = w.lock;
-
-                    assert(x == y);
-                    assert(x.useCount == 2);
-                    assert(y.get == 123);
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
                 }
 
                 {
-                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
+                    IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+
+                    auto w = x.weak;    //weak ptr
+
+                    IntrusivePtr!Foo y = w.lock;
+
+                    assert(x == y);
+                    assert(x.useCount == 2);
+                    assert(y.get.i == 123);
+                }
+
+                {
+                    IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
 
                     auto w = x.weak;    //weak ptr
 
                     assert(w.expired == false);
 
-                    x = IntrusivePtr!long.make(321);
+                    x = IntrusivePtr!Foo.make(321);
 
                     assert(w.expired == true);
 
-                    IntrusivePtr!long y = w.lock;
+                    IntrusivePtr!Foo y = w.lock;
+
+                    assert(y == null);
+                }
+
+                {
+                    shared IntrusivePtr!(shared Foo) x = IntrusivePtr!(shared Foo).make(123);
+
+                    shared IntrusivePtr!(shared Foo).WeakType w = x.load.weak;    //weak ptr
+
+                    assert(w.expired == false);
+
+                    x = IntrusivePtr!(shared Foo).make(321);
+
+                    assert(w.expired == true);
+
+                    IntrusivePtr!(shared Foo) y = w.load.lock;
 
                     assert(y == null);
                 }
@@ -1708,8 +1815,17 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
+                static struct Foo{
+                    ControlBlock!(int, int) c;
+                    int i;
+
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
+                }
+
                 {
-                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
+                    IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
 
                     auto wx = x.weak;   //weak pointer
 
@@ -1735,14 +1851,24 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
                 Examples:
                     --------------------
-                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
+                    static struct Foo{
+                        ControlBlock!(int, int) c;
+                        int i;
+                        alias i this;
+
+                        this(int i)pure nothrow @safe @nogc{
+                            this.i = i;
+                        }
+                    }
+
+                    IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
                     assert(*x == 123);
-                    (*x = 321);
+                    ((*x).i = 321);
                     assert(*x == 321);
                     const y = x;
                     assert(*y == 321);
                     assert(*x == 321);
-                    static assert(is(typeof(*y) == const long));
+                    static assert(is(typeof(*y) == const Foo));
                     --------------------
             */
             public template opUnary(string op : "*")
@@ -1757,14 +1883,23 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
                 Examples:
                     --------------------
-                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
-                    assert(x.get == 123);
-                    x.get = 321;
-                    assert(x.get == 321);
+                    static struct Foo{
+                        ControlBlock!(int, int) c;
+                        int i;
+
+                        this(int i)pure nothrow @safe @nogc{
+                            this.i = i;
+                        }
+                    }
+
+                    IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+                    assert(x.get.i == 123);
+                    x.get.i = 321;
+                    assert(x.get.i == 321);
                     const y = x;
-                    assert(y.get == 321);
-                    assert(x.get == 321);
-                    static assert(is(typeof(y.get) == const long));
+                    assert(y.get.i == 321);
+                    assert(x.get.i == 321);
+                    static assert(is(typeof(y.get) == const Foo));
                     --------------------
             */
             static if(is(ElementType == class))
@@ -1785,41 +1920,30 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
                 Examples:
                     --------------------
-                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
-                    assert(*x.element == 123);
-                    x.get = 321;
-                    assert(*x.element == 321);
+                    static struct Foo{
+                        ControlBlock!(int, int) c;
+                        int i;
+
+                        this(int i)pure nothrow @safe @nogc{
+                            this.i = i;
+                        }
+                    }
+
+                    IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+                    assert(x.element.i == 123);
+                    x.get.i = 321;
+                    assert(x.element.i == 321);
                     const y = x;
-                    assert(*y.element == 321);
-                    assert(*x.element == 321);
-                    static assert(is(typeof(y.ptr) == const(long)*));
+                    assert(y.element.i == 321);
+                    assert(x.element.i == 321);
+                    static assert(is(typeof(y.element) == const(Foo)*));
                     --------------------
             */
-            public @property ElementReferenceTypeImpl!(inout ElementType) element()
-            inout scope return pure nothrow @system @nogc{
+            public @property ElementReferenceTypeImpl!(inout ElementType)
+            element()inout scope return pure nothrow @system @nogc{
                 return this._element;
             }
 
-        }
-
-
-
-        /**
-            Returns length of dynamic array (isDynamicArray!ElementType == true).
-
-            Examples:
-                --------------------
-                auto x = IntrusivePtr!(int[]).make(10, -1);
-                assert(x.length == 10);
-                assert(x.get.length == 10);
-
-                import std.algorithm : all;
-                assert(x.get.all!(i => i == -1));
-                --------------------
-        */
-        static if(isDynamicArray!ElementType)
-        public @property size_t length()const scope pure nothrow @safe @nogc{
-            return this._element.length;
         }
 
 
@@ -1828,11 +1952,20 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
-                IntrusivePtr!long x = IntrusivePtr!long.make(123);
+                static struct Foo{
+                    ControlBlock!(int, int) c;
+                    int i;
+
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
+                }
+
+                IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
                 assert(x.useCount == 1);
                 auto wx = x.weak;   //weak pointer
                 assert(wx.expired == false);
-                assert(wx.lock.get == 123);
+                assert(wx.lock.get.i == 123);
                 assert(wx.useCount == 1);
                 x = null;
                 assert(wx.expired == true);
@@ -1855,7 +1988,16 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
-                IntrusivePtr!long x = IntrusivePtr!long.make(123);
+                static struct Foo{
+                    ControlBlock!(int, int) c;
+                    int i;
+
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
+                }
+
+                IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
                 assert(cast(bool)x);    //explicit cast
                 assert(x);              //implicit cast
                 x = null;
@@ -1874,10 +2016,30 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
-                IntrusivePtr!long x = IntrusivePtr!long.make(123);
-                auto y = cast(IntrusivePtr!(const long))x;
-                auto z = cast(const IntrusivePtr!long)x;
-                auto u = cast(const IntrusivePtr!(const long))x;
+                static struct Foo{
+                    ControlBlock!(int, int) c;
+                    int i;
+                    alias i this;
+
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
+                }
+
+                import std.conv;
+
+                IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+                assert(x.useCount == 1
+                );
+                auto y = cast(IntrusivePtr!(const Foo))x;
+                //debug assert(x.useCount == 2, x.useCount.to!string);
+                assert(x.useCount == 2);
+
+
+                auto z = cast(const IntrusivePtr!Foo)x;
+                assert(x.useCount == 3);
+
+                auto u = cast(const IntrusivePtr!(const Foo))x;
                 assert(x.useCount == 4);
                 --------------------
         */
@@ -1896,32 +2058,41 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
+                static struct Foo{
+                    ControlBlock!(int, int) c;
+                    int i;
+
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
+                }
+
                 {
-                    IntrusivePtr!long x = IntrusivePtr!long.make(0);
+                    IntrusivePtr!Foo x = IntrusivePtr!Foo.make(0);
                     assert(x != null);
                     x = null;
                     assert(x == null);
                 }
 
                 {
-                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
-                    IntrusivePtr!long y = IntrusivePtr!long.make(123);
+                    IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+                    IntrusivePtr!Foo y = IntrusivePtr!Foo.make(123);
                     assert(x == x);
                     assert(y == y);
                     assert(x != y);
                 }
 
                 {
-                    IntrusivePtr!long x;
-                    IntrusivePtr!(const long) y;
+                    IntrusivePtr!Foo x;
+                    IntrusivePtr!(const Foo) y;
                     assert(x == x);
                     assert(y == y);
                     assert(x == y);
                 }
 
                 {
-                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
-                    IntrusivePtr!long y = IntrusivePtr!long.make(123);
+                    IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+                    IntrusivePtr!Foo y = IntrusivePtr!Foo.make(123);
                     assert(x == x.element);
                     assert(y.element == y);
                     assert(x != y.element);
@@ -1971,10 +2142,19 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
+                static struct Foo{
+                    ControlBlock!(int, int) c;
+                    int i;
+
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
+                }
+
                 {
-                    const a = IntrusivePtr!long.make(42);
-                    const b = IntrusivePtr!long.make(123);
-                    const n = IntrusivePtr!long.init;
+                    const a = IntrusivePtr!Foo.make(42);
+                    const b = IntrusivePtr!Foo.make(123);
+                    const n = IntrusivePtr!Foo.init;
 
                     assert(a <= a);
                     assert(a >= a);
@@ -1990,8 +2170,8 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                 }
 
                 {
-                    const a = IntrusivePtr!long.make(42);
-                    const b = IntrusivePtr!long.make(123);
+                    const a = IntrusivePtr!Foo.make(42);
+                    const b = IntrusivePtr!Foo.make(123);
 
                     assert(a <= a.element);
                     assert(a.element >= a);
@@ -2043,18 +2223,27 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             Examples:
                 --------------------
+                static struct Foo{
+                    ControlBlock!(int, int) c;
+                    int i;
+
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
+                    }
+                }
+
                 {
-                    IntrusivePtr!long x = IntrusivePtr!long.make(123);
-                    IntrusivePtr!long y = IntrusivePtr!long.make(123);
+                    IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+                    IntrusivePtr!Foo y = IntrusivePtr!Foo.make(123);
                     assert(x.toHash == x.toHash);
                     assert(y.toHash == y.toHash);
                     assert(x.toHash != y.toHash);
-                    IntrusivePtr!(const long) z = x;
+                    IntrusivePtr!(const Foo) z = x;
                     assert(x.toHash == z.toHash);
                 }
                 {
-                    IntrusivePtr!long x;
-                    IntrusivePtr!(const long) y;
+                    IntrusivePtr!Foo x;
+                    IntrusivePtr!(const Foo) y;
                     assert(x.toHash == x.toHash);
                     assert(y.toHash == y.toHash);
                     assert(x.toHash == y.toHash);
@@ -2103,9 +2292,6 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
             }
             else
                 return control;
-            //static assert(!is(typeof(*control) == immutable));
-            //return cast(Unconst!(typeof(*control))*)control;
-            //return control;
         }
 
         private void _set_element(ElementReferenceType e)pure nothrow @system @nogc{

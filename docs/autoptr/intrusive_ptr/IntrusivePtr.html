@@ -83,13 +83,12 @@ $('#symbolSearchPane').show();</script>
 </p>
 
 <p>    A <code class="lang-d"><span class="typ">IntrusivePtr</span></code> can not share ownership of an object while storing a pointer to another object (use <code class="lang-d"><span class="typ">SharedPtr</span></code> for that).
-    The stored pointer is the one accessed by <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.get.html"><span class="pln">get</span></a><span class="pun">()</span></code>, the dereference and the comparison operators.
 </p>
 
 <p>    A <code class="lang-d"><span class="typ">IntrusivePtr</span></code> may also own no objects, in which case it is called empty.
 </p>
 
-<p>    <code class="lang-d"><span class="pln">_Type</span></code> must contain one property of type <code class="lang-d"><span class="typ">ControlBlock</span></code> (this property contains ref counting). If this property is <code class="lang-d"><span class="kwd">shared</span></code> then ref counting is atomic.
+<p>    <code class="lang-d"><span class="pln">_Type</span></code> must contain one property of type <code class="lang-d"><span class="typ">ControlBlock</span></code> or <code class="lang-d"><span class="typ">MutableControlBlock</span></code> (this property contains ref counting). If this property is <code class="lang-d"><span class="kwd">shared</span></code> then ref counting is atomic.
 </p>
 
 <p>    If <code class="lang-d"><span class="pln">_Type</span></code> is const/immutable then ControlBlock cannot be modified =&gt; ref counting doesn't work and <code class="lang-d"><span class="typ">IntrusivePtr</span></code> can be only moved.
@@ -164,13 +163,6 @@ $('#symbolSearchPane').show();</script>
 							<a href="../../autoptr/intrusive_ptr/IntrusivePtr.get.html" class="public property"><code>get</code></a><span class="tableEntryAnnotation">[get]</span>
 						</td>
 						<td class="typecol"><code class="prettyprint lang-d"><span class="kwd">inout</span><span class="pun">(</span><a href="../../autoptr/intrusive_ptr/IntrusivePtr.ElementType.html"><span class="typ">IntrusivePtr<wbr/></span><span class="pun">.<wbr/></span><span class="typ">ElementType</span></a><span class="pun">)</span></code></td><td>Get reference to managed object of <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.ElementType.html"><span class="typ">ElementType</span></a></code> or value if <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.ElementType.html"><span class="typ">ElementType</span></a></code> is reference type (class or interface) or dynamic array.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/intrusive_ptr/IntrusivePtr.length.html" class="public property"><code>length</code></a><span class="tableEntryAnnotation">[get]</span>
-						</td>
-						<td class="typecol"><code class="prettyprint lang-d"><span class="pln">size_t</span></code></td><td>Returns length of dynamic array (isDynamicArray!ElementType == true).
 </td>
 					</tr>
 					<tr>

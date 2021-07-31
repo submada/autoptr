@@ -321,6 +321,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         }
 
 
+
         /**
             Constructs a `SharedPtr` which shares ownership of the object managed by `rhs` and pointing to `element`.
 
@@ -1394,7 +1395,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 }
                 --------------------
         */
-        public auto load(MemoryOrder order = MemoryOrder.seq, this This)()scope return{
+        public ChangeElementType!(This, CopyTypeQualifiers!(This, ElementType))
+        load(MemoryOrder order = MemoryOrder.seq, this This)()scope return{
             static assert(isValidSharedPtr!This, "`This` is invalid `SharedPtr`");
 
             static if(is(This == shared)){
@@ -1405,7 +1407,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 )();
             }
             else{
-                return ChangeElementType!(This, ElementType)(this);
+                return typeof(return)(this);
             }
         }
 

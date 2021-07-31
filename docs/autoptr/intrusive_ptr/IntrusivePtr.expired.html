@@ -68,8 +68,17 @@ $('#symbolSearchPane').show();</script>
 </section>
 
 			<section><h2>Examples</h2>
-<pre class="code"><code class="lang-d"><span class="pun">{
-    <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">long </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
+<pre class="code"><code class="lang-d"><span class="kwd">static struct </span><span class="typ">Foo</span><span class="pun">{
+    </span><span class="typ">ControlBlock</span><span class="pun">!(</span><span class="typ">int</span><span class="pun">, </span><span class="typ">int</span><span class="pun">) </span><span class="pln">c</span><span class="pun">;
+    </span><span class="typ">int </span><span class="pln">i</span><span class="pun">;
+
+    </span><span class="kwd">this</span><span class="pun">(</span><span class="typ">int </span><span class="pln">i</span><span class="pun">)</span><span class="kwd">pure nothrow @safe @nogc</span><span class="pun">{
+        </span><span class="kwd">this<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">= </span><span class="pln">i</span><span class="pun">;
+    }
+}
+
+{
+    <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Foo </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
 
     </span><span class="kwd">auto </span><span class="pln">wx </span><span class="pun">= </span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">weak</span><span class="pun">;   </span><span class="com">//weak pointer
 

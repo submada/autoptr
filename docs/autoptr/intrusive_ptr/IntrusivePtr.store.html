@@ -98,10 +98,19 @@ $('#symbolSearchPane').show();</script>
 </section>
 
 			<section><h2>Examples</h2>
-<pre class="code"><code class="lang-d"><span class="com">//null store:
+<pre class="code"><code class="lang-d"><span class="kwd">static struct </span><span class="typ">Foo</span><span class="pun">{
+    </span><span class="typ">ControlBlock</span><span class="pun">!(</span><span class="typ">int</span><span class="pun">, </span><span class="typ">int</span><span class="pun">) </span><span class="pln">c</span><span class="pun">;
+    </span><span class="typ">int </span><span class="pln">i</span><span class="pun">;
+
+    </span><span class="kwd">this</span><span class="pun">(</span><span class="typ">int </span><span class="pln">i</span><span class="pun">)</span><span class="kwd">pure nothrow @safe @nogc</span><span class="pun">{
+        </span><span class="kwd">this<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">= </span><span class="pln">i</span><span class="pun">;
+    }
+}
+
+</span><span class="com">//null store:
 </span><span class="pun">{
-    </span><span class="kwd">shared </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!(</span><span class="kwd">shared </span><span class="typ">long</span><span class="pun">)<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">load<wbr/></span><span class="pun">.</span><span class="pln">get </span><span class="pun">== </span><span class="lit">123</span><span class="pun">);
+    </span><span class="kwd">shared </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!(</span><span class="kwd">shared </span><span class="typ">Foo</span><span class="pun">)<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">load<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">123</span><span class="pun">);
 
     </span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">store</span><span class="pun">(</span><span class="kwd">null</span><span class="pun">);
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">0</span><span class="pun">);
@@ -110,23 +119,23 @@ $('#symbolSearchPane').show();</script>
 
 </span><span class="com">//rvalue store:
 </span><span class="pun">{
-    </span><span class="kwd">shared </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!(</span><span class="kwd">shared </span><span class="typ">long</span><span class="pun">)<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">load<wbr/></span><span class="pun">.</span><span class="pln">get </span><span class="pun">== </span><span class="lit">123</span><span class="pun">);
+    </span><span class="kwd">shared </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!(</span><span class="kwd">shared </span><span class="typ">Foo</span><span class="pun">)<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">load<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">123</span><span class="pun">);
 
-    </span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">store</span><span class="pun">(<a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!(</span><span class="kwd">shared </span><span class="typ">long</span><span class="pun">)<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">));
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">load<wbr/></span><span class="pun">.</span><span class="pln">get </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
+    </span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">store</span><span class="pun">(<a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!(</span><span class="kwd">shared </span><span class="typ">Foo</span><span class="pun">)<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">));
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">load<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
 }
 
 </span><span class="com">//lvalue store:
 </span><span class="pun">{
-    </span><span class="kwd">shared </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!(</span><span class="kwd">shared </span><span class="typ">long</span><span class="pun">)<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
-    </span><span class="kwd">auto </span><span class="pln">y </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!(</span><span class="kwd">shared </span><span class="typ">long</span><span class="pun">)<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
+    </span><span class="kwd">shared </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!(</span><span class="kwd">shared </span><span class="typ">Foo</span><span class="pun">)<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
+    </span><span class="kwd">auto </span><span class="pln">y </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!(</span><span class="kwd">shared </span><span class="typ">Foo</span><span class="pun">)<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
 
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">load<wbr/></span><span class="pun">.</span><span class="pln">get </span><span class="pun">== </span><span class="lit">123</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">y<wbr/></span><span class="pun">.</span><span class="pln">load<wbr/></span><span class="pun">.</span><span class="pln">get </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">load<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">123</span><span class="pun">);
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">y<wbr/></span><span class="pun">.</span><span class="pln">load<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
 
     </span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">store</span><span class="pun">(</span><span class="pln">y</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">load<wbr/></span><span class="pun">.</span><span class="pln">get </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">load<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
 }</span></code></pre>
 </section>

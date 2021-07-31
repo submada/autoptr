@@ -82,7 +82,16 @@ $('#symbolSearchPane').show();</script>
 			<section></section>
 
 			<section><h3>Examples</h3>
-<pre class="code"><code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">long </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
+<pre class="code"><code class="lang-d"><span class="kwd">static struct </span><span class="typ">Foo</span><span class="pun">{
+    </span><span class="typ">ControlBlock</span><span class="pun">!(</span><span class="typ">int</span><span class="pun">, </span><span class="typ">int</span><span class="pun">) </span><span class="pln">c</span><span class="pun">;
+    </span><span class="typ">int </span><span class="pln">i</span><span class="pun">;
+
+    </span><span class="kwd">this</span><span class="pun">(</span><span class="typ">int </span><span class="pln">i</span><span class="pun">)</span><span class="kwd">pure nothrow @safe @nogc</span><span class="pun">{
+        </span><span class="kwd">this<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">= </span><span class="pln">i</span><span class="pun">;
+    }
+}
+
+<a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Foo </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
 </span><span class="kwd">assert</span><span class="pun">(</span><span class="kwd">cast</span><span class="pun">(</span><span class="typ">bool</span><span class="pun">)</span><span class="pln">x</span><span class="pun">);    </span><span class="com">//explicit cast
 </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x</span><span class="pun">);              </span><span class="com">//implicit cast
 </span><span class="pln">x </span><span class="pun">= </span><span class="kwd">null</span><span class="pun">;
@@ -103,10 +112,30 @@ $('#symbolSearchPane').show();</script>
 			<section></section>
 
 			<section><h3>Examples</h3>
-<pre class="code"><code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">long </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
-</span><span class="kwd">auto </span><span class="pln">y </span><span class="pun">= </span><span class="kwd">cast</span><span class="pun">(<a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!(</span><span class="kwd">const </span><span class="typ">long</span><span class="pun">))</span><span class="pln">x</span><span class="pun">;
-</span><span class="kwd">auto </span><span class="pln">z </span><span class="pun">= </span><span class="kwd">cast</span><span class="pun">(</span><span class="kwd">const <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">long</span><span class="pun">)</span><span class="pln">x</span><span class="pun">;
-</span><span class="kwd">auto </span><span class="pln">u </span><span class="pun">= </span><span class="kwd">cast</span><span class="pun">(</span><span class="kwd">const <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!(</span><span class="kwd">const </span><span class="typ">long</span><span class="pun">))</span><span class="pln">x</span><span class="pun">;
+<pre class="code"><code class="lang-d"><span class="kwd">static struct </span><span class="typ">Foo</span><span class="pun">{
+    </span><span class="typ">ControlBlock</span><span class="pun">!(</span><span class="typ">int</span><span class="pun">, </span><span class="typ">int</span><span class="pun">) </span><span class="pln">c</span><span class="pun">;
+    </span><span class="typ">int </span><span class="pln">i</span><span class="pun">;
+    </span><span class="kwd">alias </span><span class="pln">i </span><span class="kwd">this</span><span class="pun">;
+
+    </span><span class="kwd">this</span><span class="pun">(</span><span class="typ">int </span><span class="pln">i</span><span class="pun">)</span><span class="kwd">pure nothrow @safe @nogc</span><span class="pun">{
+        </span><span class="kwd">this<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">= </span><span class="pln">i</span><span class="pun">;
+    }
+}
+
+</span><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">conv</span><span class="pun">;
+
+<a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Foo </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
+</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1
+</span><span class="pun">);
+</span><span class="kwd">auto </span><span class="pln">y </span><span class="pun">= </span><span class="kwd">cast</span><span class="pun">(<a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!(</span><span class="kwd">const </span><span class="typ">Foo</span><span class="pun">))</span><span class="pln">x</span><span class="pun">;
+</span><span class="com">//debug assert(x.useCount == 2, x.useCount.to!string);
+</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
+
+
+</span><span class="kwd">auto </span><span class="pln">z </span><span class="pun">= </span><span class="kwd">cast</span><span class="pun">(</span><span class="kwd">const <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Foo</span><span class="pun">)</span><span class="pln">x</span><span class="pun">;
+</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">3</span><span class="pun">);
+
+</span><span class="kwd">auto </span><span class="pln">u </span><span class="pun">= </span><span class="kwd">cast</span><span class="pun">(</span><span class="kwd">const <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!(</span><span class="kwd">const </span><span class="typ">Foo</span><span class="pun">))</span><span class="pln">x</span><span class="pun">;
 </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">4</span><span class="pun">);</span></code></pre>
 </section>
 

@@ -1220,7 +1220,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 }
                 --------------------
         */
-        public auto load(MemoryOrder order = MemoryOrder.seq, this This)()scope return{
+        public ChangeElementType!(This, CopyTypeQualifiers!(This, ElementType))
+        load(MemoryOrder order = MemoryOrder.seq, this This)()scope return{
             static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
 
             static if(is(This == shared)){
@@ -1231,12 +1232,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 )();
             }
             else{
-                alias Result = ChangeElementType!(
-                    This,
-                    CopyTypeQualifiers!(This, ElementType)
-                );
-
-                return Result(this);
+                return typeof(return)(this);
             }
         }
 

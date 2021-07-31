@@ -78,45 +78,45 @@ $('#symbolSearchPane').show();</script>
 </section>
 
 			<section><h2>Examples</h2>
-<pre class="code"><code class="lang-d"><span class="kwd">auto <a href="../../autoptr/intrusive_ptr/IntrusivePtr.alloc.html#a"></span><span class="pln">a</span></a><span class="pln"> </span><span class="pun">= </span><span class="pln">allocatorObject</span><span class="pun">(</span><span class="typ">Mallocator<wbr/></span><span class="pun">.</span><span class="pln">instance</span><span class="pun">);
-{
-    <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">long <a href="../../autoptr/intrusive_ptr/IntrusivePtr.alloc.html#a"></span><span class="pln">a</span></a><span class="pln"> </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">alloc</span><span class="pun">(<a href="../../autoptr/intrusive_ptr/IntrusivePtr.alloc.html#a"></span><span class="pln">a</span></a><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">a<wbr/></span><span class="pun">.</span><span class="pln">get </span><span class="pun">== </span><span class="lit">0</span><span class="pun">);
+<pre class="code"><code class="lang-d"><span class="kwd">static struct </span><span class="typ">Foo</span><span class="pun">{
+    </span><span class="typ">ControlBlock</span><span class="pun">!(</span><span class="typ">int</span><span class="pun">, </span><span class="typ">int</span><span class="pun">) </span><span class="pln">c</span><span class="pun">;
+    </span><span class="typ">int </span><span class="pln">i</span><span class="pun">;
 
-    <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!(</span><span class="kwd">const </span><span class="typ">long</span><span class="pun">) </span><span class="pln">b </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">alloc</span><span class="pun">(<a href="../../autoptr/intrusive_ptr/IntrusivePtr.alloc.html#a"></span><span class="pln">a</span></a><span class="pun">, </span><span class="lit">2</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">b<wbr/></span><span class="pun">.</span><span class="pln">get </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
+    </span><span class="kwd">this</span><span class="pun">(</span><span class="typ">int </span><span class="pln">i</span><span class="pun">)</span><span class="kwd">pure nothrow @safe @nogc</span><span class="pun">{
+        </span><span class="kwd">this<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">= </span><span class="pln">i</span><span class="pun">;
+    }
 }
 
 {
-    </span><span class="kwd">static struct </span><span class="typ">Struct</span><span class="pun">{
-        </span><span class="typ">int </span><span class="pln">i </span><span class="pun">= </span><span class="lit">7</span><span class="pun">;
+    </span><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">experimental<wbr/></span><span class="pun">.</span><span class="pln">allocator </span><span class="pun">: </span><span class="pln">allocatorObject</span><span class="pun">;
 
-        </span><span class="kwd">this</span><span class="pun">(</span><span class="typ">int </span><span class="pln">i</span><span class="pun">)</span><span class="kwd">pure nothrow @safe @nogc</span><span class="pun">{
-            </span><span class="kwd">this<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">= </span><span class="pln">i</span><span class="pun">;
+    </span><span class="kwd">auto <a href="../../autoptr/intrusive_ptr/IntrusivePtr.alloc.html#a"></span><span class="pln">a</span></a><span class="pln"> </span><span class="pun">= </span><span class="pln">allocatorObject</span><span class="pun">(</span><span class="typ">Mallocator<wbr/></span><span class="pun">.</span><span class="pln">instance</span><span class="pun">);
+    {
+        <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Foo </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">alloc</span><span class="pun">(<a href="../../autoptr/intrusive_ptr/IntrusivePtr.alloc.html#a"></span><span class="pln">a</span></a><span class="pun">);
+        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">0</span><span class="pun">);
+
+        <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!(</span><span class="kwd">const </span><span class="typ">Foo</span><span class="pun">) </span><span class="pln">y </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">alloc</span><span class="pun">(<a href="../../autoptr/intrusive_ptr/IntrusivePtr.alloc.html#a"></span><span class="pln">a</span></a><span class="pun">, </span><span class="lit">2</span><span class="pun">);
+        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">y<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
+    }
+
+    {
+        </span><span class="kwd">static struct </span><span class="typ">Struct</span><span class="pun">{
+            </span><span class="typ">ControlBlock</span><span class="pun">!(</span><span class="typ">int</span><span class="pun">) </span><span class="pln">c</span><span class="pun">;
+            </span><span class="typ">int </span><span class="pln">i </span><span class="pun">= </span><span class="lit">7</span><span class="pun">;
+
+            </span><span class="kwd">this</span><span class="pun">(</span><span class="typ">int </span><span class="pln">i</span><span class="pun">)</span><span class="kwd">pure nothrow @safe @nogc</span><span class="pun">{
+                </span><span class="kwd">this<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">= </span><span class="pln">i</span><span class="pun">;
+            }
         }
+
+        <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Struct </span><span class="pln">s1 </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Struct<wbr/></span><span class="pun">.</span><span class="pln">alloc</span><span class="pun">(<a href="../../autoptr/intrusive_ptr/IntrusivePtr.alloc.html#a"></span><span class="pln">a</span></a><span class="pun">);
+        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">s1<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">7</span><span class="pun">);
+
+        <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Struct </span><span class="pln">s2 </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Struct<wbr/></span><span class="pun">.</span><span class="pln">alloc</span><span class="pun">(<a href="../../autoptr/intrusive_ptr/IntrusivePtr.alloc.html#a"></span><span class="pln">a</span></a><span class="pun">, </span><span class="lit">123</span><span class="pun">);
+        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">s2<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">123</span><span class="pun">);
     }
 
-    <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Struct </span><span class="pln">s1 </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Struct<wbr/></span><span class="pun">.</span><span class="pln">alloc</span><span class="pun">(<a href="../../autoptr/intrusive_ptr/IntrusivePtr.alloc.html#a"></span><span class="pln">a</span></a><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">s1<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">7</span><span class="pun">);
-
-    <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Struct </span><span class="pln">s2 </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Struct<wbr/></span><span class="pun">.</span><span class="pln">alloc</span><span class="pun">(<a href="../../autoptr/intrusive_ptr/IntrusivePtr.alloc.html#a"></span><span class="pln">a</span></a><span class="pun">, </span><span class="lit">123</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">s2<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">123</span><span class="pun">);
-}
-
-{
-    </span><span class="kwd">static interface </span><span class="typ">Interface</span><span class="pun">{
-    }
-    </span><span class="kwd">static class </span><span class="typ">Class </span><span class="pun">: </span><span class="typ">Interface</span><span class="pun">{
-        </span><span class="typ">int </span><span class="pln">i</span><span class="pun">;
-
-        </span><span class="kwd">this</span><span class="pun">(</span><span class="typ">int </span><span class="pln">i</span><span class="pun">)</span><span class="kwd">pure nothrow @safe @nogc</span><span class="pun">{
-            </span><span class="kwd">this<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">= </span><span class="pln">i</span><span class="pun">;
-        }
-    }
-
-    <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Interface </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Class<wbr/></span><span class="pun">.</span><span class="pln">alloc</span><span class="pun">(<a href="../../autoptr/intrusive_ptr/IntrusivePtr.alloc.html#a"></span><span class="pln">a</span></a><span class="pun">, </span><span class="lit">3</span><span class="pun">);
-    </span><span class="com">//assert(x.dynTo!Class.get.i == 3);
-</span><span class="pun">}</span></code></pre>
+}</span></code></pre>
 </section>
 
 			<footer>
