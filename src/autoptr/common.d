@@ -556,70 +556,6 @@ unittest{
 }
 
 
-/*
-    Change `ElementType` for type 'SharedPtr', `RcPtr`, `IntrusivePtr` or `UniquePtr`.
-*/
-package template ChangeElementType(Ptr, T){
-    import std.traits : CopyTypeQualifiers;
-
-    alias FromType = CopyTypeQualifiers!(Ptr, Ptr.ElementType);
-    alias ResultType = CopyTypeQualifiers!(FromType, T);
-
-    static if(is(Ptr : SmartPtr!(OldType, Args), alias SmartPtr, OldType, Args...)){
-        alias ChangeElementType = SmartPtr!(
-            ResultType,
-            Args
-        );
-    }
-    else static assert(0, "no impl");
-}
-
-
-package template GetElementReferenceType(Ptr){
-    import std.traits : CopyTypeQualifiers;
-
-    alias ElementType = CopyTypeQualifiers!(Ptr, Ptr.ElementType);
-
-    alias GetElementReferenceType = ElementReferenceTypeImpl!ElementType;
-}
-
-package template ElementReferenceTypeImpl(Type){
-    import std.traits : Select, isDynamicArray;
-    import std.range : ElementEncodingType;
-
-    static if(isDynamicArray!Type)
-        alias ElementReferenceTypeImpl = ElementEncodingType!Type[];
-    else
-        alias ElementReferenceTypeImpl = PtrOrRef!Type;
-
-}
-
-
-//mutex:
-package static auto lockPtr(alias fn, Ptr, Args...)
-(auto ref scope shared Ptr ptr, auto ref scope return Args args)
-{
-    import std.traits : CopyConstness, CopyTypeQualifiers, Unqual;
-    import core.lifetime : forward;
-    import autoptr.internal.mutex : getMutex;
-
-    shared mutex = getMutex(ptr);
-
-    mutex.lock();
-    scope(exit)mutex.unlock();
-
-    alias Result = ChangeElementType!(
-        Unshared!Ptr,
-        CopyTypeQualifiers!(shared Ptr, Ptr.ElementType)
-    );
-
-
-    return fn(
-        *(()@trusted => cast(Result*)&ptr )(),
-        forward!args
-    );
-}
-
 
 /**
     Check if type `T` is of type `MutableControlBlock!(...)`.
@@ -861,6 +797,71 @@ unittest{
 }
 
 
+
+//mutex:
+package static auto lockPtr(alias fn, Ptr, Args...)
+(auto ref scope shared Ptr ptr, auto ref scope return Args args){
+    import std.traits : CopyConstness, CopyTypeQualifiers, Unqual;
+    import core.lifetime : forward;
+    import autoptr.internal.mutex : getMutex;
+
+    shared mutex = getMutex(ptr);
+
+    mutex.lock();
+    scope(exit)mutex.unlock();
+
+    alias Result = ChangeElementType!(
+        Unshared!Ptr,
+        CopyTypeQualifiers!(shared Ptr, Ptr.ElementType)
+    );
+
+
+    return fn(
+        *(()@trusted => cast(Result*)&ptr )(),
+        forward!args
+    );
+}
+
+
+/*
+    Change `ElementType` for type 'SharedPtr', `RcPtr`, `IntrusivePtr` or `UniquePtr`.
+*/
+package template ChangeElementType(Ptr, T){
+    import std.traits : CopyTypeQualifiers;
+
+    alias FromType = CopyTypeQualifiers!(Ptr, Ptr.ElementType);
+    alias ResultType = CopyTypeQualifiers!(FromType, T);
+
+    static if(is(Ptr : SmartPtr!(OldType, Args), alias SmartPtr, OldType, Args...)){
+        alias ChangeElementType = SmartPtr!(
+            ResultType,
+            Args
+        );
+    }
+    else static assert(0, "no impl");
+}
+
+
+package template GetElementReferenceType(Ptr){
+    import std.traits : CopyTypeQualifiers;
+
+    alias ElementType = CopyTypeQualifiers!(Ptr, Ptr.ElementType);
+
+    alias GetElementReferenceType = ElementReferenceTypeImpl!ElementType;
+}
+
+package template ElementReferenceTypeImpl(Type){
+    import std.traits : Select, isDynamicArray;
+    import std.range : ElementEncodingType;
+
+    static if(isDynamicArray!Type)
+        alias ElementReferenceTypeImpl = ElementEncodingType!Type[];
+    else
+        alias ElementReferenceTypeImpl = PtrOrRef!Type;
+
+}
+
+
 import std.traits : BaseClassesTuple, Unqual, Unconst, CopyTypeQualifiers;
 import std.meta : AliasSeq;
 
@@ -1032,6 +1033,20 @@ unittest{
     static assert(is(
         typeof(intrusivControlBlock(lvalueOf!(immutable Foo))) == shared ControlBlock!int*
     ));
+}
+
+
+
+
+package auto dynCastElement(To, From)(scope return From from)pure nothrow @trusted @nogc
+if(isReferenceType!From && isReferenceType!To){
+    import std.traits : CopyTypeQualifiers, Unqual;
+
+    alias Result = CopyTypeQualifiers!(From, To);
+
+    return (from is null)
+        ? Result.init
+        : cast(Result)cast(Unqual!To)cast(Unqual!From)from;
 }
 
 
@@ -2535,17 +2550,6 @@ unittest{
     assert(result1 == result2);
 }
 
-package auto dynCastElement(To, From)(scope return From from)pure nothrow @trusted @nogc
-if(isReferenceType!From && isReferenceType!To){
-    import std.traits : CopyTypeQualifiers, Unqual;
-
-    alias Result = CopyTypeQualifiers!(From, To);
-
-    return (from is null)
-        ? Result.init
-        : cast(Result)cast(Unqual!To)cast(Unqual!From)from;
-}
-
 //decrement counter and return new value, if counter is shared then atomic increment is used.
 private static T rc_decrement(bool atomic, T)(ref T counter){
     static if(atomic || is(T == shared)){
@@ -2586,6 +2590,7 @@ unittest{
 
     assert(result1 == result2);
 }
+
 
 version(D_BetterC){
 }

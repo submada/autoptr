@@ -2757,13 +2757,7 @@ private{
         alias FromPtr = CopyTypeQualifiers!(From, From.ElementReferenceType);
         alias ToPtr = CopyTypeQualifiers!(To, To.ElementReferenceType);
 
-        /+static if(isIntrusivePtr!From)
-            enum bool valid = is(From.mutableControl);
-        else 
-            enum bool valid = true;+/
-
         enum bool isConstructable = true
-            //&& valid
             && is(FromPtr : ToPtr)
             && is(From.DestructorType : To.DestructorType)
             && is(From.ControlType == To.ControlType)            ;

@@ -1,6 +1,5 @@
 module autoptr.internal.traits;
 
-
 import std.traits : isFunctionPointer, isDelegate;
 
 public auto assumeNoGC(T)(T t)@trusted
@@ -11,6 +10,7 @@ in(isFunctionPointer!T || isDelegate!T){
     return cast(SetFunctionAttributes!(T, functionLinkage!T, attrs)) t;
 }
 
+
 public auto assumePure(T)(T t)@trusted
 in(isFunctionPointer!T || isDelegate!T){
     import std.traits : functionAttributes, FunctionAttribute, SetFunctionAttributes, functionLinkage;
@@ -18,6 +18,7 @@ in(isFunctionPointer!T || isDelegate!T){
     enum attrs = functionAttributes!T | FunctionAttribute.pure_;
     return cast(SetFunctionAttributes!(T, functionLinkage!T, attrs)) t;
 }
+
 
 public auto assumePureNoGc(T)(T t)@trusted
 in(isFunctionPointer!T || isDelegate!T){
@@ -27,6 +28,7 @@ in(isFunctionPointer!T || isDelegate!T){
     return cast(SetFunctionAttributes!(T, functionLinkage!T, attrs)) t;
 }
 
+
 public auto assumePureNoGcNothrow(T)(T t)@trusted
 in(isFunctionPointer!T || isDelegate!T){
     import std.traits : functionAttributes, FunctionAttribute, SetFunctionAttributes, functionLinkage;
@@ -35,8 +37,12 @@ in(isFunctionPointer!T || isDelegate!T){
     return cast(SetFunctionAttributes!(T, functionLinkage!T, attrs)) t;
 }
 
+
+
+//remove `shared` from type `T`.
 public alias Unshared(T) = T;
 public alias Unshared(T: shared U, U) = U;
+
 
 //Same as `std.traits.hasIndirections` but for classes.
 public template classHasIndirections(T){
@@ -52,11 +58,8 @@ public template classHasIndirections(T){
 
             static foreach (alias B; AliasSeq!(T, BaseClassesTuple!T)) {
                 static foreach(alias Var; typeof(B.init.tupleof)){
-                    static if(hasIndirections!Var){
+                    static if(hasIndirections!Var)
                         has_indirection = true;
-                        //has_indirection = true;
-                        //break TOP;
-                    }
                 }
             }
 
@@ -68,6 +71,7 @@ public template classHasIndirections(T){
     }
 }
 
+
 //alias to `T` if `T` is class or interface, otherwise `T*`.
 public template PtrOrRef(T){
     static if(is(T == class) || is(T == interface))
@@ -76,9 +80,9 @@ public template PtrOrRef(T){
         alias PtrOrRef = T*;
 }
 
+
+//`true` if `T` is class or interface.
 public enum bool isReferenceType(T) = is(T == class) || is(T == interface);
-
-
 
 
 //alias to `AliasSeq` containing `T` if `T` has state, otherwise a empty tuple.
@@ -94,6 +98,7 @@ public template AllocatorWithState(T){
         alias AllocatorWithState = AliasSeq!T;
 }
 
+
 //alias to stateless allocator instance
 public template statelessAllcoator(T){
     import std.experimental.allocator.common : stateSize;
@@ -106,6 +111,7 @@ public template statelessAllcoator(T){
     else 
         enum T statelessAllcoator = T.init;   
 }
+
 
 //Size of instance, if `T` is class then `__traits(classInstanceSize, T)`, otherwise `T.sizeof`
 public template instanceSize(T){

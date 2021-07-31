@@ -1364,17 +1364,16 @@ if(true
     && isReferenceType!(Ptr.ElementType) && (__traits(getLinkage, Ptr.ElementType) == "D")
 ){
     static assert(isValidUniquePtr!Ptr, "`Ptr` is invalid `UniquePtr`");
-    //static assert(is(CopyTypeQualifiers!(GetElementReferenceType!Ptr, void*) : CopyTypeQualifiers!(GetElementReferenceType!Return, void*) ));
 
     alias Return = typeof(return);
 
     if(auto element = dynCastElement!T(ptr._element)){
         assert(element is ptr._element);
+
         return ()@trusted{
             ptr._const_reset();
             return Return(element);
         }();
-        //return typeof(return)(ptr.move, Evoid.init);
     }
 
     return typeof(return).init;
