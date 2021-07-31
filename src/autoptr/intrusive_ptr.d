@@ -2292,13 +2292,7 @@ if(true
     static assert(isCopyable!(Ptr, ChangeElementType!(Ptr, Ptr.ElementType)));
     static assert(isValidIntrusivePtr!Ptr, "`Ptr` is invalid `IntrusivePtr`");
 
-    import std.traits : CopyTypeQualifiers;
-    import core.lifetime : forward;
-
-    if(ptr == null)
-        return typeof(return).init;
-
-    if(auto element = cast(CopyTypeQualifiers!(Ptr, T))ptr._element){
+    if(auto element = dynCastElement!T(ptr._element)){
         ptr._control.add!false;
         return typeof(return)(element);
     }
@@ -2331,11 +2325,10 @@ if(true
     static assert(isMovable!(Ptr, ChangeElementType!(Ptr, Ptr.ElementType)));
     static assert(isValidIntrusivePtr!Ptr, "`Ptr` is invalid `IntrusivePtr`");
 
-    if(ptr == null)
-        return typeof(return).init;
-
-    if(auto element = cast(Result.ElementType)ptr._element){
-        ptr._const_set_counter(null);
+    if(auto element = dynCastElement!T(ptr._element)){
+        ()@trusted{
+            ptr._const_reset();
+        }();
         return typeof(return)(element);
     }
 
@@ -2344,7 +2337,7 @@ if(true
 
 
 ///
-unittest{
+pure nothrow @safe @nogc unittest{
     static class Base{
         MutableControlBlock!(int, int) c;
     }
@@ -2370,14 +2363,30 @@ unittest{
 
     {
         IntrusivePtr!(const Foo) foo = IntrusivePtr!Bar.make(42, 3.14);
-        assert(foo.get.i == 42);
+        //assert(foo.get.i == 42);
 
         auto bar = dynCast!Bar(foo);
         assert(bar != null);
-        assert(bar.get.d == 3.14);
+        //assert(bar.get.d == 3.14);
         static assert(is(typeof(bar) == IntrusivePtr!(const Bar)));
 
         auto zee = dynCast!Zee(foo);
+        assert(zee == null);
+        static assert(is(typeof(zee) == IntrusivePtr!(const Zee)));
+    }
+
+    {
+        IntrusivePtr!(const Foo) foo = IntrusivePtr!Bar.make(42, 3.14);
+        //assert(foo.get.i == 42);
+
+        auto bar = dynCastMove!Bar(foo);
+        assert(bar != null);
+        assert(foo == null);
+        //assert(bar.get.d == 3.14);
+        static assert(is(typeof(bar) == IntrusivePtr!(const Bar)));
+
+        auto zee = dynCast!Zee(bar);
+        assert(bar != null);
         assert(zee == null);
         static assert(is(typeof(zee) == IntrusivePtr!(const Zee)));
     }
@@ -2408,7 +2417,7 @@ if(isIntrusivePtr!Ptr && !is(Ptr == shared)){
 
 
 ///
-unittest{
+pure nothrow @safe @nogc unittest{
     static class Foo{
         MutableControlBlock!(int, int) c;
         int i;
@@ -2419,7 +2428,7 @@ unittest{
     }
 
     auto x = IntrusivePtr!Foo.make(42);
-    assert(x.get.i == 42);
+    //assert(x.get.i == 42);
     assert(x.useCount == 1);
 
     auto s = sharedPtr(x);

@@ -5,7 +5,9 @@
 <url><loc>http://127.0.0.1/autoptr/common/ControlBlock.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/ControlBlock.hasSharedCounter.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/ControlBlock.hasWeakCounter.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/common/ControlBlock.opAssign.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/ControlBlock.Shared.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/common/ControlBlock.this.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/ControlBlock.Weak.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/ControlTypeDeduction.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/DefaultAllocator.html</loc></url>

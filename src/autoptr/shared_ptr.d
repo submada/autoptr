@@ -382,7 +382,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         }
 
         //copy ctor
-        private this(Rhs, this This)(ref scope Rhs rhs, Evoid ctor)@safe //pure @nogc nothrow
+        private this(Rhs, this This)(ref scope Rhs rhs, Evoid ctor)//@safe //pure @nogc nothrow
         if(true
             && isSharedPtr!Rhs
             && isConstructable!(Rhs, This)
@@ -468,7 +468,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 }
                 --------------------
         */
-        public this(Rhs, this This)(ref scope Rhs rhs)@safe
+        public this(Rhs, this This)(ref scope Rhs rhs)//@safe
         if(true
             && isSharedPtr!Rhs
             && !is(Unqual!This == Unqual!Rhs)   ///copy ctors
@@ -2474,15 +2474,11 @@ if(true
 
     alias Return = typeof(return);
 
-    if(ptr == null)
-        return Return.init;
-
-    if(auto element = cast(Return.ElementType)ptr._element){
+    if(auto element = dynCastElement!T(ptr._element)){
         return (()@trusted => Return(move(ptr), element) )();
-
     }
 
-    return Return.init;
+    return typeof(return).init;
 }
 
 
@@ -2548,15 +2544,13 @@ if(true
 
     alias Return = typeof(return);
 
-    if(ptr == null)
-        return Return.init;
-
-    if(auto element = cast(Return.ElementType)ptr._element){
+    if(auto element = dynCastElement!T(ptr._element)){
+        //return typeof(return)(forward!ptr, element);
         return (()@trusted => Return(forward!ptr, element) )();
 
     }
 
-    return Return.init;
+    return typeof(return).init;
 }
 
 

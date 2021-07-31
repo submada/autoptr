@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="UTF-8"/>
-		<title>Enum member ControlBlock.hasWeakCounter</title>
+		<title>Function ControlBlock.this</title>
 		<link rel="stylesheet" type="text/css" href="../../styles/ddox.css"/>
 		<link rel="stylesheet" href="../../prettify/prettify.css" type="text/css"/>
 		<script type="text/javascript" src="../../scripts/jquery.js">/**/</script><script type="text/javascript" src="../../scripts/ddox.js">/**/</script>
@@ -54,25 +54,17 @@ $('#symbolSearchPane').show();</script>
 			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>Enum member ControlBlock.hasWeakCounter</h1><p><code class="lang-d"><span class="kwd">true</span></code> if <code class="lang-d"><a href="../../autoptr/common/ControlBlock.html"><span class="typ">ControlBlock</span></a></code> has weak ref counting (<code class="lang-d"><a href="../../autoptr/common/ControlBlock.Weak.html"><span class="typ">Weak</span></a><span class="pln"> </span><span class="pun">!= </span><span class="typ">void</span></code>).
+			<h1>Function ControlBlock.this</h1><p>Copy constructor is @disabled.
 </p>
 			<div class="prototype">
 				<code class="lang-d">
 					<div class="single-prototype">
-			<span class="kwd">struct</span> <a href="../../autoptr/common/ControlBlock.html"><span class="typ">ControlBlock</span></a>
+			<span class="kwd">@disable </span><span class="pln">this</span>
+			<span class="pun">(</span>
 			<br/>
-			<span class="pun">
-				{
-				<br/>
-			</span>
-			&nbsp;&nbsp;<span class="com">// ...</span>
+			&nbsp;&nbsp;<span class="kwd">scope const ref </span><span class="kwd">typeof</span><span class="pun">(</span><span class="kwd">this</span><span class="pun">)</span> <span class="pln"></span>
 			<br/>
-			&nbsp;&nbsp;<span class="kwd">enum</span> <span class="pln">hasWeakCounter</span>
-			 <span class="pun">=</span> <span class="pun">!</span><span class="kwd">is</span><span class="pun">(</span><span class="pln">_Weak </span><span class="pun">== </span><span class="typ">void</span><span class="pun">)</span><span class="pun">;</span>
-			<br/>
-			&nbsp;&nbsp;<span class="com">// ...</span>
-			<br/>
-			<span class="pun">}</span>
+			<span class="pun">)</span><span class="pln"> </span><span class="kwd">scope pure nothrow @nogc scope @safe</span><span class="pun">;</span>
 					</div>
 				</code>
 			</div>

@@ -1389,23 +1389,25 @@ if(true
     && isReferenceType!T && (__traits(getLinkage, T) == "D")
     && isReferenceType!(Ptr.ElementType) && (__traits(getLinkage, Ptr.ElementType) == "D")
 ){
+    static assert(isValidUniquePtr!Ptr, "`Ptr` is invalid `UniquePtr`");
     //static assert(is(CopyTypeQualifiers!(GetElementReferenceType!Ptr, void*) : CopyTypeQualifiers!(GetElementReferenceType!Return, void*) ));
 
     alias Return = typeof(return);
 
-    if(ptr == null)
-        return Return.init;
-
-    if(auto element = cast(Return.ElementType)ptr._element){
+    if(auto element = dynCastElement!T(ptr._element)){
         assert(element is ptr._element);
-        return (()@trusted => Return(ptr.move, Evoid.init) )();
+        return ()@trusted{
+            ptr._const_reset();
+            return Return(element);
+        }();
+        //return typeof(return)(ptr.move, Evoid.init);
     }
 
-    return Return.init;
+    return typeof(return).init;
 }
 
 ///
-pure nothrow unittest{
+pure @safe nothrow @nogc unittest{
     static class Foo{
         int i;
 
@@ -1428,12 +1430,12 @@ pure nothrow unittest{
 
     {
         UniquePtr!(const Foo) foo = UniquePtr!Bar.make(42, 3.14);
-        assert(foo.get.i == 42);
+        //assert(foo.get.i == 42);
 
         auto bar = dynCastMove!Bar(foo);
         assert(bar != null);
         assert(foo == null);
-        assert(bar.get.d == 3.14);
+        //assert(bar.get.d == 3.14);
         static assert(is(typeof(bar) == UniquePtr!(const Bar)));
 
         auto zee = dynCastMove!Zee(bar);
@@ -1454,6 +1456,7 @@ if(true
     && is(T == class) && (__traits(getLinkage, T) == "D")
     && is(Ptr.ElementType == class) && (__traits(getLinkage, Ptr.ElementType) == "D")
 ){
+    static assert(isValidUniquePtr!Ptr, "`Ptr` is invalid `UniquePtr`");
 
     return dynCastMove!T(ptr);
 }

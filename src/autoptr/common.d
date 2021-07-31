@@ -344,16 +344,23 @@ public template ControlBlock(_Shared, _Weak = void){
         /**
             `true` if `ControlBlock` has ref counting (`Shared != void`).
         */
-        public enum bool hasSharedCounter = !is(Shared == void);
+        public enum bool hasSharedCounter = !is(_Shared == void);
 
         /**
             `true` if `ControlBlock` has weak ref counting (`Weak != void`).
         */
-        public enum bool hasWeakCounter = !is(Weak == void);
+        public enum bool hasWeakCounter = !is(_Weak == void);
         
+        /**
+            Copy constructor is @disabled.
+        */
+        public @disable this(scope ref const typeof(this) )scope pure nothrow @safe @nogc;
 
-        
-        @disable void opAssign(scope ref const typeof(this) )scope pure nothrow @safe @nogc;
+        /**
+            Assign is @disabled.
+        */
+        public @disable void opAssign(scope ref const typeof(this) )scope pure nothrow @safe @nogc;
+
 
         package void initialize(this This)(immutable Vtable* vptr)scope pure nothrow @trusted @nogc{
             (cast(Unqual!This*)&this).vptr = vptr;
@@ -625,7 +632,7 @@ public template isIntrusive(Type){
 unittest{
     static assert(isIntrusive!long == 0);
 
-    static assert(isIntrusive!(ControlBlock!int) == 1);
+    static assert(isIntrusive!(ControlBlock!int) == 0);
 
     static class Foo{
         long x;
@@ -647,7 +654,7 @@ unittest{
         Struct s;
 
     }
-    static assert(isIntrusive!Bar == 3);
+    static assert(isIntrusive!Bar == 2);
 
 
     static class Zee{
@@ -655,11 +662,46 @@ unittest{
         double x;
         Struct str;
     }
-    static assert(isIntrusive!Zee == 1);
+    static assert(isIntrusive!Zee == 0);
 
 }
 
+private size_t isIntrusiveClass(Type, bool ignoreBase)()pure nothrow @safe @nogc
+if(is(Type == class)){
+    import std.traits : BaseClassesTuple;
 
+    Type ty = null;
+
+    size_t result = 0;
+
+    static foreach(alias T; typeof(ty.tupleof)){
+        static if(is(T == struct) && (isControlBlock!T || isMutableControlBlock!T))
+            result += 1;
+    }
+
+    static if(!ignoreBase)
+    static foreach(alias T; BaseClassesTuple!Type){
+        result += isIntrusiveClass!(T, true);
+    }
+
+    return result;
+
+}
+
+private size_t isIntrusiveStruct(Type)()pure nothrow @safe @nogc
+if(is(Type == struct)){
+    Type* ty = null;
+
+    size_t result = 0;
+
+    static foreach(alias T; typeof((*ty).tupleof)){
+        static if(is(T == struct) && (isControlBlock!T || isMutableControlBlock!T))
+            result += 1;
+    }
+
+    return result;
+}
+/+
 private size_t isIntrusiveClass(Type, bool ignoreBase)()pure nothrow @safe @nogc
 if(is(Type == class)){
     import std.traits : BaseClassesTuple;
@@ -701,6 +743,7 @@ if(is(Type == struct)){
         return result;
     }
 }
++/
 
 
 /**
@@ -808,9 +851,75 @@ import std.meta : AliasSeq;
     If result pointer is shared then atomic ref counting is necessary.
 */
 package auto intrusivControlBlock(Type)(scope return auto ref Type elm)pure nothrow @trusted @nogc{
-    static assert(isIntrusive!(Unqual!Type) == 1);
 
     static if(is(Type == struct)){
+        static if(isControlBlock!Type){
+            static if(is(Type == shared))
+                return cast(CopyTypeQualifiers!(shared(void), Type*))&elm;
+            else
+                return &elm;
+        }
+        else static if(isMutableControlBlock!Type){
+            auto control = intrusivControlBlock(elm.control);
+
+            static if(is(Type == shared) || is(typeof(Unqual!Type.control) == shared))
+                return cast(shared(Unconst!(typeof(*control))*))control;
+            else
+                return cast(Unconst!(typeof(*control))*)control;
+        }
+        else{
+            static assert(isIntrusive!(Unqual!Type) == 1);
+
+            foreach(ref x; (*cast(Unqual!(typeof(elm))*)&elm).tupleof){
+                static if(isControlBlock!(typeof(x)) || isMutableControlBlock!(typeof(x))){
+                //static if(is(T == struct) && isIntrusive!T){
+                    auto control = intrusivControlBlock(*cast(CopyTypeQualifiers!(Type, typeof(x))*)&x);
+
+                    static if(is(Type == shared) || is(typeof(x) == shared))
+                        return cast(CopyTypeQualifiers!(shared(void), typeof(control)))control;
+                    else
+                        return control;
+                }
+            }
+        }
+    }
+    else static if(is(Type == class)){
+        static assert(isIntrusive!(Unqual!Type) == 1);
+
+        static if(isIntrusiveClass!(Type, true)){
+            foreach(ref x; (cast(Unqual!(typeof(elm)))elm).tupleof){
+                static if(isControlBlock!(typeof(x)) || isMutableControlBlock!(typeof(x))){
+                //static if(is(typeof(x) == struct) && isIntrusive!(typeof(x))){
+                    auto control = intrusivControlBlock(*cast(CopyTypeQualifiers!(Type, typeof(x))*)&x);
+
+                    static if(is(Type == shared) || is(typeof(x) == shared))
+                        return cast(CopyTypeQualifiers!(shared(void), typeof(control)))control;
+                    else
+                        return control;
+                }
+            }
+
+        }
+        else static foreach(alias T; BaseClassesTuple!Type){
+            static if(isIntrusiveClass!(T, true)){
+
+                foreach(ref x; (cast(Unqual!T)elm).tupleof){
+                    static if(isControlBlock!(typeof(x)) || isMutableControlBlock!(typeof(x))){
+                    //static if(is(typeof(x) == struct) && isIntrusive!(typeof(x))){
+                        auto control = intrusivControlBlock(*cast(CopyTypeQualifiers!(Type, typeof(x))*)&x);
+
+                        static if(is(Type == shared) || is(typeof(x) == shared))
+                            return cast(CopyTypeQualifiers!(shared(void), typeof(control)))control;
+                        else
+                            return control;
+                    }
+                }
+
+            }
+        }
+    }
+    else static assert(0, "no impl");
+    /+static if(is(Type == struct)){
         static if(isControlBlock!Type){
             static if(is(Type == shared))
                 return cast(CopyTypeQualifiers!(shared(void), Type*))&elm;
@@ -870,7 +979,7 @@ package auto intrusivControlBlock(Type)(scope return auto ref Type elm)pure noth
             }
         }
     }
-    else static assert(0, "no impl");
+    else static assert(0, "no impl");+/
 
 }
 
@@ -976,7 +1085,7 @@ package size_t intrusivControlBlockOffset(Type)()pure nothrow @safe @nogc{
     static assert(isIntrusive!(Unqual!Type) == 1);
     
     static if(is(Type == struct)){
-        static if(isControlBlock!Type){
+        /+static if(isControlBlock!Type){
             return 0;
         }
         else{
@@ -984,10 +1093,15 @@ package size_t intrusivControlBlockOffset(Type)()pure nothrow @safe @nogc{
                 static if(is(typeof(var) == struct) && isIntrusive!(typeof(var)))
                     return var.offsetof + intrusivControlBlockOffset!(typeof(var))();
             }
+        }+/
+
+        static foreach(alias var; Type.tupleof){
+            static if(isControlBlock!(typeof(var)) || isMutableControlBlock!(typeof(var)))
+                return var.offsetof;
         }
     }
     else static if(is(Type == class)){
-        static if(isIntrusiveClass!(Type, true)){
+        /+static if(isIntrusiveClass!(Type, true)){
             static foreach(alias var; Type.tupleof){
                 static if(is(typeof(var) == struct) && isIntrusive!(typeof(var)))
                     return var.offsetof + intrusivControlBlockOffset!(typeof(var))();
@@ -1000,6 +1114,21 @@ package size_t intrusivControlBlockOffset(Type)()pure nothrow @safe @nogc{
                         return var.offsetof + intrusivControlBlockOffset!(typeof(var))();
                 }
             }
+        }+/
+        static if(isIntrusiveClass!(Type, true)){
+            static foreach(alias var; Type.tupleof){
+                static if(isControlBlock!(typeof(var)) || isMutableControlBlock!(typeof(var)))
+                    return var.offsetof;
+
+            }
+        }
+        else static foreach(alias T; BaseClassesTuple!Type){
+            static if(isIntrusiveClass!(T, true)){
+                static foreach(alias var; T.tupleof){
+                    static if(isControlBlock!(typeof(var)) || isMutableControlBlock!(typeof(var)))
+                        return var.offsetof;
+                }
+            }
         }
     }
     else static assert(0, "no impl");
@@ -1007,7 +1136,7 @@ package size_t intrusivControlBlockOffset(Type)()pure nothrow @safe @nogc{
 
 unittest{
     static assert(isIntrusive!long == 0);
-    static assert(isIntrusive!(ControlBlock!int) == 1);
+    static assert(isIntrusive!(ControlBlock!int) == 0);
 
     static class Foo{
         long x;
@@ -1040,23 +1169,7 @@ unittest{
 
     }
 
-    static assert(isIntrusive!Bar == 3);
-
-
-    static class Zee{
-        long l;
-        double x;
-        Struct str;
-    }
-    static assert(isIntrusive!Zee == 1);
-    static assert(Zee.str.offsetof + Struct.control.offsetof == intrusivControlBlockOffset!Zee());
-
-
-    {
-        Zee zee;
-        auto control = intrusivControlBlock(zee);
-    }
-
+    static assert(isIntrusive!Bar == 2);
 }
 
 
@@ -1855,12 +1968,17 @@ if(isIntrusive!_Type == 1){
             static if(is(_Type == class)){
                 _Type data = ((ref data)@trusted => cast(_Type)data.ptr)(this.data);
                 emplaceIntrusive(data, &vtable, forward!args);
+                //emplace(data, forward!args);
+                //intrusivControlBlock(data).initialize(&vtable);
             }
             else static if(is(_Type == struct)){ 
                 _Type* data = ((ref data)@trusted => cast(_Type*)data.ptr)(this.data);
                 emplaceIntrusive(*data, &vtable, forward!args);
+                //emplace(data, forward!args);
+                //intrusivControlBlock(*data).initialize(&vtable);
             }
             else static assert(0, "no impl");
+
 
 
             smart_ptr_construct();
@@ -2480,6 +2598,17 @@ unittest{
     assert(result2 == 1);
 
     assert(result1 == result2);
+}
+
+package auto dynCastElement(To, From)(scope return From from)pure nothrow @trusted @nogc
+if(isReferenceType!From && isReferenceType!To){
+    import std.traits : CopyTypeQualifiers, Unqual;
+
+    alias Result = CopyTypeQualifiers!(From, To);
+
+    return (from is null)
+        ? Result.init
+        : cast(Result)cast(Unqual!To)cast(Unqual!From)from;
 }
 
 //decrement counter and return new value, if counter is shared then atomic increment is used.

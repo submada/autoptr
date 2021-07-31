@@ -2335,10 +2335,7 @@ if(true
 ){
     static assert(isValidRcPtr!Ptr, "`Ptr` is invalid `RcPtr`");
 
-    if(ptr == null)
-        return typeof(return).init;
-
-    if(auto element = cast(typeof(return).ElementType)ptr._element){
+    if(auto element = dynCastElement!T(ptr._element)){
         return typeof(return)(ptr._control, element);
     }
 
@@ -2366,18 +2363,12 @@ if(true
 ){
     static assert(isValidRcPtr!Ptr, "`Ptr` is invalid `RcPtr`");
 
-
-    alias Return = typeof(return);
-
-    if(ptr == null)
-        return Return.init;
-
-    if(auto element = cast(Return.ElementType)ptr._element){
+    if(auto element = dynCastElement!T(ptr._element)){
         ptr._const_reset();
-        return Return(element);
+        return typeof(return)(element);
     }
 
-    return Return.init;
+    return typeof(return).init;
 }
 
 
