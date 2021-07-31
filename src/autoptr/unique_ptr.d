@@ -322,7 +322,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     }();
                 }
                 else{
-                    return this.lockUniquePtr!(
+                    return this.lockPtr!(
                         (ref scope self) => self.opAssign!order(null)
                     )();
                 }
@@ -394,7 +394,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     }();
                 }
                 else{
-                    return this.lockUniquePtr!(
+                    return this.lockPtr!(
                         (ref scope self, Rhs x) => self.opAssign!order(x.move)
                     )(rhs.move);
                 }
@@ -716,7 +716,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     }();
                 }
                 else{
-                    return this.lockUniquePtr!(
+                    return this.lockPtr!(
                         (ref scope self) => self.exchange!order(null)
                     )();
                 }
@@ -756,7 +756,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     }();
                 }
                 else{
-                    return this.lockUniquePtr!(
+                    return this.lockPtr!(
                         (ref scope self, Rhs x) => self.exchange!order(x.move)
                     )(ptr.move);
                 }
@@ -1349,32 +1349,6 @@ pure nothrow @nogc unittest{
 }
 
 
-//mutex:
-private static auto lockUniquePtr(alias fn, Ptr, Args...)(auto ref shared Ptr ptr, auto ref scope return Args args){
-    import std.traits : CopyConstness, CopyTypeQualifiers, Unqual;
-    import core.lifetime : forward;
-    import autoptr.mutex : getMutex;
-
-
-    //static assert(!Ptr.threadLocal);
-    shared mutex = getMutex(ptr);
-
-    mutex.lock();
-    scope(exit)mutex.unlock();
-
-    alias Result = ChangeElementType!(
-        CopyConstness!(Ptr, Unqual!Ptr),      //remove shared from this
-        CopyTypeQualifiers!(shared Ptr, Ptr.ElementType)
-    );
-
-
-    return fn(
-        *(()@trusted => cast(Result*)&ptr )(),
-        forward!args
-    );
-}
-
-
 /**
     Dynamic cast for shared pointers if `ElementType` is class with D linkage.
 
@@ -1621,39 +1595,6 @@ private{
         enum bool isAssignable = true
             && isConstructable!(From, To)
             && isMutable!To;
-    }
-
-    template GetElementReferenceType(Ptr)
-    if(isUniquePtr!Ptr){
-        import std.traits : CopyTypeQualifiers, Select, isDynamicArray;
-        import std.range : ElementEncodingType;
-
-        alias ElementType = CopyTypeQualifiers!(Ptr, Ptr.ElementType);
-
-        alias GetElementReferenceType = ElementReferenceTypeImpl!ElementType;
-    }
-
-    template ChangeElementType(Ptr, T)
-    if(isUniquePtr!Ptr){
-        import std.traits : CopyTypeQualifiers, Unqual;
-
-        alias FromType = CopyTypeQualifiers!(Ptr, Ptr.ElementType);
-        alias ResultType = CopyTypeQualifiers!(FromType, T);
-
-        //static assert(is(Unqual!ResultType == Unqual!FromType), Unqual!ResultType.stringof ~ " != " ~ Unqual!FromType.stringof);
-
-        alias ResultPtr = UniquePtr!(
-            ResultType,
-
-            Ptr.DestructorType,
-            //Ptr.threadLocal,
-            Ptr.ControlType,
-        );
-
-        /+static if(is(Ptr == shared))
-            alias ChangeElementType = shared ResultPtr;
-        else+/
-        alias ChangeElementType = ResultPtr;
     }
 
 }

@@ -556,8 +556,69 @@ unittest{
 }
 
 
+/*
+    Change `ElementType` for type 'SharedPtr', `RcPtr`, `IntrusivePtr` or `UniquePtr`.
+*/
+package template ChangeElementType(Ptr, T){
+    import std.traits : CopyTypeQualifiers;
+
+    alias FromType = CopyTypeQualifiers!(Ptr, Ptr.ElementType);
+    alias ResultType = CopyTypeQualifiers!(FromType, T);
+
+    static if(is(Ptr : SmartPtr!(OldType, Args), alias SmartPtr, OldType, Args...)){
+        alias ChangeElementType = SmartPtr!(
+            ResultType,
+            Args
+        );
+    }
+    else static assert(0, "no impl");
+}
 
 
+package template GetElementReferenceType(Ptr){
+    import std.traits : CopyTypeQualifiers;
+
+    alias ElementType = CopyTypeQualifiers!(Ptr, Ptr.ElementType);
+
+    alias GetElementReferenceType = ElementReferenceTypeImpl!ElementType;
+}
+
+package template ElementReferenceTypeImpl(Type){
+    import std.traits : Select, isDynamicArray;
+    import std.range : ElementEncodingType;
+
+    static if(isDynamicArray!Type)
+        alias ElementReferenceTypeImpl = ElementEncodingType!Type[];
+    else
+        alias ElementReferenceTypeImpl = PtrOrRef!Type;
+
+}
+
+
+//mutex:
+package static auto lockPtr(alias fn, Ptr, Args...)
+(auto ref scope shared Ptr ptr, auto ref scope return Args args)
+{
+    import std.traits : CopyConstness, CopyTypeQualifiers, Unqual;
+    import core.lifetime : forward;
+    import autoptr.internal.mutex : getMutex;
+
+    shared mutex = getMutex(ptr);
+
+    mutex.lock();
+    scope(exit)mutex.unlock();
+
+    alias Result = ChangeElementType!(
+        Unshared!Ptr,
+        CopyTypeQualifiers!(shared Ptr, Ptr.ElementType)
+    );
+
+
+    return fn(
+        *(()@trusted => cast(Result*)&ptr )(),
+        forward!args
+    );
+}
 
 
 /**
@@ -702,49 +763,7 @@ if(is(Type == struct)){
 
     return result;
 }
-/+
-private size_t isIntrusiveClass(Type, bool ignoreBase)()pure nothrow @safe @nogc
-if(is(Type == class)){
-    import std.traits : BaseClassesTuple;
 
-    Type ty = null;
-
-    size_t result = 0;
-
-    static foreach(alias T; typeof(ty.tupleof)){
-        static if(is(T == struct))
-            result += isIntrusiveStruct!T;
-    }
-
-    static if(!ignoreBase)
-    static foreach(alias T; BaseClassesTuple!Type){
-        result += isIntrusiveClass!(T, true);
-    }
-
-    return result;
-
-}
-
-private size_t isIntrusiveStruct(Type)()pure nothrow @safe @nogc
-if(is(Type == struct)){
-    static if(isControlBlock!Type){
-        return 1;
-    }
-    else{
-
-        Type* ty = null;
-
-        size_t result = 0;
-
-        static foreach(alias T; typeof((*ty).tupleof)){
-            static if(is(T == struct))
-                result += isIntrusiveStruct!T;
-        }
-
-        return result;
-    }
-}
-+/
 
 
 /**
@@ -873,7 +892,6 @@ package auto intrusivControlBlock(Type)(scope return auto ref Type elm)pure noth
 
             foreach(ref x; (*cast(Unqual!(typeof(elm))*)&elm).tupleof){
                 static if(isControlBlock!(typeof(x)) || isMutableControlBlock!(typeof(x))){
-                //static if(is(T == struct) && isIntrusive!T){
                     auto control = intrusivControlBlock(*cast(CopyTypeQualifiers!(Type, typeof(x))*)&x);
 
                     static if(is(Type == shared) || is(typeof(x) == shared))
@@ -890,7 +908,6 @@ package auto intrusivControlBlock(Type)(scope return auto ref Type elm)pure noth
         static if(isIntrusiveClass!(Type, true)){
             foreach(ref x; (cast(Unqual!(typeof(elm)))elm).tupleof){
                 static if(isControlBlock!(typeof(x)) || isMutableControlBlock!(typeof(x))){
-                //static if(is(typeof(x) == struct) && isIntrusive!(typeof(x))){
                     auto control = intrusivControlBlock(*cast(CopyTypeQualifiers!(Type, typeof(x))*)&x);
 
                     static if(is(Type == shared) || is(typeof(x) == shared))
@@ -906,7 +923,6 @@ package auto intrusivControlBlock(Type)(scope return auto ref Type elm)pure noth
 
                 foreach(ref x; (cast(Unqual!T)elm).tupleof){
                     static if(isControlBlock!(typeof(x)) || isMutableControlBlock!(typeof(x))){
-                    //static if(is(typeof(x) == struct) && isIntrusive!(typeof(x))){
                         auto control = intrusivControlBlock(*cast(CopyTypeQualifiers!(Type, typeof(x))*)&x);
 
                         static if(is(Type == shared) || is(typeof(x) == shared))
@@ -920,68 +936,6 @@ package auto intrusivControlBlock(Type)(scope return auto ref Type elm)pure noth
         }
     }
     else static assert(0, "no impl");
-    /+static if(is(Type == struct)){
-        static if(isControlBlock!Type){
-            static if(is(Type == shared))
-                return cast(CopyTypeQualifiers!(shared(void), Type*))&elm;
-            else 
-                return &elm;
-        }
-        else static if(isMutableControlBlock!Type){
-            auto control = intrusivControlBlock(elm.control);
-
-            static if(is(Type == shared) || is(typeof(Unqual!Type.control) == shared))
-                return cast(shared(Unconst!(typeof(*control))*))control;
-            else
-                return cast(Unconst!(typeof(*control))*)control;
-        }
-        else{
-            foreach(ref x; (*cast(Unqual!(typeof(elm))*)&elm).tupleof){
-                static if(is(typeof(x) == struct) && isIntrusive!(typeof(x))){
-                    auto control = intrusivControlBlock(*cast(CopyTypeQualifiers!(Type, typeof(x))*)&x);
-
-                    static if(is(Type == shared) || is(typeof(x) == shared))
-                        return cast(CopyTypeQualifiers!(shared(void), typeof(control)))control;
-                    else
-                        return control; 
-                }
-            }
-        }
-    }
-    else static if(is(Type == class)){
-        static if(isIntrusiveClass!(Type, true)){
-
-            foreach(ref x; (cast(Unqual!(typeof(elm)))elm).tupleof){
-                static if(is(typeof(x) == struct) && isIntrusive!(typeof(x))){
-                    auto control = intrusivControlBlock(*cast(CopyTypeQualifiers!(Type, typeof(x))*)&x);
-                    
-                    static if(is(Type == shared) || is(typeof(x) == shared))
-                        return cast(CopyTypeQualifiers!(shared(void), typeof(control)))control;
-                    else
-                        return control; 
-                }
-            }
-
-        }
-        else static foreach(alias T; BaseClassesTuple!Type){
-            static if(isIntrusiveClass!(T, true)){
-
-                foreach(ref x; (cast(Unqual!T)elm).tupleof){
-                    static if(is(typeof(x) == struct) && isIntrusive!(typeof(x))){
-                        auto control = intrusivControlBlock(*cast(CopyTypeQualifiers!(Type, typeof(x))*)&x);
-                        
-                        static if(is(Type == shared) || is(typeof(x) == shared))
-                            return cast(CopyTypeQualifiers!(shared(void), typeof(control)))control;
-                        else
-                            return control; 
-                    }
-                }
-
-            }
-        }
-    }
-    else static assert(0, "no impl");+/
-
 }
 
 //control block
@@ -2370,26 +2324,6 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
     }
 }
 
-
-/+
-package const(void)* elementAddress(Elm)(const Elm elm)pure nothrow @trusted @nogc{
-    if(this == null)
-        return null;
-
-    static if(is(Unqual!Elm == typeof(null))){
-        return null;
-    }
-    else static if(isDynamicArray!Elm){
-        return cast(const void*)elm.ptr;
-    }
-    else static if(isReferenceType!Elm){
-        return cast(const void*)cast(const Object)cast(const Unqual!Elm)elm;
-    }
-    else static if(isPointer!Elm){
-        return cast(const void*)elm;
-    }
-    else static assert(0, "no impl " ~ Elm.stringof);
-}+/
 
 
 version(D_BetterC){

@@ -80,16 +80,6 @@ public enum bool isReferenceType(T) = is(T == class) || is(T == interface);
 
 
 
-public template ElementReferenceTypeImpl(Type){
-    import std.traits : Select, isDynamicArray;
-    import std.range : ElementEncodingType;
-
-    static if(isDynamicArray!Type)
-        alias ElementReferenceTypeImpl = ElementEncodingType!Type[];
-    else
-        alias ElementReferenceTypeImpl = PtrOrRef!Type;
-
-}
 
 //alias to `AliasSeq` containing `T` if `T` has state, otherwise a empty tuple.
 public template AllocatorWithState(T){

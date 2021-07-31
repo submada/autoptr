@@ -824,7 +824,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             static assert(isValidSharedPtr!This, "`This` is invalid `SharedPtr`");
 
             static if(is(This == shared)){
-                this.lockSharedPtr!(
+                this.lockPtr!(
                     (ref scope self) => self.opAssign!order(null)
                 )();
             }
@@ -904,7 +904,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 return;
 
             static if(is(This == shared)){
-                this.lockSharedPtr!(
+                this.lockPtr!(
                     (ref scope self, ref scope Rhs x) => self.opAssign!order(x)
                 )(desired);
             }
@@ -933,7 +933,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             static assert(isValidSharedPtr!Rhs, "`Rhs` is invalid `SharedPtr`");
 
             static if(is(This == shared)){
-                this.lockSharedPtr!(
+                this.lockPtr!(
                     (ref scope self, scope Rhs x) => self.opAssign!order(x.move)
                 )(desired.move);
             }
@@ -1290,7 +1290,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             static if(is(This == shared)){
                 static assert(is(ControlType == shared));
 
-                return this.lockSharedPtr!(
+                return this.lockPtr!(
                     (ref scope return self) => self.useCount()
                 )();
             }
@@ -1331,7 +1331,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             static if(is(This == shared)){
                 static assert(is(ControlType == shared));
 
-                return this.lockSharedPtr!(
+                return this.lockPtr!(
                     (ref scope return self) => self.weakCount()
                 )();
             }
@@ -1402,7 +1402,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             static if(is(This == shared)){
                 static assert(is(ControlType == shared));
 
-                return this.lockSharedPtr!(
+                return this.lockPtr!(
                     (ref scope return self) => self.load!order()
                 )();
             }
@@ -1551,7 +1551,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             static assert(isValidSharedPtr!This, "`This` is invalid `SharedPtr`");
 
             static if(is(This == shared))
-                return this.lockSharedPtr!(
+                return this.lockPtr!(
                     (ref scope self) => self.exchange!order(null)
                 )();
             else{
@@ -1570,7 +1570,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             static assert(isValidSharedPtr!Rhs, "`Rhs` is invalid `SharedPtr`");
 
             static if(is(This == shared))
-                return this.lockSharedPtr!(
+                return this.lockPtr!(
                     (ref scope self, Rhs x) => self.exchange!order(x.move)
                 )(ptr.move);
             else{
@@ -2778,65 +2778,7 @@ private{
             && isMutable!To;
     }
 
-    template ChangeElementType(Ptr, T)
-    if(isSharedPtr!Ptr){
-        import std.traits : CopyTypeQualifiers;
-
-        alias FromType = CopyTypeQualifiers!(Ptr, Ptr.ElementType);
-        alias ResultType = CopyTypeQualifiers!(FromType, T);
-
-        alias ResultPtr = SharedPtr!(
-            ResultType,
-
-            Ptr.DestructorType,
-            Ptr.ControlType,
-            Ptr.weakPtr
-        );
-
-        alias ChangeElementType = ResultPtr;
-    }
-
-    template GetElementReferenceType(Ptr)
-    if(isSharedPtr!Ptr){
-        import std.traits : CopyTypeQualifiers, isDynamicArray;
-        import std.range : ElementEncodingType;
-
-        alias ElementType = CopyTypeQualifiers!(Ptr, Ptr.ElementType);
-
-        alias GetElementReferenceType = ElementReferenceTypeImpl!ElementType;
-    }
-
 }
-
-//mutex:
-private static auto lockSharedPtr
-    (alias fn, Ptr, Args...)
-    (auto ref scope shared Ptr ptr, auto ref scope return Args args)
-{
-    import std.traits : CopyConstness, CopyTypeQualifiers, Unqual;
-    import core.lifetime : forward;
-    import autoptr.internal.mutex : getMutex;
-
-
-    //static assert(!Ptr.threadLocal);
-    shared mutex = getMutex(ptr);
-
-    mutex.lock();
-    scope(exit)mutex.unlock();
-
-    alias Result = ChangeElementType!(
-        CopyConstness!(Ptr, Unqual!Ptr),      //remove shared from this
-        CopyTypeQualifiers!(shared Ptr, Ptr.ElementType)
-    );
-
-
-    return fn(
-        *(()@trusted => cast(Result*)&ptr )(),
-        forward!args
-    );
-}
-
-
 
 version(unittest){
     struct TestAllocator{
