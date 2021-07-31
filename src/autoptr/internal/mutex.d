@@ -1,4 +1,3 @@
-//
 module autoptr.internal.mutex;   //original source: object.d
 
 import std.traits : isMutable;

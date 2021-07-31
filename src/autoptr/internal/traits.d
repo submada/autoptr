@@ -1,7 +1,6 @@
 module autoptr.internal.traits;
 
 
-
 import std.traits : isFunctionPointer, isDelegate;
 
 public auto assumeNoGC(T)(T t)@trusted

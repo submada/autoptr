@@ -1342,7 +1342,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                 }
                 --------------------
         */
-        public auto exchange(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null))scope
+        public IntrusivePtr exchange(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null))scope
         if(isMutable!This){
             static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
 
@@ -1373,7 +1373,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         }
 
         /// ditto
-        public auto exchange(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs ptr)scope
+        public IntrusivePtr exchange(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs ptr)scope
         if(true
             && isIntrusivePtr!Rhs 
             && !is(Rhs == shared) 
@@ -2073,7 +2073,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         /**
             Move `IntrusivePtr`
         */
-        public auto move()()scope{
+        public IntrusivePtr move()()scope{
             import core.lifetime : move_impl = move;
 
             return move_impl(this);

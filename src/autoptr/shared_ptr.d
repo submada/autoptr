@@ -1405,12 +1405,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 )();
             }
             else{
-                alias Result = ChangeElementType!(
-                    This,
-                    CopyTypeQualifiers!(This, ElementType)
-                );
-
-                return Result(this);
+                return ChangeElementType!(This, ElementType)(this);
             }
         }
 
@@ -1549,7 +1544,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 }
                 --------------------
         */
-        public auto exchange(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null))scope
+        public SharedPtr exchange(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null))scope
         if(isMutable!This){
             static assert(isValidSharedPtr!This, "`This` is invalid `SharedPtr`");
 
@@ -1563,7 +1558,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         }
 
         /// ditto
-        public auto exchange(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs ptr)scope
+        public SharedPtr exchange(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs ptr)scope
         if(true
             && isSharedPtr!Rhs
             && !is(Rhs == shared)
@@ -2183,7 +2178,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         /**
             Move `SharedPtr`
         */
-        public auto move()()scope{
+        public SharedPtr move()()scope{
             import core.lifetime : move_impl = move;
 
             return move_impl(this);

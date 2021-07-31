@@ -1359,7 +1359,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 }
                 --------------------
         */
-        public auto exchange(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null))scope
+        public RcPtr exchange(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null))scope
         if(isMutable!This){
             static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
 
@@ -1390,7 +1390,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         }
 
         /// ditto
-        public auto exchange(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs rhs)scope
+        public RcPtr exchange(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs rhs)scope
         if(true
             && isRcPtr!Rhs
             && isAssignable!(Rhs, This)
@@ -2091,7 +2091,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         /**
             Move `RcPtr`
         */
-        public auto move()()scope{
+        public RcPtr move()()scope{
             import core.lifetime : move_impl = move;
 
             return move_impl(this);

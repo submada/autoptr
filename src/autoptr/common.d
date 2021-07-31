@@ -362,6 +362,7 @@ public template ControlBlock(_Shared, _Weak = void){
         public @disable void opAssign(scope ref const typeof(this) )scope pure nothrow @safe @nogc;
 
 
+        //necessary for intrusive ptr
         package void initialize(this This)(immutable Vtable* vptr)scope pure nothrow @trusted @nogc{
             (cast(Unqual!This*)&this).vptr = vptr;
         }

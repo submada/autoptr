@@ -695,7 +695,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 }
                 --------------------
         */
-        public auto exchange(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null) ptr)scope
+        public UniquePtr exchange(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null) ptr)scope
         if(isMutable!This){
             static assert(isValidUniquePtr!This, "`This` is invalid `UniquePtr`");
 
@@ -727,7 +727,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         }
 
         /// ditto
-        public auto exchange(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs ptr)scope
+        public UniquePtr exchange(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs ptr)scope
         if(true
             && isUniquePtr!Rhs
             && isAssignable!(Rhs, This)
@@ -1062,7 +1062,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         /**
             Move `UniquePtr`
         */
-        public auto move()()scope{
+        public UniquePtr move()()scope{
             import core.lifetime : move_impl = move;
             return move_impl(this);
         }
