@@ -359,13 +359,13 @@ unittest{
 
 
 /**
-    Control block for `SharedPtr` and `UniquePtr`.
+    Control block for `SharedPtr`, `RcPtr`, `UniquePtr` and `IntrusivePtr`.
 
-    Contains ref counting and dynamic dispatching for destruction and dealocation of managed object for `SharedPtr` and `UniquePtr`.
+    Contains ref counting and dynamic dispatching for destruction and dealocation of managed object.
 
     Template parameters:
 
-        `_Shared` signed integer for ref counting of `SharedPtr` or void if ref counting is not necessary (`UniquePtr` doesn't need counting).
+        `_Shared` signed integer for ref counting of `SharedPtr` or void if ref counting is not necessary (`UniquePtr` doesn't need ref counting).
 
         `_Weak` signed integer for weak ref counting of `SharedPtr` or void if weak pointer is not necessary.
 

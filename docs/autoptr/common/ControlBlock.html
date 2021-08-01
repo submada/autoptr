@@ -54,7 +54,7 @@ $('#symbolSearchPane').show();</script>
 			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>Struct ControlBlock</h1><p>Control block for <code class="lang-d"><span class="typ">SharedPtr</span></code> and <code class="lang-d"><span class="typ">UniquePtr</span></code>.
+			<h1>Struct ControlBlock</h1><p>Control block for <code class="lang-d"><span class="typ">SharedPtr</span></code>, <code class="lang-d"><span class="typ">RcPtr</span></code>, <code class="lang-d"><span class="typ">UniquePtr</span></code> and <code class="lang-d"><span class="typ">IntrusivePtr</span></code>.
 </p>
 			<div class="prototype">
 				<code class="lang-d">
@@ -64,13 +64,13 @@ $('#symbolSearchPane').show();</script>
 					</div>
 				</code>
 			</div>
-			<section><p>Contains ref counting and dynamic dispatching for destruction and dealocation of managed object for <code class="lang-d"><span class="typ">SharedPtr</span></code> and <code class="lang-d"><span class="typ">UniquePtr</span></code>.
+			<section><p>Contains ref counting and dynamic dispatching for destruction and dealocation of managed object.
 </p>
 
 <p>    Template parameters:
 </p>
 
-<p>        <code class="lang-d"><span class="pln">_Shared</span></code> signed integer for ref counting of <code class="lang-d"><span class="typ">SharedPtr</span></code> or void if ref counting is not necessary (<code class="lang-d"><span class="typ">UniquePtr</span></code> doesn't need counting).
+<p>        <code class="lang-d"><span class="pln">_Shared</span></code> signed integer for ref counting of <code class="lang-d"><span class="typ">SharedPtr</span></code> or void if ref counting is not necessary (<code class="lang-d"><span class="typ">UniquePtr</span></code> doesn't need ref counting).
 </p>
 
 <p>        <code class="lang-d"><span class="pln">_Weak</span></code> signed integer for weak ref counting of <code class="lang-d"><span class="typ">SharedPtr</span></code> or void if weak pointer is not necessary.
