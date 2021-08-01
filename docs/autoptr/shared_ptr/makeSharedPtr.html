@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8"/>
+		<title>Function makeSharedPtr</title>
+		<link rel="stylesheet" type="text/css" href="../../styles/ddox.css"/>
+		<link rel="stylesheet" href="../../prettify/prettify.css" type="text/css"/>
+		<script type="text/javascript" src="../../scripts/jquery.js">/**/</script><script type="text/javascript" src="../../scripts/ddox.js">/**/</script>
+	</head>
+	<body onload="setupDdox();">
+		<nav id="main-nav">
+			<noscript>
+				<p style="color: red">The search functionality needs JavaScript enabled</p>
+			</noscript>
+			<div id="symbolSearchPane" style="display: none">
+				<form action="#" method="GET">
+					<input id="symbolSearch" type="text" name="q" placeholder="Search for symbols" autocomplete="off" onchange="performSymbolSearch(40);" onkeypress="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();"/>
+				</form>
+				<ul id="symbolSearchResults" class="symbolList" style="display: none"></ul><script type="application/javascript" src="../../symbols.js"></script><script type="application/javascript">var symbolSearchRootDir = "../../";
+$('#symbolSearchPane').show();</script>
+			</div>
+			<ul class="tree-view">
+				<li class="tree-view ">
+					<div class="package ">autoptr
+					</div>
+			<ul class="tree-view">
+				<li>
+					<div class="module ">
+						<a href="../../autoptr/common.html">common</a>
+					</div>
+				</li>
+				<li>
+					<div class="module ">
+						<a href="../../autoptr/intrusive_ptr.html">intrusive_ptr</a>
+					</div>
+				</li>
+				<li>
+					<div class="module ">
+						<a href="../../autoptr/rc_ptr.html">rc_ptr</a>
+					</div>
+				</li>
+				<li>
+					<div class="module selected">
+						<a href="../../autoptr/shared_ptr.html">shared_ptr</a>
+					</div>
+				</li>
+				<li>
+					<div class="module ">
+						<a href="../../autoptr/unique_ptr.html">unique_ptr</a>
+					</div>
+				</li>
+			</ul>
+				</li>
+			</ul>
+		</nav>
+		<div id="main-contents">
+			<h1>Function makeSharedPtr</h1><p>Allocate <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> with default allcoator.
+</p>
+			<div class="prototype">
+				<code class="lang-d">
+					<div class="single-prototype">
+			<a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a>!(T,DestructorType!(T,DestructorAllocatorType!AllocatorType),ControlType) <span class="pln">makeSharedPtr</span>(T, <span class="typ">bool</span> supportGC<span class="pln"> </span><span class="pun">= </span><span class="pln">platformSupportGC</span>, ControlType, AllocatorType, Args...)
+			<span class="pun">(</span>
+			<br/>
+			&nbsp;&nbsp;<span class="kwd">auto ref </span><span class="typ">Args</span> <span class="pln">args</span>
+			<br/>
+			<span class="pun">)</span>
+			<br/>
+			<span class="kwd">if</span> <span class="pun">(</span><span class="pln">isControlBlock</span><span class="pun">!</span><span class="typ">ControlType </span><span class="pun">&amp;&amp; !</span><span class="pln">isDynamicArray</span><span class="pun">!</span><span class="pln">T</span><span class="pun">);</span>
+			<br/>
+			<br/>
+			<a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a>!(T,DestructorType!(T,DestructorAllocatorType!AllocatorType),ControlType) <span class="pln">makeSharedPtr</span>(T, ControlType, <span class="typ">bool</span> supportGC<span class="pln"> </span><span class="pun">= </span><span class="pln">platformSupportGC</span>, AllocatorType, Args...)
+			<span class="pun">(</span>
+			<br/>
+			&nbsp;&nbsp;<span class="kwd">auto ref </span><span class="typ">Args</span> <span class="pln">args</span>
+			<br/>
+			<span class="pun">)</span>
+			<br/>
+			<span class="kwd">if</span> <span class="pun">(</span><span class="pln">isControlBlock</span><span class="pun">!</span><span class="typ">ControlType </span><span class="pun">&amp;&amp; !</span><span class="pln">isDynamicArray</span><span class="pun">!</span><span class="pln">T</span><span class="pun">);</span>
+			<br/>
+			<br/>
+			<a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a>!(T,DestructorType!(T,DestructorAllocatorType!AllocatorType),ControlType) <span class="pln">makeSharedPtr</span>(T, <span class="typ">bool</span> supportGC<span class="pln"> </span><span class="pun">= </span><span class="pln">platformSupportGC</span>, ControlType, AllocatorType, Args...)
+			<span class="pun">(</span>
+			<br/>
+			&nbsp;&nbsp;<span class="kwd">const </span><span class="pln">size_t</span> <span class="pln">n</span><span class="pun">,</span>
+			<br/>
+			&nbsp;&nbsp;<span class="kwd">auto ref </span><span class="typ">Args</span> <span class="pln">args</span>
+			<br/>
+			<span class="pun">)</span>
+			<br/>
+			<span class="kwd">if</span> <span class="pun">(</span><span class="pln">isControlBlock</span><span class="pun">!</span><span class="typ">ControlType </span><span class="pun">&amp;&amp; </span><span class="pln">isDynamicArray</span><span class="pun">!</span><span class="pln">T</span><span class="pun">);</span>
+			<br/>
+			<br/>
+			<a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a>!(T,DestructorType!(T,DestructorAllocatorType!AllocatorType),ControlType) <span class="pln">makeSharedPtr</span>(T, ControlType, <span class="typ">bool</span> supportGC<span class="pln"> </span><span class="pun">= </span><span class="pln">platformSupportGC</span>, AllocatorType, Args...)
+			<span class="pun">(</span>
+			<br/>
+			&nbsp;&nbsp;<span class="kwd">const </span><span class="pln">size_t</span> <span class="pln">n</span><span class="pun">,</span>
+			<br/>
+			&nbsp;&nbsp;<span class="kwd">auto ref </span><span class="typ">Args</span> <span class="pln">args</span>
+			<br/>
+			<span class="pun">)</span>
+			<br/>
+			<span class="kwd">if</span> <span class="pun">(</span><span class="pln">isControlBlock</span><span class="pun">!</span><span class="typ">ControlType </span><span class="pun">&amp;&amp; </span><span class="pln">isDynamicArray</span><span class="pun">!</span><span class="pln">T</span><span class="pun">);</span>
+			<br/>
+			<br/>
+			<a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a>!(T,DestructorType!(T,DestructorAllocatorType!AllocatorType,DestructorDeleterType!(T,DeleterType)),ControlType) <span class="pln">makeSharedPtr</span>(T, <span class="typ">bool</span> supportGC<span class="pln"> </span><span class="pun">= </span><span class="pln">platformSupportGC</span>, ControlType, AllocatorType, DeleterType, Elm)
+			<span class="pun">(</span>
+			<br/>
+			&nbsp;&nbsp;<span class="typ">Elm</span> <span class="pln">element</span><span class="pun">,</span>
+			<br/>
+			&nbsp;&nbsp;<span class="typ">DeleterType</span> <span class="pln">deleter</span>
+			<br/>
+			<span class="pun">)</span>
+			<br/>
+			<span class="kwd">if</span> <span class="pun">(</span><span class="pln">isControlBlock</span><span class="pun">!</span><span class="typ">ControlType </span><span class="pun">&amp;&amp; </span><span class="pln">isCallable</span><span class="pun">!</span><span class="typ">DeleterType </span><span class="pun">&amp;&amp; </span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Elm </span><span class="pun">: </span><span class="typ">ElementReferenceTypeImpl</span><span class="pun">!</span><span class="pln">T</span><span class="pun">)</span><span class="pun">);</span>
+			<br/>
+			<br/>
+			<a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a>!(T,DestructorType!(T,DestructorAllocatorType!AllocatorType,DestructorDeleterType!(T,DeleterType)),ControlType) <span class="pln">makeSharedPtr</span>(T, ControlType, <span class="typ">bool</span> supportGC<span class="pln"> </span><span class="pun">= </span><span class="pln">platformSupportGC</span>, AllocatorType, DeleterType, Elm)
+			<span class="pun">(</span>
+			<br/>
+			&nbsp;&nbsp;<span class="typ">Elm</span> <span class="pln">element</span><span class="pun">,</span>
+			<br/>
+			&nbsp;&nbsp;<span class="typ">DeleterType</span> <span class="pln">deleter</span>
+			<br/>
+			<span class="pun">)</span>
+			<br/>
+			<span class="kwd">if</span> <span class="pun">(</span><span class="pln">isControlBlock</span><span class="pun">!</span><span class="typ">ControlType </span><span class="pun">&amp;&amp; </span><span class="pln">isCallable</span><span class="pun">!</span><span class="typ">DeleterType </span><span class="pun">&amp;&amp; </span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Elm </span><span class="pun">: </span><span class="typ">ElementReferenceTypeImpl</span><span class="pun">!</span><span class="pln">T</span><span class="pun">)</span><span class="pun">);</span>
+					</div>
+				</code>
+			</div>
+			<section><p>Same as <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.make.html"><span class="typ">SharedPtr<wbr/></span><span class="pun">.</span><span class="pln">make</span></a></code> but <code class="lang-d"><span class="typ">DestructorType</span></code> is inferred.
+</p>
+</section>
+
+			<section><h2>Example</h2>
+
+<pre class="code"><code class="lang-d"><span class="kwd">enum </span><span class="typ">bool </span><span class="pln">supportGC </span><span class="pun">= </span><span class="kwd">true</span><span class="pun">;
+
+</span><span class="com">//
+</span><span class="pun">{
+    </span><span class="kwd">auto </span><span class="pln">s </span><span class="pun">= </span><span class="pln">makeSharedPtr</span><span class="pun">!</span><span class="typ">long</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
+}
+
+{
+    </span><span class="kwd">auto </span><span class="pln">s </span><span class="pun">= </span><span class="pln">makeSharedPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">, </span><span class="pln">supportGC</span><span class="pun">)(</span><span class="lit">42</span><span class="pun">);
+}
+
+{
+    </span><span class="kwd">auto </span><span class="pln">s </span><span class="pun">= </span><span class="pln">makeSharedPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">, </span><span class="kwd">shared</span><span class="pun">(</span><span class="typ">SharedControlType</span><span class="pun">), </span><span class="pln">supportGC</span><span class="pun">)(</span><span class="lit">42</span><span class="pun">);
+}
+
+</span><span class="com">// dynamic array:
+</span><span class="pun">{
+    </span><span class="kwd">auto </span><span class="pln">s </span><span class="pun">= </span><span class="pln">makeSharedPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])(</span><span class="lit">10</span><span class="pun">, </span><span class="lit">42</span><span class="pun">);
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">s<wbr/></span><span class="pun">.</span><span class="pln">length </span><span class="pun">== </span><span class="lit">10</span><span class="pun">);
+}
+{
+    </span><span class="kwd">auto </span><span class="pln">s </span><span class="pun">= </span><span class="pln">makeSharedPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[], </span><span class="pln">supportGC</span><span class="pun">)(</span><span class="lit">10</span><span class="pun">, </span><span class="lit">42</span><span class="pun">);
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">s<wbr/></span><span class="pun">.</span><span class="pln">length </span><span class="pun">== </span><span class="lit">10</span><span class="pun">);
+}
+{
+    </span><span class="kwd">auto </span><span class="pln">s </span><span class="pun">= </span><span class="pln">makeSharedPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[], </span><span class="kwd">shared</span><span class="pun">(</span><span class="typ">SharedControlType</span><span class="pun">), </span><span class="pln">supportGC</span><span class="pun">)(</span><span class="lit">10</span><span class="pun">, </span><span class="lit">42</span><span class="pun">);
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">s<wbr/></span><span class="pun">.</span><span class="pln">length </span><span class="pun">== </span><span class="lit">10</span><span class="pun">);
+}
+
+
+</span><span class="com">// deleter
+</span><span class="typ">long </span><span class="pln">x </span><span class="pun">= </span><span class="lit">42</span><span class="pun">;
+</span><span class="kwd">static </span><span class="typ">void <a href="../../autoptr/shared_ptr/makeSharedPtr.html#deleter"></span><span class="pln">deleter</span></a><span class="pun">(</span><span class="typ">long</span><span class="pun">* </span><span class="pln">var</span><span class="pun">)</span><span class="kwd">nothrow</span><span class="pun">{
+    (*</span><span class="pln">var</span><span class="pun">) += </span><span class="lit">1</span><span class="pun">;
+}
+
+{
+    </span><span class="kwd">auto </span><span class="pln">s </span><span class="pun">= </span><span class="pln">makeSharedPtr</span><span class="pun">!</span><span class="typ">long</span><span class="pun">(&amp;</span><span class="pln">x</span><span class="pun">, &amp;<a href="../../autoptr/shared_ptr/makeSharedPtr.html#deleter"></span><span class="pln">deleter</span></a><span class="pun">);
+}
+</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">== </span><span class="lit">43</span><span class="pun">);
+
+{
+    </span><span class="kwd">auto </span><span class="pln">s </span><span class="pun">= </span><span class="pln">makeSharedPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">, </span><span class="pln">supportGC</span><span class="pun">)(&amp;</span><span class="pln">x</span><span class="pun">, &amp;<a href="../../autoptr/shared_ptr/makeSharedPtr.html#deleter"></span><span class="pln">deleter</span></a><span class="pun">);
+}
+</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">== </span><span class="lit">44</span><span class="pun">);
+
+{
+    </span><span class="kwd">auto </span><span class="pln">s </span><span class="pun">= </span><span class="pln">makeSharedPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">, </span><span class="kwd">shared</span><span class="pun">(</span><span class="typ">SharedControlType</span><span class="pun">), </span><span class="pln">supportGC</span><span class="pun">)(&amp;</span><span class="pln">x</span><span class="pun">, &amp;<a href="../../autoptr/shared_ptr/makeSharedPtr.html#deleter"></span><span class="pln">deleter</span></a><span class="pun">);
+}
+</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">== </span><span class="lit">45</span><span class="pun">);
+</span></code></pre>
+</section>
+
+			<footer>
+				<table class="license-info">
+					<tr>
+						<th>Authors</th>
+						<td>
+							<p>github.com/submada/basic_string, Adam Búš
+</p>
+
+						</td>
+					</tr>
+					<tr>
+						<th>Copyright</th>
+						<td>
+							
+						</td>
+					</tr>
+					<tr>
+						<th>License</th>
+						<td>
+							<p>www.boost.org/LICENSE_1_0.txt, Boost License 1.0.
+</p>
+
+						</td>
+					</tr>
+				</table>
+				<p class="faint">Generated using the DDOX documentation generator</p>
+			</footer>
+		</div>
+	</body>
+</html>

@@ -78,7 +78,7 @@ $('#symbolSearchPane').show();</script>
 			<div class="prototype">
 				<code class="lang-d">
 					<div class="single-prototype">
-			<a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a> <span class="pln">make</span>(AllocatorType, <span class="typ">bool</span> supportGC<span class="pln"> </span><span class="pun">= </span><span class="pln">platformSupportGC</span>, Args...)
+			<a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a>!(ElementType,.DestructorType!(DestructorType,DestructorAllocatorType!AllocatorType),ControlType) <span class="pln">make</span>(AllocatorType, <span class="typ">bool</span> supportGC<span class="pln"> </span><span class="pun">= </span><span class="pln">platformSupportGC</span>, Args...)
 			<span class="pun">(</span>
 			<br/>
 			&nbsp;&nbsp;<span class="kwd">auto ref </span><span class="typ">Args</span> <span class="pln">args</span>
@@ -139,7 +139,7 @@ $('#symbolSearchPane').show();</script>
 			<div class="prototype">
 				<code class="lang-d">
 					<div class="single-prototype">
-			<a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a> <span class="pln">make</span>(AllocatorType, <span class="typ">bool</span> supportGC<span class="pln"> </span><span class="pun">= </span><span class="pln">platformSupportGC</span>, DeleterType)
+			<a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a>!(ElementType,.DestructorType!(DestructorType,DestructorAllocatorType!AllocatorType,DestructorDeleterType!(ElementType,DeleterType)),ControlType) <span class="pln">make</span>(AllocatorType, <span class="typ">bool</span> supportGC<span class="pln"> </span><span class="pun">= </span><span class="pln">platformSupportGC</span>, DeleterType)
 			<span class="pun">(</span>
 			<br/>
 			&nbsp;&nbsp;<a href="../../autoptr/shared_ptr/SharedPtr.ElementReferenceType.html"><span class="typ">SharedPtr<wbr/></span><span class="pun">.<wbr/></span><span class="typ">ElementReferenceType</span></a> <span class="pln">element</span><span class="pun">,</span>
@@ -173,7 +173,7 @@ $('#symbolSearchPane').show();</script>
 			<div class="prototype">
 				<code class="lang-d">
 					<div class="single-prototype">
-			<a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a> <span class="pln">make</span>(AllocatorType, <span class="typ">bool</span> supportGC<span class="pln"> </span><span class="pun">= </span><span class="pln">platformSupportGC</span>, Args...)
+			<a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a>!(ElementType,.DestructorType!(DestructorType,DestructorAllocatorType!AllocatorType),ControlType) <span class="pln">make</span>(AllocatorType, <span class="typ">bool</span> supportGC<span class="pln"> </span><span class="pun">= </span><span class="pln">platformSupportGC</span>, Args...)
 			<span class="pun">(</span>
 			<br/>
 			&nbsp;&nbsp;<span class="kwd">const </span><span class="pln">size_t</span> <span class="pln">n</span><span class="pun">,</span>

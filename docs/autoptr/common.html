@@ -180,6 +180,30 @@ $('#symbolSearchPane').show();</script>
 					</tr>
 					<tr>
 						<td>
+							<a id="DestructorAllocatorType" class="public" href="../autoptr/common/DestructorAllocatorType.html">
+								<code>DestructorAllocatorType</code>
+							</a>
+						</td>
+						<td>
+							<code class="prettyprint lang-d"><span class="pln">impl</span></code>
+						</td>
+						<td>Similiar to <code class="lang-d"><a href="../autoptr/common/DestructorType.html"><span class="typ">DestructorType</span></a></code> but returns destructor attributes of type <code class="lang-d"><span class="typ">Allocator</span></code> and attributes of methods <code class="lang-d"><span class="typ">void</span><span class="pun">[] </span><span class="pln">allocate</span><span class="pun">(</span><span class="pln">size_t</span><span class="pun">)</span></code> and <code class="lang-d"><span class="typ">void </span><span class="pln">deallocate</span><span class="pun">(</span><span class="typ">void</span><span class="pun">[])</span></code>.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a id="DestructorDeleterType" class="public" href="../autoptr/common/DestructorDeleterType.html">
+								<code>DestructorDeleterType</code>
+							</a>
+						</td>
+						<td>
+							<code class="prettyprint lang-d"><span class="pln">impl</span></code>
+						</td>
+						<td>Similiar to <code class="lang-d"><a href="../autoptr/common/DestructorType.html"><span class="typ">DestructorType</span></a></code> but returns destructor attributes of type <code class="lang-d"><span class="typ">Deleter</span></code> and attributes necessary to call variable of type <code class="lang-d"><span class="typ">Deleter</span></code> with parameter of type <code class="lang-d"><span class="pln">T</span></code>.
+</td>
+					</tr>
+					<tr>
+						<td>
 							<a id="DestructorType" class="public" href="../autoptr/common/DestructorType.html">
 								<code>DestructorType</code>
 							</a>
@@ -212,18 +236,6 @@ $('#symbolSearchPane').show();</script>
 							<code class="prettyprint lang-d"><a href="../autoptr/common/MutableControlBlock.html"><span class="typ">MutableControlBlock</span></a>!(ControlBlock!(_Shared,_Weak))</code>
 						</td>
 						<td>Mutable intrusive <code class="lang-d"><a href="../autoptr/common/ControlBlock.html"><span class="typ">ControlBlock</span></a></code>, this control block can be modified even if is <code class="lang-d"><span class="kwd">const</span></code> / <code class="lang-d"><span class="kwd">immutable</span></code>.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a id="ShallowDestructorType" class="public" href="../autoptr/common/ShallowDestructorType.html">
-								<code>ShallowDestructorType</code>
-							</a>
-						</td>
-						<td>
-							<code class="prettyprint lang-d"><span class="pln">impl</span></code>
-						</td>
-						<td>Same as <code class="lang-d"><a href="../autoptr/common/DestructorType.html"><span class="typ">DestructorType</span></a></code> but ignore classes and slices.
 </td>
 					</tr>
 					<tr>

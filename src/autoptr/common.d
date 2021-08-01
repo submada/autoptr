@@ -101,6 +101,126 @@ unittest{
 
 
 /**
+    Similiar to `DestructorType` but returns destructor attributes of type `Deleter` and attributes necessary to call variable of type `Deleter` with parameter of type `T`.
+*/
+public template DestructorDeleterType(T, Deleter){
+    import std.traits : isCallable;
+
+    static assert(isCallable!Deleter);
+
+    static assert(__traits(compiles, (ElementReferenceTypeImpl!T elm){
+        cast(void)Deleter.init(elm);
+    }));
+
+    alias Get(T) = T;
+
+    alias impl = Get!(typeof(function void(Evoid*){
+
+        ElementReferenceTypeImpl!T elm;
+
+        Deleter deleter;
+
+        cast(void)deleter(elm);
+    }));
+
+    alias DestructorDeleterType = impl;
+}
+
+
+
+/**
+    Similiar to `DestructorType` but returns destructor attributes of type `Allocator` and attributes of methods `void[] allocate(size_t)` and `void deallocate(void[])`.
+
+    If method `allocate` is `@safe`/`@trusted` then method `deallocate` is assumed to be `@trusted` even if doesn't have `@safe`/`@trusted` attribute.
+*/
+public template DestructorAllocatorType(Allocator){
+    import std.traits : Unqual, isPointer, PointerTarget, isAggregateType, hasMember;
+    import std.range : ElementEncodingType;
+    import std.meta : AliasSeq;
+
+    import std.experimental.allocator.common : stateSize;
+
+    static if(isPointer!Allocator)
+        alias AllocatorType = PointerTarget!Allocator;
+    else
+        alias AllocatorType = Allocator;
+
+    static assert(isAggregateType!AllocatorType);
+
+    static assert(hasMember!(AllocatorType, "deallocate"));
+    static assert(hasMember!(AllocatorType, "allocate"));
+
+    static if(stateSize!Allocator == 0){
+        static assert(__traits(compiles, (){
+            const size_t size;
+            void[] data = statelessAllcoator!Allocator.allocate(size);
+        }()));
+
+        static assert(__traits(compiles, (){
+            void[] data;
+            statelessAllcoator!Allocator.deallocate(data);
+        }()));
+    }
+    else{
+        static assert(__traits(compiles, (){
+            const size_t size;
+            Allocator.init.allocate(size);
+        }()));
+
+        static assert(__traits(compiles, (){
+            void[] data;
+            Allocator.init.deallocate(data);
+        }()));
+    }
+
+
+    alias Get(T) = T;
+    alias impl = Get!(typeof(function void(Evoid*){
+        {
+            Allocator allocator;
+        }
+        void[] data;
+        const size_t size;
+
+        static if(stateSize!Allocator == 0){
+            enum bool safe_alloc = __traits(compiles, ()@safe{
+                const size_t size;
+                statelessAllcoator!Allocator.allocate(size);
+            }());
+
+            data = statelessAllcoator!Allocator.allocate(size);
+
+            static if(safe_alloc)
+                function(void[] data)@trusted{
+                    statelessAllcoator!Allocator.deallocate(data);
+                }(data);
+            else
+                statelessAllcoator!Allocator.deallocate(data);
+        }
+        else{
+            enum bool safe_alloc = __traits(compiles, ()@safe{
+                const size_t size;
+                Allocator.init.allocate(size);
+            }());
+
+            data = Allocator.init.allocate(size);
+
+            static if(safe_alloc)
+                function(void[] data)@trusted{
+                    Allocator.init.deallocate(data);
+                }(data);
+            else
+                Allocator.init.deallocate(data);
+        }
+
+    }));
+
+    alias DestructorAllocatorType = impl;
+}
+
+
+
+/**
     Destructor type of destructors of types `Types` ( void function(Evoid*)@destructor_attributes ).
 */
 public template DestructorType(Types...){
@@ -148,7 +268,6 @@ public template DestructorType(Types...){
     alias DestructorType = impl;
 }
 
-
 ///
 unittest{
     static assert(is(DestructorType!long == void function(Evoid*)pure nothrow @safe @nogc));
@@ -184,75 +303,6 @@ unittest{
     ));
 }
 
-
-/**
-    Same as `DestructorType` but ignore classes and slices.
-*/
-public template ShallowDestructorType(Types...){
-    import std.traits : Unqual, isDynamicArray;
-    import std.range : ElementEncodingType;
-
-    alias Get(T) = T;
-    alias impl = Get!(typeof(function void(Evoid*){
-
-        static foreach(alias Type; Types){
-            static if(is(Unqual!Type == void)){
-                //nothing
-            }
-            else static if(is(Type == class)){
-                //nothing
-            }
-            else static if(isDynamicArray!Type){
-                //nothing
-            }
-            else static if(is(void function(Evoid*)pure nothrow @safe @nogc : Unqual!Type)){
-                {
-                    Unqual!Type fn;
-                    fn(null);
-                }
-            }
-            else{
-                {
-                    Unqual!Type tmp;
-                }
-            }
-        }
-    }));
-    alias ShallowDestructorType = impl;
-}
-
-///
-unittest{
-    static assert(is(ShallowDestructorType!long == void function(Evoid*)pure nothrow @safe @nogc));
-
-
-    static struct Struct{
-        ~this()nothrow @system{
-        }
-    }
-    static assert(is(ShallowDestructorType!Struct == void function(Evoid*)nothrow @system));
-
-
-
-    version(D_BetterC)
-        static extern(C)class Class{
-            ~this()pure @trusted{
-
-            }
-        }
-    else
-        static class Class{
-            ~this()pure @trusted{
-
-            }
-        }
-
-    static assert(is(ShallowDestructorType!Class == void function(Evoid*)pure nothrow @safe @nogc));
-
-    //multiple types:
-    static assert(is(ShallowDestructorType!(Class, Struct, long) == void function(Evoid*)nothrow @system));
-
-}
 
 
 /**
@@ -940,7 +990,7 @@ package auto intrusivControlBlock(Type)(scope return auto ref Type elm)pure noth
 }
 
 //control block
-@system unittest{
+unittest{
     import std.traits : lvalueOf;
     static struct Foo{
         ControlBlock!int c;
@@ -1055,36 +1105,12 @@ package size_t intrusivControlBlockOffset(Type)()pure nothrow @safe @nogc{
     static assert(isIntrusive!(Unqual!Type) == 1);
     
     static if(is(Type == struct)){
-        /+static if(isControlBlock!Type){
-            return 0;
-        }
-        else{
-            static foreach(alias var; Type.tupleof){
-                static if(is(typeof(var) == struct) && isIntrusive!(typeof(var)))
-                    return var.offsetof + intrusivControlBlockOffset!(typeof(var))();
-            }
-        }+/
-
         static foreach(alias var; Type.tupleof){
             static if(isControlBlock!(typeof(var)) || isMutableControlBlock!(typeof(var)))
                 return var.offsetof;
         }
     }
     else static if(is(Type == class)){
-        /+static if(isIntrusiveClass!(Type, true)){
-            static foreach(alias var; Type.tupleof){
-                static if(is(typeof(var) == struct) && isIntrusive!(typeof(var)))
-                    return var.offsetof + intrusivControlBlockOffset!(typeof(var))();
-            }
-        }
-        else static foreach(alias T; BaseClassesTuple!Type){
-            static if(isIntrusiveClass!(T, true)){
-                static foreach(alias var; T.tupleof){
-                    static if(is(typeof(var) == struct) && isIntrusive!(typeof(var)))
-                        return var.offsetof + intrusivControlBlockOffset!(typeof(var))();
-                }
-            }
-        }+/
         static if(isIntrusiveClass!(Type, true)){
             static foreach(alias var; Type.tupleof){
                 static if(isControlBlock!(typeof(var)) || isMutableControlBlock!(typeof(var)))
@@ -1197,6 +1223,10 @@ if(isIntrusive!T){
 }
 
 package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorType, bool supportGC){
+    import core.lifetime : emplace;
+    import std.traits: hasIndirections, isAbstractClass, isMutable, isDynamicArray,
+        Select, CopyTypeQualifiers,
+        Unqual, Unconst, PointerTarget;
 
     static assert(isIntrusive!_Type == 0);
     
@@ -1207,22 +1237,18 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
         "cannot create object of interface type " ~ Unqual!_Type.stringof
     );
 
-    alias AllocatorWithState = .AllocatorWithState!_AllocatorType;
+    static if(!isDynamicArray!_Type)
+    static assert(is(DestructorType!_Type : _DestructorType));
 
-    enum bool hasStatelessAllocator = (AllocatorWithState.length == 0);
-
-    static assert(false
-        || hasStatelessAllocator
-        || is(.ShallowDestructorType!_AllocatorType : _DestructorType),
-            "allocator destructor type '" ~ .ShallowDestructorType!_AllocatorType.stringof ~
-            "' is not compatible with `_DestructorType`: " ~ _DestructorType.stringof
+    static assert(is(DestructorAllocatorType!_AllocatorType : _DestructorType),
+        "allocator attributes `" ~ DestructorAllocatorType!_AllocatorType.stringof ~ "`" ~
+        "doesn't support destructor attributes `" ~ _DestructorType.stringof
     );
 
 
-    import core.lifetime : emplace;
-    import std.traits: hasIndirections, isAbstractClass, isMutable,
-        Select, CopyTypeQualifiers,
-        Unqual, Unconst, PointerTarget;
+    alias AllocatorWithState = .AllocatorWithState!_AllocatorType;
+
+    enum bool hasStatelessAllocator = (AllocatorWithState.length == 0);
 
     enum bool hasWeakCounter = _ControlType.hasWeakCounter;
 
@@ -1509,29 +1535,22 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
 }
 
 package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _AllocatorType, bool supportGC){
+    import std.traits: hasIndirections, isAbstractClass, isDynamicArray, Unqual;
+    import std.range : ElementEncodingType;
+
     static assert(isDynamicArray!_Type);
 
-    import std.range : ElementEncodingType;
+    static assert(is(DestructorType!_Type : _DestructorType));
+
+    static assert(is(DestructorAllocatorType!_AllocatorType : _DestructorType),
+        "allocator attributes `" ~ DestructorAllocatorType!_AllocatorType.stringof ~ "`" ~
+        "doesn't support destructor attributes `" ~ _DestructorType.stringof
+    );
+
 
     alias AllocatorWithState = .AllocatorWithState!_AllocatorType;
 
     enum bool hasStatelessAllocator = (AllocatorWithState.length == 0);
-
-    static assert(false
-        || hasStatelessAllocator
-        || is(.ShallowDestructorType!_AllocatorType : _DestructorType),
-            "allocator destructor type '" ~ .ShallowDestructorType!_AllocatorType.stringof ~
-            "' is not compatible with `_DestructorType`: " ~ _DestructorType.stringof
-    );
-
-    static assert(false
-        || is(.ShallowDestructorType!(ElementEncodingType!_Type) : _DestructorType),
-            "array element type '" ~ ElementEncodingType!_Type.stringof ~
-            " has destructor of type `" ~ .DestructorType!(ElementEncodingType!_Type).stringof ~ "`" ~
-            " which is not compatible with `_DestructorType`: `" ~ _DestructorType.stringof ~ "`"
-    );
-
-    import std.traits: hasIndirections, isAbstractClass, isDynamicArray, Unqual;
 
     enum bool hasWeakCounter = _ControlType.hasWeakCounter;
 
@@ -1755,32 +1774,33 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _Allocat
 
 package template MakeIntrusive(_Type, _DestructorType, _AllocatorType, bool supportGC)
 if(isIntrusive!_Type == 1){
-    static assert(is(_Type == struct) || is(_Type == class));
-
-    alias AllocatorWithState = .AllocatorWithState!_AllocatorType;
-
-    enum bool hasStatelessAllocator = (AllocatorWithState.length == 0);
-
-    static assert(!isAbstractClass!_Type,
-        "cannot create object of abstract class" ~ Unqual!_Type.stringof
-    );
-    static assert(!is(_Type == interface),
-        "cannot create object of interface type " ~ Unqual!_Type.stringof
-    );
-
-    static assert(false
-        || hasStatelessAllocator
-        || is(.ShallowDestructorType!_AllocatorType : _DestructorType),
-            "allocator destructor type '" ~ .ShallowDestructorType!_AllocatorType.stringof ~
-            "' is not compatible with `_DestructorType`: " ~ _DestructorType.stringof
-    );
-
     import core.lifetime : emplace;
     import std.traits: hasIndirections, isAbstractClass, isMutable,
         Select, CopyTypeQualifiers,
         Unqual, Unconst, PointerTarget;
 
+    static assert(is(_Type == struct) || is(_Type == class));
+
+    static assert(!isAbstractClass!_Type,
+        "cannot create object of abstract class" ~ Unqual!_Type.stringof
+    );
+
+    static assert(!is(_Type == interface),
+        "cannot create object of interface type " ~ Unqual!_Type.stringof
+    );
+
+    static assert(is(DestructorType!_Type : _DestructorType));
+
+    static assert(is(DestructorAllocatorType!_AllocatorType : _DestructorType),
+        "allocator attributes `" ~ DestructorAllocatorType!_AllocatorType.stringof ~ "`" ~
+        "doesn't support destructor attributes `" ~ _DestructorType.stringof
+    );
+
     alias ControlType = IntrusivControlBlock!_Type;
+
+    alias AllocatorWithState = .AllocatorWithState!_AllocatorType;
+
+    enum bool hasStatelessAllocator = (AllocatorWithState.length == 0);
 
     enum bool hasWeakCounter = ControlType.hasWeakCounter;
 
@@ -2037,54 +2057,26 @@ if(isIntrusive!_Type == 1){
     }
 }
 
-unittest{
-    static struct Foo{
-        ControlBlock!(int, int) c;
-        int i;
+package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, _AllocatorType, bool supportGC){
+    import std.traits: hasIndirections, isAbstractClass, isDynamicArray, Unqual;
 
-        this(int i)pure nothrow @safe @nogc{
-            this.i = i;
-        }
-    }
+    static if(!isDynamicArray!_Type)
+    static assert(is(DestructorType!_Type : _DestructorType));
 
-    alias Make = MakeIntrusive!(Foo, DestructorType!Foo, Mallocator, true);
-    /+
-    auto m1 = Make(Evoid.init);
-    m1.control.release!(false);
+    static assert(is(DestructorAllocatorType!_AllocatorType : _DestructorType),
+        "allocator attributes `" ~ DestructorAllocatorType!_AllocatorType.stringof ~ "`" ~
+        "doesn't support destructor attributes `" ~ _DestructorType.stringof
+    );
 
-    auto m2 = Make(Evoid.init, 123);
-    m2.control.release!(false);
-
-    auto mp1 = Make.make();
-    mp1.control.release!(false);
-
-    auto mp2 = Make.make(123);
-    mp2.control.release!(false);
-    +/
+    static assert(is(.DestructorDeleterType!(_Type, DeleterType) : _DestructorType),
+        "deleter attributes '" ~ DestructorDeleterType!(_Type, DeleterType).stringof ~
+        "' doesn't support destructor attributes " ~ _DestructorType.stringof
+    );
 
 
-}
-
-package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, AllocatorType, bool supportGC){
-    alias AllocatorWithState = .AllocatorWithState!AllocatorType;
+    alias AllocatorWithState = .AllocatorWithState!_AllocatorType;
 
     enum bool hasStatelessAllocator = (AllocatorWithState.length == 0);
-
-    static assert(false
-        || hasStatelessAllocator 
-        || isReferenceType!AllocatorType 
-        || is(.DestructorType!AllocatorType : _DestructorType),
-            "destructor of type '" ~ AllocatorType.stringof ~ 
-            "' doesn't support specified finalizer " ~ _DestructorType.stringof
-    );
-    static assert(false
-        || isReferenceType!DeleterType 
-        || is(.DestructorType!DeleterType : _DestructorType),
-            "destructor of type '" ~ DeleterType.stringof ~ 
-            "' doesn't support specified finalizer " ~ _DestructorType.stringof
-    );
-    
-    import std.traits: hasIndirections, isAbstractClass, isDynamicArray, Unqual;
 
     enum bool hasWeakCounter = _ControlType.hasWeakCounter;
 
@@ -2092,7 +2084,7 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
 
     enum bool allocatorGCRange = supportGC
         && !hasStatelessAllocator
-        && hasIndirections!AllocatorType;
+        && hasIndirections!_AllocatorType;
 
     enum bool deleterGCRange = supportGC
         && hasIndirections!DeleterType;
@@ -2109,7 +2101,7 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
         private _ControlType control;
 
         static if(!hasStatelessAllocator)
-            private AllocatorType allocator;
+            private _AllocatorType allocator;
 
         private DeleterType deleter;
         package ElementReferenceType data;
@@ -2175,7 +2167,7 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
 
 
             static if(hasStatelessAllocator)
-                void[] raw = statelessAllcoator!AllocatorType.allocate(typeof(this).sizeof);
+                void[] raw = statelessAllcoator!_AllocatorType.allocate(typeof(this).sizeof);
             else
                 void[] raw = a[0].allocate(typeof(this).sizeof);
 
@@ -2201,7 +2193,7 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
                         - typeof(this).allocator.offsetof
                         + typeof(this.deleter).sizeof;
                 else
-                    enum size_t gc_range_size = AllocatorType.sizeof;
+                    enum size_t gc_range_size = _AllocatorType.sizeof;
 
                 gc_add_range(
                     cast(void*)&result.allocator,
@@ -2316,7 +2308,7 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
 
 
             static if(hasStatelessAllocator)
-                assumePureNoGcNothrow(function(void[] raw) => statelessAllcoator!AllocatorType.deallocate(raw))(raw);
+                assumePureNoGcNothrow(function(void[] raw) => statelessAllcoator!_AllocatorType.deallocate(raw))(raw);
             else
                 assumePureNoGcNothrow(function(void[] raw, ref typeof(this.allocator) allo) => allo.deallocate(raw))(raw, this.allocator);
 

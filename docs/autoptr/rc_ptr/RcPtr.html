@@ -625,7 +625,7 @@ $('#symbolSearchPane').show();</script>
 </span><span class="kwd">auto </span><span class="pln">allocator </span><span class="pun">= </span><span class="pln">allocatorObject</span><span class="pun">(</span><span class="typ">Mallocator<wbr/></span><span class="pun">.</span><span class="pln">instance</span><span class="pun">);
 
 {
-    </span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= </span><span class="typ">RcPtr</span><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">alloc</span><span class="pun">(</span><span class="pln">allocator</span><span class="pun">, </span><span class="lit">42</span><span class="pun">);
+    </span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= </span><span class="typ">RcPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">, </span><span class="typ">void </span><span class="kwd">function</span><span class="pun">(</span><span class="typ">Evoid</span><span class="pun">* )</span><span class="kwd">nothrow</span><span class="pun">)<wbr/>.</span><span class="pln">alloc</span><span class="pun">(</span><span class="pln">allocator</span><span class="pun">, </span><span class="lit">42</span><span class="pun">);
 }
 
 {

@@ -156,14 +156,6 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
     enum bool hasSharedCounter = _ControlType.hasSharedCounter;
 
-    
-    alias MakeIntrusive(AllocatorType, bool supportGC) = .MakeIntrusive!(
-        _Type,
-        _DestructorType,
-        AllocatorType,
-        supportGC
-    );
-
     enum bool _isLockFree = true;
 
     struct IntrusivePtr{
@@ -987,17 +979,16 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(!weakPtr)
-        public static IntrusivePtr make
-            (AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)
-            (auto ref Args args)
+        public static IntrusivePtr!(ElementType, .DestructorType!(DestructorType, DestructorAllocatorType!AllocatorType))
+        make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(auto ref Args args)
         if(stateSize!AllocatorType == 0 && !isDynamicArray!ElementType){
             static assert(!weakPtr);
 
-            auto m = MakeIntrusive!(AllocatorType, supportGC).make(forward!(args));
+            auto m = typeof(return).MakeIntrusive!(AllocatorType, supportGC).make(forward!(args));
 
             return (m is null)
-                ? IntrusivePtr.init
-                : IntrusivePtr(m.get);
+                ? typeof(return).init
+                : typeof(return)(m.get);
         }
 
 
@@ -1024,10 +1015,10 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
                     auto a = allocatorObject(Mallocator.instance);
                     {
-                        IntrusivePtr!Foo x = IntrusivePtr!Foo.alloc(a);
+                        auto x = IntrusivePtr!Foo.alloc(a);
                         assert(x.get.i == 0);
 
-                        IntrusivePtr!(const Foo) y = IntrusivePtr!Foo.alloc(a, 2);
+                        auto y = IntrusivePtr!(const Foo).alloc(a, 2);
                         assert(y.get.i == 2);
                     }
 
@@ -1041,10 +1032,10 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                             }
                         }
 
-                        IntrusivePtr!Struct s1 = IntrusivePtr!Struct.alloc(a);
+                        auto s1 = IntrusivePtr!Struct.alloc(a);
                         assert(s1.get.i == 7);
 
-                        IntrusivePtr!Struct s2 = IntrusivePtr!Struct.alloc(a, 123);
+                        auto s2 = IntrusivePtr!Struct.alloc(a, 123);
                         assert(s2.get.i == 123);
                     }
 
@@ -1052,17 +1043,16 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(!weakPtr)
-        public static IntrusivePtr alloc
-            (AllocatorType, bool supportGC = platformSupportGC, Args...)
-            (AllocatorType a, auto ref Args args)
+        public static IntrusivePtr!(ElementType, .DestructorType!(DestructorType, DestructorAllocatorType!AllocatorType))
+        alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, auto ref Args args)
         if(stateSize!AllocatorType >= 0 && !isDynamicArray!ElementType){
             static assert(!weakPtr);
 
-            auto m = MakeIntrusive!(AllocatorType, supportGC).make(forward!(a, args));
+            auto m = typeof(return).MakeIntrusive!(AllocatorType, supportGC).make(forward!(a, args));
 
             return (m is null)
-                ? IntrusivePtr.init
-                : IntrusivePtr(m.get);
+                ? typeof(return).init
+                : typeof(return)(m.get);
         }
 
 
@@ -2287,6 +2277,13 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
             self._reset();
         }
+
+        private alias MakeIntrusive(AllocatorType, bool supportGC) = .MakeIntrusive!(
+            _Type,
+            _DestructorType,
+            AllocatorType,
+            supportGC
+        );
     }
 
 }
@@ -2403,6 +2400,44 @@ nothrow unittest{
         auto x = IntrusivePtr!Foo.alloc(allocator, 42);
     }
 
+}
+
+
+//make:
+nothrow unittest{
+    static class Foo{
+        ControlBlock!(int, int) c;
+    }
+
+    enum bool supportGC = true;
+
+    {
+        auto s = IntrusivePtr!Foo.make();
+    }
+
+    {
+        auto s = IntrusivePtr!Foo.make!(DefaultAllocator, supportGC)();
+    }
+}
+
+//alloc:
+nothrow unittest{
+    import std.experimental.allocator : allocatorObject;
+
+    static class Foo{
+        ControlBlock!(int, int) c;
+    }
+
+    auto a = allocatorObject(Mallocator.instance);
+    enum bool supportGC = true;
+
+    {
+        auto s = IntrusivePtr!Foo.alloc(a);
+    }
+
+    {
+        auto s = IntrusivePtr!Foo.alloc!supportGC(a);
+    }
 }
 
 
@@ -3528,10 +3563,10 @@ version(unittest){
 
             auto a = allocatorObject(Mallocator.instance);
             {
-                IntrusivePtr!Foo x = IntrusivePtr!Foo.alloc(a);
+                auto x = IntrusivePtr!Foo.alloc(a);
                 assert(x.get.i == 0);
 
-                IntrusivePtr!(const Foo) y = IntrusivePtr!Foo.alloc(a, 2);
+                auto y = IntrusivePtr!Foo.alloc(a, 2);
                 assert(y.get.i == 2);
             }
 
@@ -3545,10 +3580,10 @@ version(unittest){
                     }
                 }
 
-                IntrusivePtr!Struct s1 = IntrusivePtr!Struct.alloc(a);
+                auto s1 = IntrusivePtr!Struct.alloc(a);
                 assert(s1.get.i == 7);
 
-                IntrusivePtr!Struct s2 = IntrusivePtr!Struct.alloc(a, 123);
+                auto s2 = IntrusivePtr!Struct.alloc(a, 123);
                 assert(s2.get.i == 123);
             }
 

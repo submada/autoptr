@@ -145,22 +145,6 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
     static assert(!isIntrusive!_Type);
 
-    alias MakeEmplace(AllocatorType, bool supportGC) = .MakeEmplace!(
-        _Type,
-        _DestructorType,
-        _ControlType,
-        AllocatorType,
-        supportGC
-    );
-
-    alias MakeDynamicArray(AllocatorType, bool supportGC) = .MakeDynamicArray!(
-        _Type,
-        _DestructorType,
-        _ControlType,
-        AllocatorType,
-        supportGC
-    );
-
 
     enum bool _isLockFree = !isDynamicArray!_Type;
 
@@ -921,17 +905,16 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(!weakPtr)
-        public static RcPtr make
-            (AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)
-            (auto ref Args args)
+        public static RcPtr!(ElementType, .DestructorType!(DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
+        make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(auto ref Args args)
         if(stateSize!AllocatorType == 0 && !isDynamicArray!ElementType){
             static assert(!weakPtr);
 
-            auto m = MakeEmplace!(AllocatorType, supportGC).make(forward!(args));
+            auto m = typeof(return).MakeEmplace!(AllocatorType, supportGC).make(forward!(args));
 
             return (m is null)
-                ? RcPtr.init
-                : RcPtr(m.get);
+                ? typeof(return).init
+                : typeof(return)(m.get);
         }
 
 
@@ -962,17 +945,16 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(!weakPtr)
-        public static RcPtr make
-            (AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)
-            (const size_t n, auto ref Args args)
+        public static RcPtr!(ElementType, .DestructorType!(DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
+        make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(const size_t n, auto ref Args args)
         if(stateSize!AllocatorType == 0 && isDynamicArray!ElementType){
             static assert(!weakPtr);
 
-            auto m = MakeDynamicArray!(AllocatorType, supportGC).make(n, forward!(args));
+            auto m = typeof(return).MakeDynamicArray!(AllocatorType, supportGC).make(n, forward!(args));
 
             return (m is null)
-                ? RcPtr.init
-                : RcPtr(m.get);
+                ? typeof(return).init
+                : typeof(return)(m.get);
         }
 
 
@@ -987,10 +969,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
                 auto a = allocatorObject(Mallocator.instance);
                 {
-                    RcPtr!long a = RcPtr!long.alloc(a);
+                    auto a = RcPtr!long.alloc(a);
                     assert(a.get == 0);
 
-                    RcPtr!(const long) b = RcPtr!long.alloc(a, 2);
+                    auto b = RcPtr!(const long).alloc(a, 2);
                     assert(b.get == 2);
                 }
 
@@ -1003,10 +985,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                         }
                     }
 
-                    RcPtr!Struct s1 = RcPtr!Struct.alloc(a);
+                    auto s1 = RcPtr!Struct.alloc(a);
                     assert(s1.get.i == 7);
 
-                    RcPtr!Struct s2 = RcPtr!Struct.alloc(a, 123);
+                    auto s2 = RcPtr!Struct.alloc(a, 123);
                     assert(s2.get.i == 123);
                 }
 
@@ -1027,17 +1009,16 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(!weakPtr)
-        public static RcPtr alloc
-            (AllocatorType, bool supportGC = platformSupportGC, Args...)
-            (AllocatorType a, auto ref Args args)
+        public static RcPtr!(ElementType, .DestructorType!(DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
+        alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, auto ref Args args)
         if(stateSize!AllocatorType >= 0 && !isDynamicArray!ElementType){
             static assert(!weakPtr);
 
-            auto m = MakeEmplace!(AllocatorType, supportGC).make(forward!(a, args));
+            auto m = typeof(return).MakeEmplace!(AllocatorType, supportGC).make(forward!(a, args));
 
             return (m is null)
-                ? RcPtr.init
-                : RcPtr(m.get);
+                ? typeof(return).init
+                : typeof(return)(m.get);
         }
 
 
@@ -1070,17 +1051,16 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(!weakPtr)
-        public static RcPtr alloc
-            (AllocatorType, bool supportGC = platformSupportGC, Args...)
-            (AllocatorType a, const size_t n, auto ref Args args)
+        public static RcPtr!(ElementType, .DestructorType!(DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
+        alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, const size_t n, auto ref Args args)
         if(stateSize!AllocatorType >= 0 && isDynamicArray!ElementType){
             static assert(!weakPtr);
 
-            auto m = MakeDynamicArray!(AllocatorType, supportGC).make(forward!(a, n, args));
+            auto m = typeof(return).MakeDynamicArray!(AllocatorType, supportGC).make(forward!(a, n, args));
 
             return (m is null)
-                ? RcPtr.init
-                : RcPtr(m.get);
+                ? typeof(return).init
+                : typeof(return)(m.get);
         }
 
 
@@ -2106,6 +2086,22 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             self._reset();
         }
+
+        private alias MakeEmplace(AllocatorType, bool supportGC) = .MakeEmplace!(
+            _Type,
+            _DestructorType,
+            _ControlType,
+            AllocatorType,
+            supportGC
+        );
+
+        private alias MakeDynamicArray(AllocatorType, bool supportGC) = .MakeDynamicArray!(
+            _Type,
+            _DestructorType,
+            _ControlType,
+            AllocatorType,
+            supportGC
+        );
     }
 
 }
@@ -2257,7 +2253,7 @@ nothrow unittest{
     auto allocator = allocatorObject(Mallocator.instance);
 
     {
-        auto x = RcPtr!long.alloc(allocator, 42);
+        auto x = RcPtr!(long, void function(Evoid* )nothrow).alloc(allocator, 42);
     }
 
     {
@@ -2265,6 +2261,82 @@ nothrow unittest{
         assert(arr.length == 10);
     }
 
+}
+
+
+//make:
+pure nothrow @safe @nogc unittest{
+    import std.experimental.allocator : allocatorObject;
+
+    enum bool supportGC = true;
+
+    //
+    {
+        auto s = RcPtr!long.make(42);
+    }
+
+    {
+        auto s = RcPtr!long.make!(DefaultAllocator, supportGC)(42);
+    }
+
+    {
+        auto s = RcPtr!(long, shared(SharedControlType)).make!(DefaultAllocator, supportGC)(42);
+    }
+
+
+    // dynamic array:
+    {
+        auto s = RcPtr!(long[]).make(10, 42);
+        assert(s.length == 10);
+    }
+
+    {
+        auto s = RcPtr!(long[]).make!(DefaultAllocator, supportGC)(10, 42);
+        assert(s.length == 10);
+    }
+
+    {
+        auto s = RcPtr!(long[], shared(SharedControlType)).make!(DefaultAllocator, supportGC)(10, 42);
+        assert(s.length == 10);
+    }
+}
+
+//alloc:
+nothrow unittest{
+    import std.experimental.allocator : allocatorObject;
+
+    auto a = allocatorObject(Mallocator.instance);
+    enum bool supportGC = true;
+
+    //
+    {
+        auto s = RcPtr!long.alloc(a, 42);
+    }
+
+    {
+        auto s = RcPtr!long.alloc!supportGC(a, 42);
+    }
+
+    {
+        auto s = RcPtr!(long, shared(SharedControlType)).alloc!supportGC(a, 42);
+    }
+
+
+    // dynamic array:
+    {
+        auto s = RcPtr!(long[]).alloc(a, 10, 42);
+        assert(s.length == 10);
+    }
+
+    {
+        auto s = RcPtr!(long[]).alloc!supportGC(a, 10, 42);
+        assert(s.length == 10);
+    }
+
+    {
+        auto s = RcPtr!(long[], shared(SharedControlType)).alloc!supportGC(a, 10, 42);
+        assert(s.length == 10);
+    }
 }
 
 
@@ -3449,10 +3521,10 @@ version(unittest){
 
             auto a = allocatorObject(Mallocator.instance);
             {
-                RcPtr!long x = RcPtr!long.alloc(a);
+                auto x = RcPtr!long.alloc(a);
                 assert(x.get == 0);
 
-                RcPtr!(const long) y = RcPtr!long.alloc(a, 2);
+                auto y = RcPtr!long.alloc(a, 2);
                 assert(y.get == 2);
             }
 
@@ -3465,10 +3537,10 @@ version(unittest){
                     }
                 }
 
-                RcPtr!Struct s1 = RcPtr!Struct.alloc(a);
+                auto s1 = RcPtr!Struct.alloc(a);
                 assert(s1.get.i == 7);
 
-                RcPtr!Struct s2 = RcPtr!Struct.alloc(a, 123);
+                auto s2 = RcPtr!Struct.alloc(a, 123);
                 assert(s2.get.i == 123);
             }
 
@@ -3483,7 +3555,7 @@ version(unittest){
                     }
                 }
 
-                RcPtr!Interface x = RcPtr!Class.alloc(a, 3);
+                RcPtr!(Interface, DestructorAllocatorType!(typeof(a))) x = RcPtr!Class.alloc(a, 3);
                 //assert(x.dynTo!Class.get.i == 3);
             }
 
@@ -3496,7 +3568,7 @@ version(unittest){
             import std.experimental.allocator : allocatorObject;
 
             auto a = allocatorObject(Mallocator.instance);
-            auto arr = RcPtr!(long[], DestructorType!(typeof(a))).alloc(a, 6, -1);
+            auto arr = RcPtr!(long[], DestructorAllocatorType!(typeof(a))).alloc(a, 6, -1);
             assert(arr.length == 6);
             assert(arr.get.length == 6);
 
