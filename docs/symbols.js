@@ -111,7 +111,6 @@ var symbols = [
 {name: 'autoptr.shared_ptr.first', kind: "functiondeclaration", path: './autoptr/shared_ptr/first.html', attributes: ["auto", "trusted"]},
 {name: 'autoptr.shared_ptr.isSharedPtr', kind: "enummemberdeclaration", path: './autoptr/shared_ptr/isSharedPtr.html', attributes: []},
 {name: 'autoptr.shared_ptr.isValidSharedPtr', kind: "enummemberdeclaration", path: './autoptr/shared_ptr/isValidSharedPtr.html', attributes: []},
-{name: 'autoptr.shared_ptr.makeSharedPtr', kind: "functiondeclaration", path: './autoptr/shared_ptr/makeSharedPtr.html', attributes: []},
 {name: 'autoptr.shared_ptr.share', kind: "functiondeclaration", path: './autoptr/shared_ptr/share.html', attributes: []},
 {name: 'autoptr.shared_ptr.SharedPtr', kind: "structdeclaration", path: './autoptr/shared_ptr/SharedPtr.html', attributes: []},
 {name: 'autoptr.shared_ptr.SharedPtr.alloc', kind: "functiondeclaration", path: './autoptr/shared_ptr/SharedPtr.alloc.html', attributes: []},
