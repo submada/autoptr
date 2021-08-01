@@ -1,5 +1,5 @@
 /**
-    Implementation of reference counted pointer `IntrusivePtr` (similar to `RcPtr`).
+    Implementation of intrusive reference counted pointer `IntrusivePtr` (similar to c++ `std::enable_shared_from_this`).
 
     License:   $(HTTP www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
     Authors:   $(HTTP github.com/submada/basic_string, Adam Búš)
@@ -278,7 +278,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         if(true
             && isIntrusivePtr!Rhs
             && isCopyable!(Rhs, This)
-            && !needLock!(Rhs, This)
+            && !weakLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
             static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
@@ -379,7 +379,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
             && isIntrusivePtr!Rhs
             && !is(Unqual!This == Unqual!Rhs)   ///copy ctors
             && isCopyable!(Rhs, This)
-            && !needLock!(Rhs, This)
+            && !weakLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
             static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
@@ -394,7 +394,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
             && isIntrusivePtr!Rhs
             //&& !is(Unqual!This == Unqual!Rhs) //TODO move ctors need this
             && isMovable!(Rhs, This)
-            && !needLock!(Rhs, This)
+            && !weakLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
             static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
@@ -409,7 +409,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         if(true
             && isIntrusivePtr!Rhs
             && isCopyable!(Rhs, This)   ///lock robi vzdy copiu
-            && needLock!(Rhs, This)
+            && weakLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
             static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
@@ -848,7 +848,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
             && isIntrusivePtr!Rhs
             && isMutable!This
             && isCopyable!(Rhs, This)
-            && !needLock!(Rhs, This)
+            && !weakLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
             static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
@@ -900,7 +900,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
             && isIntrusivePtr!Rhs
             && isMutable!This
             && isMovable!(Rhs, This)
-            && !needLock!(Rhs, This)
+            && !weakLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
             static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
@@ -1309,40 +1309,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                 }
                 --------------------
         */
-        public void store(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null) nil)scope
-        if(isMutable!This){
-            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
-
-            this.opAssign!order(null);
-        }
-
-        /// ditto
-        public void store(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(ref scope Rhs desired)scope
-        if(true
-            && isIntrusivePtr!Rhs
-            && !is(Rhs == shared)
-            && !needLock!(Rhs, This)
-            && (isCopyable!(Rhs, This) && isMutable!This)
-        ){
-            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
-            static assert(isValidIntrusivePtr!Rhs, "`Rhs` is invalid `IntrusivePtr`");
-
-            this.opAssign!order(forward!desired);
-        }
-
-        /// ditto
-        public void store(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs desired)scope
-        if(true
-            && isIntrusivePtr!Rhs
-            && !is(Rhs == shared)
-            && !needLock!(Rhs, This)
-            && (isMovable!(Rhs, This) && isMutable!This)
-        ){
-            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
-            static assert(isValidIntrusivePtr!Rhs, "`Rhs` is invalid `IntrusivePtr`");
-
-            this.opAssign!order(forward!desired);
-        }
+        alias store = opAssign;
 
 
 
@@ -1618,6 +1585,9 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         }
 
 
+        /*
+            implementation of `compareExchangeWeak` and `compareExchangeStrong`
+        */
         private bool compareExchangeImpl
             (bool weak, MemoryOrder success, MemoryOrder failure, E, D, this This)
             (ref scope E expected, scope D desired)scope //@trusted pure @nogc
@@ -1633,93 +1603,70 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
             static assert(isValidIntrusivePtr!E, "`E expected` is invalid `IntrusivePtr`");
             static assert(isValidIntrusivePtr!D, "`D desired` is invalid `IntrusivePtr`");
 
-            static if(is(This == shared) && isLockFree){
-                import core.atomic : cas, casWeak;
-                static if(weak)
-                    alias casImpl = casWeak;
-                else
-                    alias casImpl = cas;
+            static if(is(This == shared)){
+                static if(isLockFree){
+                    import core.atomic : cas, casWeak;
+
+                    static if(weak)
+                        alias casImpl = casWeak;
+                    else
+                        alias casImpl = cas;
 
 
-                return ()@trusted{
-                    GetElementReferenceType!This source_desired = desired._element;     //interface/class cast
-                    GetElementReferenceType!This source_expected = expected._element;   //interface/class cast
+                    return ()@trusted{
+                        GetElementReferenceType!This source_desired = desired._element;     //interface/class cast
+                        GetElementReferenceType!This source_expected = expected._element;   //interface/class cast
 
-                    const bool store_occurred = casImpl!(success, failure)(
-                        cast(Unqual!(This.ElementReferenceType)*)&this._element,
-                        cast(Unqual!(This.ElementReferenceType)*)&source_expected,
-                        cast(Unqual!(This.ElementReferenceType))source_desired
+                        const bool store_occurred = casImpl!(success, failure)(
+                            cast(Unqual!(This.ElementReferenceType)*)&this._element,
+                            cast(Unqual!(This.ElementReferenceType)*)&source_expected,
+                            cast(Unqual!(This.ElementReferenceType))source_desired
+                        );
+
+                        if(store_occurred){
+                            desired._const_reset();
+                            if(expected._element !is null)
+                                expected._control.release!(This.weakPtr);
+                        }
+                        else{
+                            expected = null;
+                            expected._set_element(source_expected);
+                        }
+
+                        return store_occurred;
+                    }();
+                }
+                else{
+                    static assert(!isLockFree);
+                    shared mutex = getMutex(this);
+
+                    mutex.lock();
+
+                    alias Self = ChangeElementType!(
+                        This, //CopyConstness!(This, Unqual!This),
+                        CopyTypeQualifiers!(This, ElementType)
                     );
 
-                    if(store_occurred){
-                        desired._const_reset();
-                        if(expected._element !is null)
-                            expected._control.release!(This.weakPtr);
+                    static assert(!is(Self == shared));
+
+                    Self* self = cast(Self*)&this;
+
+                    if(*self == expected){
+                        auto tmp = self.move;   //destructor is called after  mutex.unlock();
+                        *self = desired.move;
+
+                        mutex.unlock();
+                        return true;
                     }
-                    else{
-                        expected = null;
-                        expected._set_element(source_expected);
-                    }
 
-                    return store_occurred;
-                }();
-            }
-            else{
-                return this.compareExchange!(success, failure)(expected, desired.move);
-            }
-        }
-
-
-        /*
-            implementation of `compareExchangeWeak` and `compareExchangeStrong`
-        */
-        private bool compareExchange
-            (MemoryOrder success = MemoryOrder.seq, MemoryOrder failure = success, E, D, this This)
-            (ref scope E expected, scope D desired)scope //@trusted pure @nogc
-        if(true
-            && isIntrusivePtr!E && !is(E == shared)
-            && isIntrusivePtr!D && !is(D == shared)
-            && (isMovable!(D, This) && isMutable!This)
-            && (isMovable!(This, E) && isMutable!E)
-            && (This.weakPtr == D.weakPtr)
-            && (This.weakPtr == E.weakPtr)
-        ){
-            static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
-            static assert(isValidIntrusivePtr!E, "`E expected` is invalid `IntrusivePtr`");
-            static assert(isValidIntrusivePtr!D, "`D desired` is invalid `IntrusivePtr`");
-
-            static if(is(This == shared)){
-                import core.atomic : cas;
-
-
-                static assert(!isLockFree);
-                shared mutex = getMutex(this);
-
-                mutex.lock();
-
-                alias Self = ChangeElementType!(
-                    This, //CopyConstness!(This, Unqual!This),
-                    CopyTypeQualifiers!(This, ElementType)
-                );
-
-                static assert(!is(Self == shared));
-
-                Self* self = cast(Self*)&this;
-
-                if(*self == expected){
-                    auto tmp = self.move;   //destructor is called after  mutex.unlock();
-                    *self = desired.move;
+                    auto tmp = expected.move;   //destructor is called after  mutex.unlock();
+                    expected = *self;
 
                     mutex.unlock();
-                    return true;
+                    return false;
                 }
-
-                auto tmp = expected.move;   //destructor is called after  mutex.unlock();
-                expected = *self;
-
-                mutex.unlock();
-                return false;
             }
+
             else{
                 if(this == expected){
                     this = desired.move;
@@ -1801,7 +1748,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
             static assert(isCopyable!(This, typeof(return)));
             static assert(isValidIntrusivePtr!This, "`This` is invalid `IntrusivePtr`");
 
-            static assert(needLock!(This, typeof(return)));
+            static assert(weakLock!(This, typeof(return)));
 
             return typeof(return)(this);
         }
@@ -2704,9 +2651,9 @@ nothrow @nogc unittest{
 //local traits:
 private{
 
-    template needLock(From, To)
+    template weakLock(From, To)
     if(isIntrusivePtr!From && isIntrusivePtr!To){
-        enum needLock = (From.weakPtr && !To.weakPtr);
+        enum weakLock = (From.weakPtr && !To.weakPtr);
     }
 
     template isMovable(From, To)

@@ -38,6 +38,9 @@ in(isFunctionPointer!T || isDelegate!T){
 }
 
 
+public enum bool isRef(alias var) = false
+    || __traits(isRef, var)
+    || __traits(isOut, var);
 
 //remove `shared` from type `T`.
 public alias Unshared(T) = T;

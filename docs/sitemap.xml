@@ -62,8 +62,6 @@
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.sharedControl.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.SharedType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.store.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.store.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.store.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.this.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.this.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.this.html</loc></url>
@@ -122,7 +120,6 @@
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.proxySwap.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.SharedType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.store.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.store.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.this.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.this.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.this.html</loc></url>
@@ -149,6 +146,7 @@
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.alloc.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.alloc.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.alloc.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.compareExchange.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.compareExchangeStrong.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.compareExchangeWeak.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.ControlType.html</loc></url>
@@ -171,7 +169,6 @@
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opAssign.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opAssign.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opAssign.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opAssign.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opCast.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opCast.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opCmp.html</loc></url>
@@ -183,8 +180,6 @@
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opUnary.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.proxySwap.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.SharedType.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.store.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.store.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.store.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.this.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.this.html</loc></url>
@@ -242,10 +237,10 @@
 <url><loc>http://127.0.0.1/autoptr/unique_ptr/UniquePtr.opUnary.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/unique_ptr/UniquePtr.proxySwap.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/unique_ptr/UniquePtr.store.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/unique_ptr/UniquePtr.store.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/unique_ptr/UniquePtr.this.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/unique_ptr/UniquePtr.this.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/unique_ptr/UniquePtr.ThreadLocal.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/unique_ptr/UniquePtr.toHash.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/unique_ptr/UniquePtr.weakPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/unique_ptr/UniquePtr.html</loc></url>
 </urlset>

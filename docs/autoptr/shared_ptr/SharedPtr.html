@@ -99,7 +99,7 @@ $('#symbolSearchPane').show();</script>
     can be called by multiple threads on different instances of <code class="lang-d"><span class="typ">SharedPtr</span></code> without additional synchronization even if these instances are copies and share ownership of the same object.
 </p>
 
-<p>    If multiple threads of execution access the same <code class="lang-d"><span class="typ">SharedPtr</span></code> (<code class="lang-d"><span class="kwd">shared </span><span class="typ">SharedPtr</span></code>) then only some methods can be called (<code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.load.html"><span class="pln">load</span></a></code>, <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.store.html"><span class="pln">store</span></a></code>, <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.exchange.html"><span class="pln">exchange</span></a></code>, <code class="lang-d"><span class="pln">compareExchange</span></code>, <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.useCount.html"><span class="pln">useCount</span></a></code>).
+<p>    If multiple threads of execution access the same <code class="lang-d"><span class="typ">SharedPtr</span></code> (<code class="lang-d"><span class="kwd">shared </span><span class="typ">SharedPtr</span></code>) then only some methods can be called (<code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.load.html"><span class="pln">load</span></a></code>, <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.store.html"><span class="pln">store</span></a></code>, <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.exchange.html"><span class="pln">exchange</span></a></code>, <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.compareExchange.html"><span class="pln">compareExchange</span></a></code>, <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.useCount.html"><span class="pln">useCount</span></a></code>).
 </p>
 
 <p>    Template parameters:
@@ -251,22 +251,12 @@ $('#symbolSearchPane').show();</script>
 					</tr>
 					<tr>
 						<td>
-							<a href="../../autoptr/shared_ptr/SharedPtr.compareExchangeStrong.html" class="public">
-								<code>compareExchangeStrong</code>
+							<a href="../../autoptr/shared_ptr/SharedPtr.compareExchange.html" class="public">
+								<code>compareExchange</code>
 							</a>
 							<span class="tableEntryAnnotation">(expected, desired)</span>
 						</td>
-						<td>Compares the <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> pointers pointed-to by <code class="lang-d"><span class="kwd">this</span></code> and <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.compareExchangeStrong.html#expected"><span class="pln">expected</span></a></code>.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/shared_ptr/SharedPtr.compareExchangeWeak.html" class="public">
-								<code>compareExchangeWeak</code>
-							</a>
-							<span class="tableEntryAnnotation">(expected, desired)</span>
-						</td>
-						<td>Same as <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.compareExchangeStrong.html"><span class="pln">compareExchangeStrong</span></a></code> but may fail spuriously.
+						<td>Compares the <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> pointers pointed-to by <code class="lang-d"><span class="kwd">this</span></code> and <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.compareExchange.html#expected"><span class="pln">expected</span></a></code>.
 </td>
 					</tr>
 					<tr>
@@ -412,16 +402,6 @@ $('#symbolSearchPane').show();</script>
 					</tr>
 					<tr>
 						<td>
-							<a href="../../autoptr/shared_ptr/SharedPtr.store.html" class="public">
-								<code>store</code>
-							</a>
-							<span class="tableEntryAnnotation">(nil)</span>
-						</td>
-						<td>Stores the non <code class="lang-d"><span class="kwd">shared</span></code> <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> parameter <code class="lang-d"><span class="pln">ptr</span></code> to <code class="lang-d"><span class="kwd">this</span></code>.
-</td>
-					</tr>
-					<tr>
-						<td>
 							<a href="../../autoptr/shared_ptr/SharedPtr.weak.html" class="public">
 								<code>weak</code>
 							</a>
@@ -437,6 +417,24 @@ $('#symbolSearchPane').show();</script>
 					<col class="caption"/>
 					<tr>
 						<th>Name</th><th>Description</th>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/shared_ptr/SharedPtr.compareExchangeStrong.html" class="public">
+								<code>compareExchangeStrong</code>
+							</a>
+						</td>
+						<td>Same as <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.compareExchange.html"><span class="pln">compareExchange</span></a></code>.
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/shared_ptr/SharedPtr.compareExchangeWeak.html" class="public">
+								<code>compareExchangeWeak</code>
+							</a>
+						</td>
+						<td>Same as <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.compareExchange.html"><span class="pln">compareExchange</span></a></code>.
+</td>
 					</tr>
 					<tr>
 						<td>
@@ -480,7 +478,7 @@ $('#symbolSearchPane').show();</script>
 								<code>isLockFree</code>
 							</a>
 						</td>
-						<td><code class="lang-d"><span class="kwd">true</span></code> if shared <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> has lock free operations <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.store.html"><span class="pln">store</span></a></code>, <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.load.html"><span class="pln">load</span></a></code>, <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.exchange.html"><span class="pln">exchange</span></a></code>, <code class="lang-d"><span class="pln">compareExchange</span></code>, otherwise 'false'
+						<td><code class="lang-d"><span class="kwd">true</span></code> if shared <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> has lock free operations <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.store.html"><span class="pln">store</span></a></code>, <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.load.html"><span class="pln">load</span></a></code>, <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.exchange.html"><span class="pln">exchange</span></a></code>, <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.compareExchange.html"><span class="pln">compareExchange</span></a></code>, otherwise 'false'
 </td>
 					</tr>
 					<tr>
@@ -499,6 +497,15 @@ $('#symbolSearchPane').show();</script>
 							</a>
 						</td>
 						<td>Type of non weak ptr (must have weak counter).
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/shared_ptr/SharedPtr.store.html" class="public">
+								<code>store</code>
+							</a>
+						</td>
+						<td>Stores the non <code class="lang-d"><span class="kwd">shared</span></code> <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> parameter <code class="lang-d"><span class="pln">ptr</span></code> to <code class="lang-d"><span class="kwd">this</span></code>.
 </td>
 					</tr>
 					<tr>

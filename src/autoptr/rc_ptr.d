@@ -1,5 +1,5 @@
 /**
-    Implementation of reference counted pointer `RcPtr` (similar to `SharedPtr`).
+    Implementation of reference counted pointer `RcPtr` (similar to c++ `std::shared_ptr` without aliasing).
 
     License:   $(HTTP www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
     Authors:   $(HTTP github.com/submada/basic_string, Adam Búš)
@@ -303,7 +303,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         if(true
             && isRcPtr!Rhs
             && isConstructable!(Rhs, This)
-            && !needLock!(Rhs, This)
+            && !weakLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
             static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
@@ -398,7 +398,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && isRcPtr!Rhs
             && !is(Unqual!This == Unqual!Rhs)   ///copy ctors
             && isConstructable!(Rhs, This)
-            && !needLock!(Rhs, This)
+            && !weakLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
             static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
@@ -413,7 +413,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && isRcPtr!Rhs
             //&& !is(Unqual!This == Unqual!Rhs) //TODO move ctors need this
             && isConstructable!(Rhs, This)
-            && !needLock!(Rhs, This)
+            && !weakLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
             static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
@@ -428,7 +428,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         if(true
             && isRcPtr!Rhs
             && isConstructable!(Rhs, This)
-            && needLock!(Rhs, This)
+            && weakLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
             static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
@@ -780,7 +780,6 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         if(true
             && isRcPtr!Rhs
             && isAssignable!(Rhs, This)
-            && !needLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
             static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
@@ -831,7 +830,6 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         if(true
             && isRcPtr!Rhs
             && isAssignable!(Rhs, This)
-            && !needLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
             static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
@@ -1280,26 +1278,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 }
                 --------------------
         */
-        public void store(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null) nil)scope
-        if(isMutable!This){
-            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
-
-            this.opAssign!order(null);
-        }
-
-        /// ditto
-        public void store(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(auto ref scope Rhs desired)scope
-        if(true
-            && isRcPtr!Rhs
-            && !is(Rhs == shared)
-            && !needLock!(Rhs, This)
-            && isAssignable!(Rhs, This)
-        ){
-            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
-            static assert(isValidRcPtr!Rhs, "`Rhs` is invalid `RcPtr`");
-
-            this.opAssign!order(forward!desired);
-        }
+        alias store = opAssign;
 
 
 
@@ -1563,92 +1542,67 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             static assert(isValidRcPtr!E, "`E expected` is invalid `RcPtr`");
             static assert(isValidRcPtr!D, "`D desired` is invalid `RcPtr`");
 
-            static if(is(This == shared) && isLockFree){
-                import core.atomic : cas, casWeak;
-                static if(weak)
-                    alias casImpl = casWeak;
-                else
-                    alias casImpl = cas;
+            static if(is(This == shared)){
+                static if(isLockFree){
+                    import core.atomic : cas, casWeak;
+                    static if(weak)
+                        alias casImpl = casWeak;
+                    else
+                        alias casImpl = cas;
 
 
-                return ()@trusted{
-                    GetElementReferenceType!This source_desired = desired._element;     //interface/class cast
-                    GetElementReferenceType!This source_expected = expected._element;   //interface/class cast
+                    return ()@trusted{
+                        GetElementReferenceType!This source_desired = desired._element;     //interface/class cast
+                        GetElementReferenceType!This source_expected = expected._element;   //interface/class cast
 
-                    const bool store_occurred = casImpl!(success, failure)(
-                        cast(Unqual!(This.ElementReferenceType)*)&this._element,
-                        cast(Unqual!(This.ElementReferenceType)*)&source_expected,
-                        cast(Unqual!(This.ElementReferenceType))source_desired
+                        const bool store_occurred = casImpl!(success, failure)(
+                            cast(Unqual!(This.ElementReferenceType)*)&this._element,
+                            cast(Unqual!(This.ElementReferenceType)*)&source_expected,
+                            cast(Unqual!(This.ElementReferenceType))source_desired
+                        );
+
+                        if(store_occurred){
+                            desired._const_reset();
+                            if(expected._element !is null)
+                                expected._control.release!(This.weakPtr);
+                        }
+                        else{
+                            expected = null;
+                            expected._set_element(source_expected);
+                        }
+
+                        return store_occurred;
+                    }();
+                }
+                else{
+                    static assert(!isLockFree);
+                    shared mutex = getMutex(this);
+
+                    mutex.lock();
+
+                    alias Self = ChangeElementType!(
+                        This, //CopyConstness!(This, Unqual!This),
+                        CopyTypeQualifiers!(This, ElementType)
                     );
 
-                    if(store_occurred){
-                        desired._const_reset();
-                        if(expected._element !is null)
-                            expected._control.release!(This.weakPtr);
+                    static assert(!is(Self == shared));
+
+                    Self* self = cast(Self*)&this;
+
+                    if(*self == expected){
+                        auto tmp = self.move;   //destructor is called after  mutex.unlock();
+                        *self = desired.move;
+
+                        mutex.unlock();
+                        return true;
                     }
-                    else{
-                        expected = null;
-                        expected._set_element(source_expected);
-                    }
 
-                    return store_occurred;
-                }();
-            }
-            else{
-                return this.compareExchange!(success, failure)(expected, desired.move);
-            }
-        }
-
-
-        /*
-            implementation of `compareExchangeWeak` and `compareExchangeStrong`
-        */
-        private bool compareExchange
-            (MemoryOrder success = MemoryOrder.seq, MemoryOrder failure = success, E, D, this This)
-            (ref scope E expected, scope D desired)scope @trusted
-        if(true
-            && isRcPtr!E && !is(E == shared)
-            && isRcPtr!D && !is(D == shared)
-            && isAssignable!(D, This)
-            && isAssignable!(This, E)
-            && (This.weakPtr == D.weakPtr)
-            && (This.weakPtr == E.weakPtr)
-        ){
-            static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
-            static assert(isValidRcPtr!E, "`E expected` is invalid `RcPtr`");
-            static assert(isValidRcPtr!D, "`D desired` is invalid `RcPtr`");
-
-            static if(is(This == shared)){
-                import core.atomic : cas;
-
-
-                static assert(!isLockFree);
-                shared mutex = getMutex(this);
-
-                mutex.lock();
-
-                alias Self = ChangeElementType!(
-                    This, //CopyConstness!(This, Unqual!This),
-                    CopyTypeQualifiers!(This, ElementType)
-                );
-
-                static assert(!is(Self == shared));
-
-                Self* self = cast(Self*)&this;
-
-                if(*self == expected){
-                    auto tmp = self.move;   //destructor is called after  mutex.unlock();
-                    *self = desired.move;
+                    auto tmp = expected.move;   //destructor is called after  mutex.unlock();
+                    expected = *self;
 
                     mutex.unlock();
-                    return true;
+                    return false;
                 }
-
-                auto tmp = expected.move;   //destructor is called after  mutex.unlock();
-                expected = *self;
-
-                mutex.unlock();
-                return false;
             }
             else{
                 if(this == expected){
@@ -1705,7 +1659,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         if(!is(This == shared)){
             static assert(isValidRcPtr!This, "`This` is invalid `RcPtr`");
 
-            static assert(needLock!(This, typeof(return)));
+            static assert(weakLock!(This, typeof(return)));
 
             return typeof(return)(this);
         }
@@ -2619,9 +2573,9 @@ pure nothrow @nogc unittest{
 //local traits:
 private{
 
-    template needLock(From, To)
+    template weakLock(From, To)
     if(isRcPtr!From && isRcPtr!To){
-        enum needLock = (From.weakPtr && !To.weakPtr);
+        enum weakLock = (From.weakPtr && !To.weakPtr);
     }
 
     template isConstructable(From, To)
@@ -2655,6 +2609,7 @@ private{
 
         enum bool isAssignable = true
             && isConstructable!(From, To)
+            && !weakLock!(From, To)
             && isMutable!To;
     }
 }

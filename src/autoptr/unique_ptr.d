@@ -1,5 +1,5 @@
 /**
-    Implementation of unique pointer `UniquePtr` (similar to c++ std::unique_ptr).
+    Implementation of unique pointer `UniquePtr` (similar to c++ `std::unique_ptr`).
 
     License:   $(HTTP www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
     Authors:   $(HTTP github.com/submada/basic_string, Adam Búš)
@@ -161,6 +161,12 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             Type of control block.
         */
         public alias ControlType = _ControlType;
+
+
+        /**
+            Always `false`, `UniquePtr` is never weak ptr.
+        */
+        public enum bool weakPtr = false;
 
 
         /**
@@ -638,26 +644,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 }
                 --------------------
         */
-        public void store(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null) desired)scope
-        if(isMutable!This){
-            static assert(isValidUniquePtr!This, "`This` is invalid `UniquePtr`");
-
-            this.opAssign!order(null);
-
-        }
-
-        /// ditto
-        public void store(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs desired)scope
-        if(true
-            && isUniquePtr!Rhs
-            && !is(Rhs == shared)
-            && isAssignable!(Rhs, This)
-        ){
-            static assert(isValidUniquePtr!This, "`This` is invalid `UniquePtr`");
-            static assert(isValidUniquePtr!Rhs, "`Rhs` is invalid `UniquePtr`");
-
-            this.opAssign!order(desired.move);
-        }
+        alias store = opAssign;
 
 
 

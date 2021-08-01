@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="UTF-8"/>
-		<title>Function SharedPtr.compareExchangeWeak</title>
+		<title>Alias SharedPtr.compareExchangeWeak</title>
 		<link rel="stylesheet" type="text/css" href="../../styles/ddox.css"/>
 		<link rel="stylesheet" href="../../prettify/prettify.css" type="text/css"/>
 		<script type="text/javascript" src="../../scripts/jquery.js">/**/</script><script type="text/javascript" src="../../scripts/ddox.js">/**/</script>
@@ -54,21 +54,25 @@ $('#symbolSearchPane').show();</script>
 			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>Function SharedPtr.compareExchangeWeak</h1><p>Same as <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.compareExchangeStrong.html"><span class="pln">compareExchangeStrong</span></a></code> but may fail spuriously.
+			<h1>Alias SharedPtr.compareExchangeWeak</h1><p>Same as <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.compareExchange.html"><span class="pln">compareExchange</span></a></code>.
 </p>
 			<div class="prototype">
 				<code class="lang-d">
 					<div class="single-prototype">
-			<span class="typ">bool</span> <span class="pln">compareExchangeWeak</span>(<span class="typ">MemoryOrder</span> success<span class="pln"> </span><span class="pun">= </span><span class="typ">MemoryOrder<wbr/></span><span class="pun">.</span><span class="pln">seq</span>, <span class="typ">MemoryOrder</span> failure<span class="pln"> </span><span class="pun">= </span><span class="pln">success</span>, E, D, This)
-			<span class="pun">(</span>
+			<span class="kwd">struct</span> <a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a>
 			<br/>
-			&nbsp;&nbsp;<span class="kwd">scope ref </span><span class="pln">E</span> <span class="pln">expected</span><span class="pun">,</span>
+			<span class="pun">
+				{
+				<br/>
+			</span>
+			&nbsp;&nbsp;<span class="com">// ...</span>
 			<br/>
-			&nbsp;&nbsp;<span class="kwd">scope </span><span class="pln">D</span> <span class="pln">desired</span>
+			&nbsp;&nbsp;<span class="kwd">alias</span> <span class="pln">compareExchangeWeak</span>
+			 <span class="pun">=</span> <span class="pln">compareExchange</span><span class="pun">;</span>
 			<br/>
-			<span class="pun">)</span><span class="pln"> </span><span class="kwd">scope</span>
+			&nbsp;&nbsp;<span class="com">// ...</span>
 			<br/>
-			<span class="kwd">if</span> <span class="pun">(</span><span class="kwd">true </span><span class="pun">&amp;&amp; </span><span class="pln">isSharedPtr</span><span class="pun">!</span><span class="pln">E </span><span class="pun">&amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="pln">E </span><span class="pun">== </span><span class="kwd">shared</span><span class="pun">) &amp;&amp; </span><span class="pln">isSharedPtr</span><span class="pun">!</span><span class="pln">D </span><span class="pun">&amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="pln">D </span><span class="pun">== </span><span class="kwd">shared</span><span class="pun">) &amp;&amp; </span><span class="pln">isAssignable</span><span class="pun">!(</span><span class="pln">D</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; </span><span class="pln">isAssignable</span><span class="pun">!(</span><span class="typ">This</span><span class="pun">, </span><span class="pln">E</span><span class="pun">)</span><span class="pun">);</span>
+			<span class="pun">}</span>
 					</div>
 				</code>
 			</div>
