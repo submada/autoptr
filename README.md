@@ -1,5 +1,5 @@
 # Autoptr
-## C++-style smart pointers for D using `std.experimental.allocator`.
+## C++-style smart pointers for D.
 
 This library contains:
 * `SharedPtr` is a smart pointer that retains shared ownership of an object through a pointer. Support weak pointers and aliasing like C++ std::shared_ptr. Pointer to managed object is separated from pointer to control block conataining reference counter. `SharedPtr` contains 2 pointers or 2 pointers + length if managed object is slice). 
