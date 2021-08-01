@@ -160,8 +160,8 @@ unittest{
 unittest{
     ///simple:
     {
-        SharedPtr!long a = SharedPtr!long.make(42);
-        SharedPtr!(const long) b = a.move;
+        UniquePtr!long a = UniquePtr!long.make(42);
+        UniquePtr!(const long) b = a.move;
         assert(a == null);
 
         assert(*b == 42);
