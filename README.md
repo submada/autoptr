@@ -29,8 +29,8 @@ Constructors of smart pointers never allocate memory, only static methods `make`
 * Deallocation of data with custom allocator is `@safe` if allocation is `@safe` even if method `deallcoate` is `@system`.
 
 `scope` and -dip1000:
-* All smart pointers assume that managed object have global liftime (scope can be ignored).
-* Functions for creating new managed object `make` and `alloc` have  non `scope` parameters (global liftime).
+* All smart pointers assume that managed object have global lifetime (scope can be ignored).
+* Functions for creating new managed object `make` and `alloc` have  non `scope` parameters (global lifetime).
 * Methods returning reference/pointer (`get()`, `element()`, `opUnary!"*"()`) to managed object are all `@system` and returned reference/pointer is `scope`.
 
 ## Documentation
