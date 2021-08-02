@@ -24,14 +24,44 @@ Smart pointers can be created with static methods `make` and `alloc`.
 
 Constructors of smart pointers never allocate memory, only static methods `make` and `alloc` allocate.
 
-@safe assumptions:
+@safe:
 * Creating smart pointer with `make` or `alloc` is `@safe` if constructor of type `_Type` is `@safe` (assumption is that constructor doesn't leak `this` pointer).
-* Deallocation of data with custom allocator is `@safe` if allocation is `@safe` even if method `deallcoate` is `@system`.
+* Smart pointers assume that deallocation with custom allocator is `@safe` if allocation is `@safe` even if method `deallcoate` is `@system`.
+* Methods returning reference/pointer (`get()`, `element()`, `opUnary!"*"()`) to managed object are all `@system` because of this:
+    ```d
+    auto trustedGet(Ptr)(ref scope Ptr ptr)@trusted{
+        return ptr.get();
+    }
+
+    struct S{
+        long x;
+
+        this(long x)@safe{
+            this.x = x;
+        }
+
+        ~this()@safe{
+            this.x = -1;
+        }
+    }
+
+    void main()@safe{
+        auto p = SharedPtr!S.make(42);
+
+        (ref S s)@safe{
+            assert(s.x == 42);
+            p = null;           ///release pointer
+            assert(s.x == -1);  ///`s` is dangling reference
+
+        }(p.trustedGet);
+
+    }
+    ```
 
 `scope` and -dip1000:
 * All smart pointers assume that managed object have global lifetime (scope can be ignored).
 * Functions for creating new managed object `make` and `alloc` have  non `scope` parameters (global lifetime).
-* Methods returning reference/pointer (`get()`, `element()`, `opUnary!"*"()`) to managed object are all `@system` and returned reference/pointer is `scope`.
+*  and returned reference/pointer is `scope`.
 
 ## Documentation
 https://submada.github.io/autoptr
