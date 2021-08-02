@@ -18,7 +18,6 @@
     }
   },
   "dflags" : [
-    "-dip1000"
   ],
   "copyright" : "Copyright © 2021, Adam Búš",
   "description" : "Smart pointers.",
