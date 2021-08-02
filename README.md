@@ -98,7 +98,7 @@ class Zee : Bar{
 }
 ```
 
-#SharedPtr
+# SharedPtr
 ```d
 unittest{
     ///simple:
@@ -197,7 +197,7 @@ unittest{
 }
 ```
 
-#UniquePtr:
+# UniquePtr:
 ```d
 unittest{
     ///simple:
@@ -270,7 +270,7 @@ unittest{
 }
 ```
 
-#RcPtr:
+# RcPtr:
 ```d
 unittest{
     ///simple:
@@ -359,7 +359,7 @@ unittest{
 }
 ```
 
-#IntrusivePtr:
+# IntrusivePtr:
 ```d
 nothrow unittest{
     static struct Struct{
