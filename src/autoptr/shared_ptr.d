@@ -49,7 +49,7 @@ unittest{
 }
 
 
-/** 
+/**
     Check if type `T` is `SharedPtr`.
 */
 public template isSharedPtr(T){
@@ -121,12 +121,12 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
     static assert(is(DestructorType!void : _DestructorType),
-        _Type.stringof ~ " wrong DestructorType " ~ DestructorType!void.stringof ~ 
+        _Type.stringof ~ " wrong DestructorType " ~ DestructorType!void.stringof ~
         " : " ~ _DestructorType.stringof
     );
 
     static assert(is(DestructorType!_Type : _DestructorType),
-        "destructor of type '" ~ _Type.stringof ~ 
+        "destructor of type '" ~ _Type.stringof ~
         "' doesn't support specified finalizer " ~ _DestructorType.stringof
     );
 
@@ -149,6 +149,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
     enum bool hasSharedCounter = _ControlType.hasSharedCounter;
 
     enum bool referenceElementType = isReferenceType!_Type || isDynamicArray!_Type;
+
+    static if(isDynamicArray!_Type)
+        alias ElementDestructorType = .DestructorType!void;
+    else
+        alias ElementDestructorType = .DestructorType!_Type;
 
 
     enum bool _isLockFree = false;
@@ -317,11 +322,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         /**
             Constructs a `SharedPtr` which shares ownership of the object managed by `rhs` and pointing to `element`.
 
-            The aliasing constructor: constructs a `SharedPtr` which shares ownership information with the initial value of `rhs`, 
-                but holds an unrelated and unmanaged pointer ptr. If this `SharedPtr` is the last of the group to go out of scope, 
-                it will call the stored deleter for the object originally managed by `rhs`. 
+            The aliasing constructor: constructs a `SharedPtr` which shares ownership information with the initial value of `rhs`,
+                but holds an unrelated and unmanaged pointer ptr. If this `SharedPtr` is the last of the group to go out of scope,
+                it will call the stored deleter for the object originally managed by `rhs`.
                 However, calling `get()` or `ptr()` on this `SharedPtr` will always return a copy of `element`.
-                It is the responsibility of the programmer to make sure that this ptr remains valid as long as this `SharedPtr` exists, 
+                It is the responsibility of the programmer to make sure that this ptr remains valid as long as this `SharedPtr` exists,
                 such as in the typical use cases where `element` is a member of the object managed by `rhs` or is an alias (e.g., downcast) of `rhs.get()`.
 
             Examples:
@@ -564,7 +569,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
 
-        
+
 
 	//copy ctors:
 	//mutable:
@@ -931,7 +936,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             static assert(!isRef!desired);
             static assert(This.weakPtr <= Rhs.weakPtr, "`Rhs` can be weak only if `This` is weak ptr.");
             static assert(isValidSharedPtr!This, "`This` is invalid `SharedPtr`");
-            static assert(isValidRcPtr!Rhs || isValidIntrusivePtr!Rhs || isValidUniquePtr!Rhs, 
+            static assert(isValidRcPtr!Rhs || isValidIntrusivePtr!Rhs || isValidUniquePtr!Rhs,
                 "`Rhs` is not valid `RcPtr`, `IntrusivePtr` or `UniquePtr`"
             );
 
@@ -989,7 +994,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(!weakPtr)
-        public static SharedPtr!(ElementType, .DestructorType!(DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
+        public static SharedPtr!(ElementType, .DestructorType!(ElementDestructorType, DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
         make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(auto ref Args args)
         if(stateSize!AllocatorType == 0 && !isDynamicArray!ElementType){
             static assert(!weakPtr);
@@ -1021,7 +1026,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(!weakPtr)
-        public static SharedPtr!(ElementType, .DestructorType!(DestructorType, DestructorAllocatorType!AllocatorType, DestructorDeleterType!(ElementType, DeleterType)), ControlType)
+        public static SharedPtr!(ElementType, .DestructorType!(ElementDestructorType, DestructorType, DestructorAllocatorType!AllocatorType, DestructorDeleterType!(ElementType, DeleterType)), ControlType)
         make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, DeleterType)(ElementReferenceType element, DeleterType deleter)
         if(stateSize!AllocatorType == 0 && isCallable!DeleterType){
             static assert(!weakPtr);
@@ -1061,7 +1066,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(!weakPtr)
-        public static SharedPtr!(ElementType, .DestructorType!(DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
+        public static SharedPtr!(ElementType, .DestructorType!(ElementDestructorType, DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
         make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(const size_t n, auto ref Args args)
         if(stateSize!AllocatorType == 0 && isDynamicArray!ElementType){
             static assert(!weakPtr);
@@ -1125,7 +1130,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(!weakPtr)
-        public static SharedPtr!(ElementType, .DestructorType!(DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
+        public static SharedPtr!(ElementType, .DestructorType!(ElementDestructorType, DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
         alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, auto ref Args args)
         if(stateSize!AllocatorType >= 0 && !isDynamicArray!ElementType){
             static assert(!weakPtr);
@@ -1160,7 +1165,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(!weakPtr)
-        public static SharedPtr!(ElementType, .DestructorType!(DestructorType, DestructorAllocatorType!AllocatorType, DestructorDeleterType!(ElementType, DeleterType)), ControlType)
+        public static SharedPtr!(ElementType, .DestructorType!(ElementDestructorType, DestructorType, DestructorAllocatorType!AllocatorType, DestructorDeleterType!(ElementType, DeleterType)), ControlType)
         alloc(bool supportGC = platformSupportGC, AllocatorType, DeleterType)(AllocatorType allocator, ElementReferenceType element, DeleterType deleter)
         if(stateSize!AllocatorType >= 0 && isCallable!DeleterType){
             static assert(!weakPtr);
@@ -1202,7 +1207,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(!weakPtr)
-        public static SharedPtr!(ElementType, .DestructorType!(DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
+        public static SharedPtr!(ElementType, .DestructorType!(ElementDestructorType, DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
         alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, const size_t n, auto ref Args args)
         if(stateSize!AllocatorType >= 0 && isDynamicArray!ElementType){
             static assert(!weakPtr);
@@ -1259,7 +1264,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             }
             else{
                 const ControlType* control = this._control;
-                    
+
                 return (control is null)
                     ? 0
                     : control.count!false + 1;
@@ -1300,7 +1305,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             }
             else{
                 const ControlType* control = this._control;
-                
+
                 return (control is null)
                     ? 0
                     : control.count!true;
@@ -1602,8 +1607,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             (MemoryOrder success = MemoryOrder.seq, MemoryOrder failure = success, E, D, this This)
             (ref scope E expected, scope D desired)scope //@trusted
         if(true
-            && isSharedPtr!E && !is(E == shared) 
-            && isSharedPtr!D && !is(D == shared) 
+            && isSharedPtr!E && !is(E == shared)
+            && isSharedPtr!D && !is(D == shared)
             && isAssignable!(D, This)
             && isAssignable!(This, E)
         ){
@@ -1989,7 +1994,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
                     assert(a > n);
                     assert(a > null);
-                    
+
                     assert(n < a);
                     assert(null < a);
                 }
@@ -3939,7 +3944,7 @@ version(unittest){
     }
 
     //opCmp
-    pure nothrow @safe @nogc unittest{ 
+    pure nothrow @safe @nogc unittest{
         {
             const a = SharedPtr!long.make(42);
             const b = SharedPtr!long.make(123);
@@ -3953,7 +3958,7 @@ version(unittest){
 
             assert(a > n);
             assert(a > null);
-            
+
             assert(n < a);
             assert(null < a);
         }

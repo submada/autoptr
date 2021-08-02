@@ -120,7 +120,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
     static assert(is(_Type == struct) || is(_Type == class));
     static assert(isIntrusive!_Type == 1);
 
-    alias _ControlType = IntrusivControlBlock!_Type;
+    alias _ControlType = IntrusiveControlBlock!_Type;
 
     static assert(_ControlType.hasSharedCounter);
 
@@ -180,13 +180,13 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         /**
             `true` if `ElementType` has mutable intrusive control block even if `ElementType` is `const`/`immutable`.
         */
-        public enum bool mutableControl = isMutable!(IntrusivControlBlock!(const ElementType));
+        public enum bool mutableControl = isMutable!(IntrusiveControlBlock!(const ElementType));
 
 
         /**
             `true` if `ControlBlock` is shared
         */
-        public enum bool sharedControl = is(IntrusivControlBlock!(ElementType, true) == shared);
+        public enum bool sharedControl = is(IntrusiveControlBlock!(ElementType, true) == shared);
 
 
         /**
@@ -979,7 +979,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(!weakPtr)
-        public static IntrusivePtr!(ElementType, .DestructorType!(DestructorType, DestructorAllocatorType!AllocatorType))
+        public static IntrusivePtr!(ElementType, .DestructorType!(.DestructorType!ElementType, DestructorType, DestructorAllocatorType!AllocatorType))
         make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(auto ref Args args)
         if(stateSize!AllocatorType == 0 && !isDynamicArray!ElementType){
             static assert(!weakPtr);
@@ -1043,7 +1043,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(!weakPtr)
-        public static IntrusivePtr!(ElementType, .DestructorType!(DestructorType, DestructorAllocatorType!AllocatorType))
+        public static IntrusivePtr!(ElementType, .DestructorType!(.DestructorType!ElementType, DestructorType, DestructorAllocatorType!AllocatorType))
         alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, auto ref Args args)
         if(stateSize!AllocatorType >= 0 && !isDynamicArray!ElementType){
             static assert(!weakPtr);
@@ -2716,12 +2716,12 @@ private{
             enum bool aliasable = false;
         
 
-        alias FromControlType = IntrusivControlBlock!(
+        alias FromControlType = IntrusiveControlBlock!(
             CopyTypeQualifiers!(From, From.ElementType), //GetElementReferenceType!From,
             //From.mutableControl
         );
 
-        alias ToControlType = IntrusivControlBlock!(
+        alias ToControlType = IntrusiveControlBlock!(
             CopyTypeQualifiers!(To, To.ElementType),    //GetElementReferenceType!To,
             //To.mutableControl
         );
@@ -2740,7 +2740,7 @@ private{
         import std.traits : isMutable, CopyTypeQualifiers;
 
         static if(isMovable!(From, To)){
-            enum bool isCopyable = isMutable!(IntrusivControlBlock!(
+            enum bool isCopyable = isMutable!(IntrusiveControlBlock!(
                 CopyTypeQualifiers!(From, From.ElementType)
             ));
         }

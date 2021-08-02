@@ -627,7 +627,7 @@ import std.traits : isIntegral;
 
     Necessary for `IntrusivePtr`.
     
-    Examples are in `IntrusivControlBlock`.
+    Examples are in `IntrusiveControlBlock`.
 */
 template MutableControlBlock(_Shared, _Weak = void)
 if(isIntegral!_Shared){
@@ -757,7 +757,7 @@ if(is(Type == struct)){
 
     If `mutable` is `true`, then result type alias is mutable (can be shared).
 */
-public template IntrusivControlBlock(Type, bool mutable = false)
+public template IntrusiveControlBlock(Type, bool mutable = false)
 if(isIntrusive!Type && is(Type == class) || is(Type == struct)){
 
     static if(is(Type == class))
@@ -771,9 +771,9 @@ if(isIntrusive!Type && is(Type == class) || is(Type == struct)){
     import std.traits : CopyTypeQualifiers, PointerTarget, Unconst;
 
     static if(mutable && is(PtrControlBlock == shared))
-        alias IntrusivControlBlock = shared(Unconst!(PointerTarget!PtrControlBlock));
+        alias IntrusiveControlBlock = shared(Unconst!(PointerTarget!PtrControlBlock));
     else
-        alias IntrusivControlBlock = PointerTarget!PtrControlBlock;
+        alias IntrusiveControlBlock = PointerTarget!PtrControlBlock;
     
 }
 
@@ -784,19 +784,19 @@ unittest{
     }
 
     static assert(is(
-        IntrusivControlBlock!(Foo) == ControlBlock!int
+        IntrusiveControlBlock!(Foo) == ControlBlock!int
     ));
     static assert(is(
-        IntrusivControlBlock!(const Foo) == const ControlBlock!int
+        IntrusiveControlBlock!(const Foo) == const ControlBlock!int
     ));
     static assert(is(
-        IntrusivControlBlock!(shared Foo) == shared ControlBlock!int
+        IntrusiveControlBlock!(shared Foo) == shared ControlBlock!int
     ));
     static assert(is(
-        IntrusivControlBlock!(const shared Foo) == const shared ControlBlock!int
+        IntrusiveControlBlock!(const shared Foo) == const shared ControlBlock!int
     ));
     static assert(is(
-        IntrusivControlBlock!(immutable Foo) == immutable ControlBlock!int
+        IntrusiveControlBlock!(immutable Foo) == immutable ControlBlock!int
     ));
 
 
@@ -806,19 +806,19 @@ unittest{
     }
 
     static assert(is(
-        IntrusivControlBlock!(Bar) == ControlBlock!int
+        IntrusiveControlBlock!(Bar) == ControlBlock!int
     ));
     static assert(is(
-        IntrusivControlBlock!(const Bar) == ControlBlock!int
+        IntrusiveControlBlock!(const Bar) == ControlBlock!int
     ));
     static assert(is(
-        IntrusivControlBlock!(shared Bar) == shared ControlBlock!int
+        IntrusiveControlBlock!(shared Bar) == shared ControlBlock!int
     ));
     static assert(is(
-        IntrusivControlBlock!(const shared Bar) == shared ControlBlock!int
+        IntrusiveControlBlock!(const shared Bar) == shared ControlBlock!int
     ));
     static assert(is(
-        IntrusivControlBlock!(immutable Bar) == ControlBlock!int
+        IntrusiveControlBlock!(immutable Bar) == ControlBlock!int
     ));
 
 
@@ -828,19 +828,19 @@ unittest{
     }
 
     static assert(is(
-        IntrusivControlBlock!(Zee) == shared ControlBlock!int
+        IntrusiveControlBlock!(Zee) == shared ControlBlock!int
     ));
     static assert(is(
-        IntrusivControlBlock!(const Zee) == shared ControlBlock!int
+        IntrusiveControlBlock!(const Zee) == shared ControlBlock!int
     ));
     static assert(is(
-        IntrusivControlBlock!(shared Zee) == shared ControlBlock!int
+        IntrusiveControlBlock!(shared Zee) == shared ControlBlock!int
     ));
     static assert(is(
-        IntrusivControlBlock!(const shared Zee) == shared ControlBlock!int
+        IntrusiveControlBlock!(const shared Zee) == shared ControlBlock!int
     ));
     static assert(is(
-        IntrusivControlBlock!(immutable Zee) == shared ControlBlock!int
+        IntrusiveControlBlock!(immutable Zee) == shared ControlBlock!int
     ));
 
 
@@ -1167,6 +1167,57 @@ unittest{
 
     static assert(isIntrusive!Bar == 2);
 }
+
+/+
+import std.traits : isMutable, isBasicType, 
+    isPointer, PointerTarget,
+    isArray;
+import std.range : ElementEncodingType;
+
+template isSafeCtorCallArg(T){
+
+    static if(!isMutable!T || isBasicType!T || is(immutable T == immutable typeof(null)))
+        enum bool isSafeCtorCallArg = true;
+
+    else static if(isPointer!T)
+        enum bool isSafeCtorCallArg = .isSafeCtorCallArg!(PointerTarget!T);
+
+    else static if(isArray!T)
+        enum bool isSafeCtorCallArg = .isSafeCtorCallArg!(ElementEncodingType!T);
+
+    else
+        enum bool isSafeCtorCallArg = false;
+}
+
+/*
+    Return `true` if type `T` can be constructed with parameters `Args` in @safe code.
+*/
+template hasSafeCtorCall(T){
+    static if(is(T == struct) || is(T == union) || is(T == class)){
+        bool hasSafeCtorCall(Args...)(auto ref Args args){
+            import core.lifetime : forward;
+            T chunk;
+
+            static if(is(typeof(chunk.__ctor(forward!args)))){
+                import std.traits : isMutable, isBasicType, isPointer, PointerTarget;
+                bool safe = true;
+
+                static foreach(alias Arg; Args)
+                    safe = isSafeCtorCallArg!Arg;   
+
+                return safe;
+            }
+            else{
+                return true;
+            }
+        }
+    }
+    else{
+        bool hasSafeCtorCall(Args...)(auto ref Args args){
+            return true;
+        }
+    }
+}+/
 
 
 /*
@@ -1796,7 +1847,7 @@ if(isIntrusive!_Type == 1){
         "doesn't support destructor attributes `" ~ _DestructorType.stringof
     );
 
-    alias ControlType = IntrusivControlBlock!_Type;
+    alias ControlType = IntrusiveControlBlock!_Type;
 
     alias AllocatorWithState = .AllocatorWithState!_AllocatorType;
 

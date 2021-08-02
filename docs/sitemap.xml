@@ -15,7 +15,7 @@
 <url><loc>http://127.0.0.1/autoptr/common/DestructorDeleterType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/DestructorType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/Evoid.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/common/IntrusivControlBlock.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/common/IntrusiveControlBlock.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/isControlBlock.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/isDestructorType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/isIntrusive.html</loc></url>

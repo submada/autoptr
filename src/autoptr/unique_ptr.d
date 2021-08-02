@@ -434,7 +434,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 }
                 --------------------
         */
-        public static UniquePtr!(ElementType, .DestructorType!(DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
+        public static UniquePtr!(ElementType, .DestructorType!(.DestructorType!ElementType, DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
         make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(auto ref Args args)
         if(stateSize!AllocatorType == 0 && !isDynamicArray!ElementType){
 
@@ -473,7 +473,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 assert(arr.get == [0, 1, 2, 3, 4, 5]);
                 --------------------
         */
-        public static UniquePtr!(ElementType, .DestructorType!(DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
+        public static UniquePtr!(ElementType, .DestructorType!(.DestructorType!ElementType, DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
         make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(const size_t n, auto ref Args args)
         if(stateSize!AllocatorType == 0 && isDynamicArray!ElementType){
 
@@ -518,7 +518,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 }
                 --------------------
         */
-        public static UniquePtr!(ElementType, .DestructorType!(DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
+        public static UniquePtr!(ElementType, .DestructorType!(.DestructorType!ElementType, DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
         alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, auto ref Args args)
         if(stateSize!AllocatorType >= 0 && !isDynamicArray!ElementType){
 
@@ -557,7 +557,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 assert(arr.get == [0, 1, 2, 3, 4, 5]);
                 --------------------
         */
-        public static UniquePtr!(ElementType, .DestructorType!(DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
+        public static UniquePtr!(ElementType, .DestructorType!(.DestructorType!ElementType, DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
         alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, const size_t n, auto ref Args args)
         if(stateSize!AllocatorType >= 0 && isDynamicArray!ElementType){
 

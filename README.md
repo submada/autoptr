@@ -23,7 +23,16 @@ Smart pointers can be created with static methods `make` and `alloc`.
 * `alloc` create smart pointer using allocator with state. Allocator is saved in control block.
 
 Constructors of smart pointers never allocate memory, only static methods `make` and `alloc` allocate.
- 
+
+@safe assumptions:
+* Creating smart pointer with `make` or `alloc` is `@safe` if constructor of type `_Type` is `@safe` (assumption is that constructor doesn't leak `this` pointer).
+* Deallocation of data with custom allocator is `@safe` if allocation is `@safe` even if method `deallcoate` is `@system`.
+
+`scope` and -dip1000:
+* All smart pointers assume that managed object have global liftime (scope can be ignored).
+* Functions for creating new managed object `make` and `alloc` have all arguments non `scope` (global liftime).
+* Methods returning reference/pointer (`get()`, `element()`, `opUnary!"*"`) to managed object are all `@system` and returned reference/pointer is `scope`.
+
 ## Documentation
 https://submada.github.io/autoptr
 
