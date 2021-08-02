@@ -62,7 +62,7 @@ private string genDestructorTypes(){
 
 //create all possible DestructorType types, DestructorType can return type with some hidden information and comparsion with it can fail (bug in D compiler).
 //If type is created before calling DestructorType then DestructorType return existing type free of hidden informations and comparsion is ok.
-private alias DestructorTypes = AliasSeq!(
+public alias DestructorTypes = AliasSeq!(
     void function(Evoid* )pure nothrow @safe @nogc,
     void function(Evoid* )pure nothrow @safe,
     void function(Evoid* )pure nothrow @system @nogc,
