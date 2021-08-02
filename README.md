@@ -16,7 +16,9 @@ This library contains:
   * Default value for `SharedPtr` and `RefPtr` is `autoptr.common.ControlBlock!(int, int)` which mean that type of reference counter is `int` and  weak reference counter type is `int`. `autoptr.common.ControlBlock!(int, void)` disable weak reference counting.
   * If control block is `shared` then reference counting is atomic. Qualiffier `shared` is inferred from `_Type` for `_ControlType`. If `_Type` is `shared` then `_ControlType` is `shared` too.
 
-`IntrusivePtr` has only 2 template parameters, `_Type` and `_DestructorType` same as other smart pointers.
+`IntrusivePtr` has only 1 template parameters, `_Type`.
+* `_DestructorType` is inferred from `_Type`.
+* `_ControlType` is inferred from `_Type`.
 
 Smart pointers can be created with static methods `make` and `alloc`.
 * `make` create smart pointer with stateless allocator (default `Mallocator`)
