@@ -30,8 +30,8 @@ Constructors of smart pointers never allocate memory, only static methods `make`
 
 `scope` and -dip1000:
 * All smart pointers assume that managed object have global liftime (scope can be ignored).
-* Functions for creating new managed object `make` and `alloc` have all arguments non `scope` (global liftime).
-* Methods returning reference/pointer (`get()`, `element()`, `opUnary!"*"`) to managed object are all `@system` and returned reference/pointer is `scope`.
+* Functions for creating new managed object `make` and `alloc` have  non `scope` parameters (global liftime).
+* Methods returning reference/pointer (`get()`, `element()`, `opUnary!"*"()`) to managed object are all `@system` and returned reference/pointer is `scope`.
 
 ## Documentation
 https://submada.github.io/autoptr
