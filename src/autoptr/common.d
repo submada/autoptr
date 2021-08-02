@@ -62,7 +62,7 @@ private string genDestructorTypes(){
 
 //create all possible DestructorType types, DestructorType can return type with some hidden information and comparsion with it can fail (bug in D compiler).
 //If type is created before calling DestructorType then DestructorType return existing type free of hidden informations and comparsion is ok.
-public alias DestructorTypes = AliasSeq!(
+/+public alias DestructorTypes = AliasSeq!(
     void function(Evoid* )pure nothrow @safe @nogc,
     void function(Evoid* )pure nothrow @safe,
     void function(Evoid* )pure nothrow @system @nogc,
@@ -79,7 +79,7 @@ public alias DestructorTypes = AliasSeq!(
     void function(Evoid* )@safe,
     void function(Evoid* )@system @nogc,
     void function(Evoid* )@system,
-);
+);+/
 
 
 /**
@@ -114,16 +114,16 @@ public template DestructorDeleterType(T, Deleter){
 
     alias Get(T) = T;
 
-    alias impl = Get!(typeof(function void(Evoid*){
-
+    static void impl()(Evoid*){
         ElementReferenceTypeImpl!T elm;
 
         Deleter deleter;
 
         cast(void)deleter(elm);
-    }));
+    }
 
-    alias DestructorDeleterType = impl;
+    alias DestructorDeleterType = typeof(&impl!());
+
 }
 
 
@@ -175,7 +175,8 @@ public template DestructorAllocatorType(Allocator){
 
 
     alias Get(T) = T;
-    alias impl = Get!(typeof(function void(Evoid*){
+
+    static void impl()(Evoid*){
         {
             Allocator allocator;
         }
@@ -213,9 +214,9 @@ public template DestructorAllocatorType(Allocator){
                 Allocator.init.deallocate(data);
         }
 
-    }));
+    }
 
-    alias DestructorAllocatorType = impl;
+    alias DestructorAllocatorType = typeof(&impl!());
 }
 
 
@@ -229,7 +230,8 @@ public template DestructorType(Types...){
     import std.meta : AliasSeq;
 
     alias Get(T) = T;
-    alias impl = Get!(typeof(function void(Evoid*){
+
+    static void impl()(Evoid*){
 
         static foreach(alias Type; Types){
             static if(is(Unqual!Type == void)){
@@ -264,8 +266,9 @@ public template DestructorType(Types...){
                 }
             }
         }
-    }));
-    alias DestructorType = impl;
+    }
+
+    alias DestructorType = typeof(&impl!());
 }
 
 ///
