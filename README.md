@@ -68,7 +68,6 @@ https://submada.github.io/autoptr
 
 ## Examples
 ```d
-
 class Foo{
     int i;
 
@@ -97,8 +96,10 @@ class Zee : Bar{
     ~this()nothrow @system{
     }
 }
+```
 
-///`SharedPtr`:
+#SharedPtr
+```d
 unittest{
     ///simple:
     {
@@ -194,8 +195,10 @@ unittest{
         assert(*a6 == a.get[6]);
     }
 }
+```
 
-///`UniquePtr`:
+#UniquePtr:
+```d
 unittest{
     ///simple:
     {
@@ -265,10 +268,10 @@ unittest{
         assert(a.get[] == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
     }
 }
+```
 
-
-
-///`RcPtr`:
+#RcPtr:
+```d
 unittest{
     ///simple:
     {
@@ -354,10 +357,10 @@ unittest{
         assert(a.get[] == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
     }
 }
+```
 
-
-
-///`IntrusivePtr`:
+#IntrusivePtr:
+```d
 nothrow unittest{
     static struct Struct{
         MutableControlBlock!(int, int) control;
