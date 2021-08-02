@@ -1823,12 +1823,12 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _Allocat
     }
 }
 
-package template MakeIntrusive(_Type, _DestructorType, _AllocatorType, bool supportGC)
+package template MakeIntrusive(_Type/+, _DestructorType+/, _AllocatorType, bool supportGC)
 if(isIntrusive!_Type == 1){
     import core.lifetime : emplace;
     import std.traits: hasIndirections, isAbstractClass, isMutable,
         Select, CopyTypeQualifiers,
-        Unqual, Unconst, PointerTarget;
+        Unqual, Unconst, PointerTarget, BaseClassesTuple;
 
     static assert(is(_Type == struct) || is(_Type == class));
 
@@ -1840,12 +1840,16 @@ if(isIntrusive!_Type == 1){
         "cannot create object of interface type " ~ Unqual!_Type.stringof
     );
 
-    static assert(is(DestructorType!_Type : _DestructorType));
-
-    static assert(is(DestructorAllocatorType!_AllocatorType : _DestructorType),
+    static assert(is(DestructorAllocatorType!_AllocatorType : .DestructorType!_Type),
         "allocator attributes `" ~ DestructorAllocatorType!_AllocatorType.stringof ~ "`" ~
-        "doesn't support destructor attributes `" ~ _DestructorType.stringof
+        "doesn't support destructor attributes `" ~ .DestructorType!_Type.stringof
     );
+
+    static if(is(_Type == class))
+    static foreach(alias Base; BaseClassesTuple!_Type){
+        static if(!is(Base == Object))
+        static assert(is(.DestructorType!_Type : .DestructorType!Base));
+    }
 
     alias ControlType = IntrusiveControlBlock!_Type;
 

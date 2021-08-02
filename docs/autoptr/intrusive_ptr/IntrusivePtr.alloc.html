@@ -59,7 +59,7 @@ $('#symbolSearchPane').show();</script>
 			<div class="prototype">
 				<code class="lang-d">
 					<div class="single-prototype">
-			<a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"><span class="typ">IntrusivePtr</span></a>!(ElementType,.DestructorType!(.DestructorType!ElementType,DestructorType,DestructorAllocatorType!AllocatorType)) <span class="pln">alloc</span>(<span class="typ">bool</span> supportGC<span class="pln"> </span><span class="pun">= </span><span class="pln">platformSupportGC</span>, AllocatorType, Args...)
+			<a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"><span class="typ">IntrusivePtr</span></a>!ElementType <span class="pln">alloc</span>(<span class="typ">bool</span> supportGC<span class="pln"> </span><span class="pun">= </span><span class="pln">platformSupportGC</span>, AllocatorType, Args...)
 			<span class="pun">(</span>
 			<br/>
 			&nbsp;&nbsp;<span class="typ">AllocatorType</span> <span class="pln">a</span><span class="pun">,</span>
@@ -68,7 +68,7 @@ $('#symbolSearchPane').show();</script>
 			<br/>
 			<span class="pun">)</span>
 			<br/>
-			<span class="kwd">if</span> <span class="pun">(</span><span class="pln">stateSize</span><span class="pun">!</span><span class="typ">AllocatorType </span><span class="pun">&gt;= </span><span class="lit">0 </span><span class="pun">&amp;&amp; !</span><span class="pln">isDynamicArray</span><span class="pun">!</span><span class="typ">ElementType</span><span class="pun">);</span>
+			<span class="kwd">if</span> <span class="pun">(</span><span class="pln">stateSize</span><span class="pun">!</span><span class="typ">AllocatorType </span><span class="pun">&gt;= </span><span class="lit">0</span><span class="pun">);</span>
 					</div>
 				</code>
 			</div>

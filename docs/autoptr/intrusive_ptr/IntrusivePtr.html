@@ -59,11 +59,11 @@ $('#symbolSearchPane').show();</script>
 			<div class="prototype">
 				<code class="lang-d">
 					<div class="single-prototype">
-			<span class="kwd">struct</span> <span class="typ">IntrusivePtr</span>(_Type, _DestructorType, <span class="typ">bool</span> _weakPtr<span class="pln"> </span><span class="pun">= </span><span class="kwd">false</span>)
+			<span class="kwd">struct</span> <span class="typ">IntrusivePtr</span>(_Type, <span class="typ">bool</span> _weakPtr<span class="pln"> </span><span class="pun">= </span><span class="kwd">false</span>)
 			<br/>
 			&nbsp;&nbsp;
 			<br/>
-			<span class="kwd">if</span> <span class="pun">(</span><span class="pln">isIntrusive</span><span class="pun">!</span><span class="pln">_Type </span><span class="pun">&amp;&amp; </span><span class="pln">isDestructorType</span><span class="pun">!</span><span class="pln">_DestructorType</span><span class="pun">);</span>
+			<span class="kwd">if</span> <span class="pun">(</span><span class="pln">isIntrusive</span><span class="pun">!</span><span class="pln">_Type</span><span class="pun">);</span>
 					</div>
 				</code>
 			</div>
@@ -101,9 +101,6 @@ $('#symbolSearchPane').show();</script>
 </p>
 
 <p>        <code class="lang-d"><span class="pln">_Type</span></code> type of managed object
-</p>
-
-<p>        <code class="lang-d"><span class="pln">_DestructorType</span></code> function pointer with attributes of destructor, to get attributes of destructor from type use <code class="lang-d"><a href="../../autoptr/common/DestructorType.html" title="autoptr.common.DestructorType"><span class="typ">DestructorType</span></a><span class="pun">!</span><span class="pln">T</span></code>. Destructor of type <code class="lang-d"><span class="pln">_Type</span></code> must be compatible with <code class="lang-d"><span class="pln">_DestructorType</span></code>
 </p>
 
 <p>        <code class="lang-d"><span class="pln">_weakPtr</span></code> if <code class="lang-d"><span class="kwd">true</span></code> then <code class="lang-d"><span class="typ">IntrusivePtr</span></code> represent weak ptr
@@ -538,7 +535,8 @@ $('#symbolSearchPane').show();</script>
 </section>
 <section><h2>Example</h2>
 
-<pre class="code"><code class="lang-d"><span class="pln">
+<pre class="code"><code class="lang-d"><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">experimental<wbr/></span><span class="pun">.</span><span class="pln">allocator </span><span class="pun">: <a href="../../autoptr/intrusive_ptr/IntrusivePtr.make.html"></span><span class="pln">make</span></a><span class="pun">, </span><span class="pln">dispose</span><span class="pun">, </span><span class="pln">allocatorObject</span><span class="pun">;
+
 </span><span class="kwd">static struct </span><span class="typ">Foo</span><span class="pun">{
     </span><span class="typ">ControlBlock</span><span class="pun">!(</span><span class="typ">int</span><span class="pun">, </span><span class="typ">int</span><span class="pun">) </span><span class="pln">c</span><span class="pun">;
     </span><span class="typ">int </span><span class="pln">i</span><span class="pun">;
@@ -546,10 +544,14 @@ $('#symbolSearchPane').show();</script>
     </span><span class="kwd">this</span><span class="pun">(</span><span class="typ">int </span><span class="pln">i</span><span class="pun">)</span><span class="kwd">pure nothrow @safe @nogc</span><span class="pun">{
         </span><span class="kwd">this<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">= </span><span class="pln">i</span><span class="pun">;
     }
+
+    ~</span><span class="kwd">this</span><span class="pun">(){
+        </span><span class="kwd">if</span><span class="pun">(</span><span class="kwd">false</span><span class="pun">)
+            </span><span class="kwd">auto </span><span class="pln">allocator </span><span class="pun">= </span><span class="pln">allocatorObject</span><span class="pun">(</span><span class="typ">Mallocator<wbr/></span><span class="pun">.</span><span class="pln">instance</span><span class="pun">);
+    }
 }
 
 </span><span class="com">//alloc IntrusivePtr object
-</span><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">experimental<wbr/></span><span class="pun">.</span><span class="pln">allocator </span><span class="pun">: <a href="../../autoptr/intrusive_ptr/IntrusivePtr.make.html"></span><span class="pln">make</span></a><span class="pun">, </span><span class="pln">dispose</span><span class="pun">, </span><span class="pln">allocatorObject</span><span class="pun">;
 
 </span><span class="kwd">auto </span><span class="pln">allocator </span><span class="pun">= </span><span class="pln">allocatorObject</span><span class="pun">(</span><span class="typ">Mallocator<wbr/></span><span class="pun">.</span><span class="pln">instance</span><span class="pun">);
 

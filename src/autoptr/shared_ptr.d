@@ -2380,7 +2380,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
 //make:
-pure nothrow @safe @nogc unittest{
+pure nothrow @nogc unittest{
     enum bool supportGC = true;
 
     //

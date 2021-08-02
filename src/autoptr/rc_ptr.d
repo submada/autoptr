@@ -261,7 +261,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
         //necesary for autoptr.unique_ptr.sharedPtr
-        package this(Elm, this This)(Elm element)pure nothrow @safe @nogc
+        package this(Elm, this This)(Elm element, Evoid ctor)pure nothrow @safe @nogc
         if(true
             && is(Elm : GetElementReferenceType!This) 
             && !is(Unqual!Elm == typeof(null))
@@ -278,7 +278,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             assert(control !is null);
             assert((control is null) == (element is null));
 
-            this(element);
+            this(element, Evoid.init);
             control.add!weakPtr;
         }
 
@@ -438,7 +438,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 this(null);
             }
             else{
-                this(rhs.element);
+                this(rhs.element, Evoid.init);
                 rhs._const_reset();
             }
         }
@@ -914,7 +914,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             return (m is null)
                 ? typeof(return).init
-                : typeof(return)(m.get);
+                : typeof(return)(m.get, Evoid.init);
         }
 
 
@@ -954,7 +954,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             return (m is null)
                 ? typeof(return).init
-                : typeof(return)(m.get);
+                : typeof(return)(m.get, Evoid.init);
         }
 
 
@@ -1018,7 +1018,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             return (m is null)
                 ? typeof(return).init
-                : typeof(return)(m.get);
+                : typeof(return)(m.get, Evoid.init);
         }
 
 
@@ -1060,7 +1060,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             return (m is null)
                 ? typeof(return).init
-                : typeof(return)(m.get);
+                : typeof(return)(m.get, Evoid.init);
         }
 
 
@@ -2387,7 +2387,7 @@ if(true
 
     if(auto element = dynCastElement!T(ptr._element)){
         ptr._const_reset();
-        return typeof(return)(element);
+        return typeof(return)(element, Evoid.init);
     }
 
     return typeof(return).init;
@@ -2592,7 +2592,7 @@ if(isValidRcPtr!Ptr && is(Ptr.ElementType : T[], T)){
     static if(isDynamicArray!(Ptr.ElementType) || isStaticArray!(Ptr.ElementType)){
         auto ptr_element = ptr._element.ptr;
         ptr._const_reset();
-        return Result(ptr_element);
+        return Result(ptr_element, Evoid.init);
     }
     else static assert(0, "no impl");
 }

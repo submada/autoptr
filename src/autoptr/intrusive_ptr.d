@@ -106,17 +106,14 @@ unittest{
 
         `_Type` type of managed object
 
-        `_DestructorType` function pointer with attributes of destructor, to get attributes of destructor from type use `autoptr.common.DestructorType!T`. Destructor of type `_Type` must be compatible with `_DestructorType`
-
         `_weakPtr` if `true` then `IntrusivePtr` represent weak ptr
 
 */
 public template IntrusivePtr(
     _Type,
-    _DestructorType = DestructorType!_Type,
     bool _weakPtr = false
 )
-if(isIntrusive!_Type && isDestructorType!_DestructorType){
+if(isIntrusive!_Type){
     static assert(is(_Type == struct) || is(_Type == class));
     static assert(isIntrusive!_Type == 1);
 
@@ -127,16 +124,6 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
     static if(_weakPtr)
     static assert(_ControlType.hasWeakCounter);
-
-    static assert(is(DestructorType!void : _DestructorType),
-        _Type.stringof ~ " wrong DestructorType " ~ DestructorType!void.stringof ~
-        " : " ~ _DestructorType.stringof
-    );
-
-    static assert(is(DestructorType!_Type : _DestructorType),
-        "destructor of type '" ~ _Type.stringof ~
-        "' doesn't support specified finalizer " ~ _DestructorType.stringof
-    );
 
     static if (is(_Type == class) || is(_Type == interface) || is(_Type == struct) || is(_Type == union))
         static assert(!__traits(isNested, _Type), "IntrusivePtr does not support nested types.");
@@ -168,7 +155,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         /**
             Type of destructor (`void function(void*)@attributes`).
         */
-        public alias DestructorType = _DestructorType;
+        public alias DestructorType = .DestructorType!ElementType;
 
 
         /**
@@ -218,7 +205,6 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         static if(hasWeakCounter && !weakPtr)
         public alias WeakType = IntrusivePtr!(
             _Type,
-            _DestructorType,
             true
         );
 
@@ -229,7 +215,6 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
         static if(weakPtr)
         public alias SharedType = IntrusivePtr!(
             _Type,
-            _DestructorType,
             false
         );
 
@@ -257,7 +242,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
 
         //necesary for autoptr.unique_ptr.sharedPtr
-        package this(Elm, this This)(Elm element)pure nothrow @safe @nogc
+        package this(Elm, this This)(Elm element, Evoid ctor)pure nothrow @safe @nogc
         if(true
             && is(Elm : GetElementReferenceType!This)
             && !is(Unqual!Elm == typeof(null))
@@ -280,7 +265,7 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                 this(null);
             }
             else{
-                this(rhs._element);
+                this(rhs._element, Evoid.init);
                 rhs._control.add!weakPtr;
             }
         }
@@ -979,16 +964,18 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(!weakPtr)
-        public static IntrusivePtr!(ElementType, .DestructorType!(.DestructorType!ElementType, DestructorType, DestructorAllocatorType!AllocatorType))
+        public static IntrusivePtr!ElementType
         make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(auto ref Args args)
         if(stateSize!AllocatorType == 0 && !isDynamicArray!ElementType){
             static assert(!weakPtr);
+
+            static assert(is(DestructorAllocatorType!AllocatorType : DestructorType));
 
             auto m = typeof(return).MakeIntrusive!(AllocatorType, supportGC).make(forward!(args));
 
             return (m is null)
                 ? typeof(return).init
-                : typeof(return)(m.get);
+                : typeof(return)(m.get, Evoid.init);
         }
 
 
@@ -1043,16 +1030,18 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(!weakPtr)
-        public static IntrusivePtr!(ElementType, .DestructorType!(.DestructorType!ElementType, DestructorType, DestructorAllocatorType!AllocatorType))
+        public static IntrusivePtr!ElementType
         alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, auto ref Args args)
-        if(stateSize!AllocatorType >= 0 && !isDynamicArray!ElementType){
+        if(stateSize!AllocatorType >= 0){
             static assert(!weakPtr);
+
+            static assert(is(DestructorAllocatorType!AllocatorType : DestructorType));
 
             auto m = typeof(return).MakeIntrusive!(AllocatorType, supportGC).make(forward!(a, args));
 
             return (m is null)
                 ? typeof(return).init
-                : typeof(return)(m.get);
+                : typeof(return)(m.get, Evoid.init);
         }
 
 
@@ -2280,7 +2269,6 @@ if(isIntrusive!_Type && isDestructorType!_DestructorType){
 
         private alias MakeIntrusive(AllocatorType, bool supportGC) = .MakeIntrusive!(
             _Type,
-            _DestructorType,
             AllocatorType,
             supportGC
         );
@@ -2381,6 +2369,7 @@ pure nothrow @safe @nogc unittest{
 
 ///
 nothrow unittest{
+    import std.experimental.allocator : make, dispose, allocatorObject;
 
     static struct Foo{
         ControlBlock!(int, int) c;
@@ -2389,10 +2378,14 @@ nothrow unittest{
         this(int i)pure nothrow @safe @nogc{
             this.i = i;
         }
+
+        ~this(){
+            if(false)
+                auto allocator = allocatorObject(Mallocator.instance);
+        }
     }
 
     //alloc IntrusivePtr object
-    import std.experimental.allocator : make, dispose, allocatorObject;
 
     auto allocator = allocatorObject(Mallocator.instance);
 
@@ -2426,6 +2419,11 @@ nothrow unittest{
 
     static class Foo{
         ControlBlock!(int, int) c;
+
+        ~this(){
+            if(false)
+                auto a = allocatorObject(Mallocator.instance);
+        }
     }
 
     auto a = allocatorObject(Mallocator.instance);
@@ -2462,7 +2460,7 @@ if(true
 
     if(auto element = dynCastElement!T(ptr._element)){
         ptr._control.add!false;
-        return typeof(return)(element);
+        return typeof(return)(element, Evoid.init);
     }
 
     return typeof(return).init;
@@ -2497,7 +2495,7 @@ if(true
         ()@trusted{
             ptr._const_reset();
         }();
-        return typeof(return)(element);
+        return typeof(return)(element, Evoid.init);
     }
 
     return typeof(return).init;
@@ -2682,6 +2680,65 @@ nothrow @nogc unittest{
 }
 
 
+/**
+    Create `IntrusivePtr` from class element `Elm` or struct pointer element `Elm`.
+*/
+auto intrusivePtr(Elm)(Elm elm)
+if(is(Elm == class) && isIntrusive!Elm){
+    auto result = IntrusivePtr!Elm(elm, Evoid.init);
+    result._control.add!false;
+    return result;
+}
+
+/// ditto
+auto intrusivePtr(Ptr : Elm*, Elm)(Ptr elm)
+if(is(Elm == struct) && isIntrusive!Elm){
+    auto result = IntrusivePtr!Elm(elm, Evoid.init);
+    result._control.add!false;
+    return result;
+}
+
+///
+unittest{
+    static class Foo{
+        private ControlBlock!int control;
+        int i;
+
+        this(int i)pure nothrow @safe @nogc{
+            this.i = i;
+        }
+    }
+    static struct Bar{
+        private ControlBlock!int control;
+        int i;
+
+        this(int i)pure nothrow @safe @nogc{
+            this.i = i;
+        }
+    }
+
+    {
+        auto i = IntrusivePtr!Foo.make(42);
+        assert(i.useCount == 1);
+
+        Foo foo = i.get;
+
+        auto i2 = intrusivePtr(foo);
+        assert(i.useCount == 2);
+    }
+
+    {
+        auto i = IntrusivePtr!Bar.make(42);
+        assert(i.useCount == 1);
+
+        Bar* bar = i.element;
+
+        auto i2 = intrusivePtr(bar);
+        assert(i.useCount == 2);
+    }
+
+}
+
 
 //local traits:
 private{
@@ -2807,7 +2864,7 @@ version(unittest){
 
         import std.meta : AliasSeq;
         static foreach(alias ControlType; AliasSeq!(SharedControlType, shared SharedControlType)){{
-            alias SPtr(T) = IntrusivePtr!(T, DestructorType!T);
+            alias SPtr(T) = IntrusivePtr!(T);
 
             //mutable:
             {
@@ -3549,6 +3606,8 @@ version(unittest){
 
     //alloc
     unittest{
+        import std.experimental.allocator : allocatorObject;
+
         static struct Foo{
             ControlBlock!(int, int) c;
             int i;
@@ -3556,10 +3615,14 @@ version(unittest){
             this(int i)pure nothrow @safe @nogc{
                 this.i = i;
             }
+
+            ~this(){
+                if(false)
+                    auto a = allocatorObject(Mallocator.instance);
+            }
         }
 
         {
-            import std.experimental.allocator : allocatorObject;
 
             auto a = allocatorObject(Mallocator.instance);
             {
@@ -3577,6 +3640,11 @@ version(unittest){
 
                     this(int i)pure nothrow @safe @nogc{
                         this.i = i;
+                    }
+
+                    ~this(){
+                        if(false)
+                            auto a = allocatorObject(Mallocator.instance);
                     }
                 }
 

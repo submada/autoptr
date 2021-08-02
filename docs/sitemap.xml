@@ -73,6 +73,8 @@
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.weakCount.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.weakPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.WeakType.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/intrusive_ptr/intrusivePtr.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/intrusive_ptr/intrusivePtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/isIntrusivePtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/isValidIntrusivePtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/share.html</loc></url>

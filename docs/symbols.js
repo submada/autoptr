@@ -59,6 +59,7 @@ var symbols = [
 {name: 'autoptr.intrusive_ptr.IntrusivePtr.weakCount', kind: "functiondeclaration", path: './autoptr/intrusive_ptr/IntrusivePtr.weakCount.html', attributes: ["const", "nothrow", "nogc", "property", "scope", "safe"]},
 {name: 'autoptr.intrusive_ptr.IntrusivePtr.weakPtr', kind: "enummemberdeclaration", path: './autoptr/intrusive_ptr/IntrusivePtr.weakPtr.html', attributes: []},
 {name: 'autoptr.intrusive_ptr.IntrusivePtr.WeakType', kind: "aliasdeclaration", path: './autoptr/intrusive_ptr/IntrusivePtr.WeakType.html', attributes: []},
+{name: 'autoptr.intrusive_ptr.intrusivePtr', kind: "functiondeclaration", path: './autoptr/intrusive_ptr/intrusivePtr.html', attributes: ["auto"]},
 {name: 'autoptr.intrusive_ptr.isIntrusivePtr', kind: "enummemberdeclaration", path: './autoptr/intrusive_ptr/isIntrusivePtr.html', attributes: []},
 {name: 'autoptr.intrusive_ptr.isValidIntrusivePtr', kind: "enummemberdeclaration", path: './autoptr/intrusive_ptr/isValidIntrusivePtr.html', attributes: []},
 {name: 'autoptr.intrusive_ptr.share', kind: "functiondeclaration", path: './autoptr/intrusive_ptr/share.html', attributes: []},

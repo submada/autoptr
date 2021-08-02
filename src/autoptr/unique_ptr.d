@@ -202,7 +202,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
 
-        private this(Elm, this This)(Elm element)pure nothrow @safe @nogc
+        private this(Elm, this This)(Elm element, Evoid ctor)pure nothrow @safe @nogc
         if(is(Elm : GetElementReferenceType!This) && !is(Unqual!Elm == typeof(null))){
             this._element = element;
         }
@@ -259,7 +259,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             static assert(isValidUniquePtr!This, "`This` is invalid `UniquePtr`");
             static assert(isValidUniquePtr!Rhs, "`Rhs` is invalid `UniquePtr`");
 
-            this(rhs._element);
+            this(rhs._element, Evoid.init);
             //this._element = rhs._element;   //this._set_element(rhs._element);
             rhs._const_reset();
         }
@@ -442,7 +442,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             return (m is null)
                 ? UniquePtr.init
-                : UniquePtr(m.get);
+                : UniquePtr(m.get, Evoid.init);
         }
 
 
@@ -481,7 +481,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             return (m is null)
                 ? typeof(return).init
-                : typeof(return)(m.get);
+                : typeof(return)(m.get, Evoid.init);
         }
 
         /**
@@ -526,7 +526,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             return (m is null)
                 ? typeof(return).init
-                : typeof(return)(m.get);
+                : typeof(return)(m.get, Evoid.init);
         }
 
 
@@ -565,7 +565,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             return (m is null)
                 ? typeof(return).init
-                : typeof(return)(m.get);
+                : typeof(return)(m.get, Evoid.init);
         }
 
         /**
@@ -1384,7 +1384,7 @@ if(isUniquePtr!Ptr && is(Ptr.ElementType : T[], T)){
     static if(isDynamicArray!(Ptr.ElementType) || isStaticArray!(Ptr.ElementType)){
         auto ptr_element = ptr._element.ptr;
         ptr._const_reset();
-        return Result(ptr_element);
+        return Result(ptr_element, Evoid.init);
     }
     else static assert(0, "no impl");
 }
@@ -1434,7 +1434,7 @@ if(true
 
         return ()@trusted{
             ptr._const_reset();
-            return Return(element);
+            return Return(element, Evoid.init);
         }();
     }
 
