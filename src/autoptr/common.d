@@ -459,37 +459,29 @@ public template ControlBlock(_Shared, _Weak = void){
         static if(hasWeakCounter)
             private Weak weak_count = 0;
 
-        package this(this This)(immutable Vtable* vptr)pure nothrow @safe @nogc
-        if(isMutable!This){
+        package this(this This)(immutable Vtable* vptr)pure nothrow @safe @nogc{
             assert(vptr !is null);
             this.vptr = vptr;
         }
 
-        package final auto count(bool weak)()scope const pure nothrow @safe @nogc{
+        package final auto count(bool weak, this This)()scope const pure nothrow @safe @nogc{
             static if(weak){
-                static if(hasWeakCounter)
-                    return this.weak_count;
+                static if(hasWeakCounter){
+                    static if(is(This == shared))
+                        return atomicLoad(this.weak_count);
+                    else
+                        return this.weak_count;
+                }
                 else
                     return int.init;
             }
             else{
-                static if(hasSharedCounter)
-                    return this.shared_count;
-                else
-                    return int.max;
-            }
-
-        }
-        package final auto count(bool weak)()scope shared const pure nothrow @safe @nogc{
-            static if(weak){
-                static if(hasWeakCounter)
-                    return atomicLoad(this.weak_count);
-                else
-                    return int.init;
-            }
-            else{
-                static if(hasSharedCounter)
-                    return atomicLoad(this.shared_count);
+                static if(hasSharedCounter){
+                    static if(is(This == shared))
+                        return atomicLoad(this.shared_count);
+                    else
+                        return this.shared_count;
+                }
                 else
                     return int.max;
             }
@@ -512,35 +504,36 @@ public template ControlBlock(_Shared, _Weak = void){
                 }
             }
         }
-        package final void release(bool weak, this This)()@trusted pure nothrow @nogc
-        if(isMutable!This){
+
+        package final void release(bool weak, this This)()@trusted pure nothrow @nogc{
             enum bool atomic = is(This == shared);
+            auto self = cast(Unconst!This*)&this;
 
             static if(weak){
                 static if(hasWeakCounter){
                     static if(atomic){
-                        if(atomicLoad!(MemoryOrder.acq)(this.weak_count) == 0)
-                            this.on_zero_weak();
+                        if(atomicLoad!(MemoryOrder.acq)(self.weak_count) == 0)
+                            self.on_zero_weak();
 
-                        else if(rc_decrement!atomic(this.weak_count) == -1)
-                            this.on_zero_weak();
+                        else if(rc_decrement!atomic(self.weak_count) == -1)
+                            self.on_zero_weak();
                     }
                     else{
                         if(this.weak_count == 0)
-                            this.on_zero_weak();
-                        else if(rc_decrement!atomic(this.weak_count) == -1)
-                            this.on_zero_weak();
+                            self.on_zero_weak();
+                        else if(rc_decrement!atomic(self.weak_count) == -1)
+                            self.on_zero_weak();
                     }
                 }
             }
             else{
                 static if(hasSharedCounter){
-                    if(rc_decrement!atomic(this.shared_count) == -1){
+                    if(rc_decrement!atomic(self.shared_count) == -1){
                         //auto tmp = &this;
                         //auto self = &this;
-                        this.on_zero_shared();
+                        self.on_zero_shared();
 
-                        this.release!true;
+                        self.release!true;
                     }
                 }
             }
@@ -610,6 +603,7 @@ unittest{
 
 
 
+/+
 /**
     Check if type `T` is of type `MutableControlBlock!(...)`.
 */
@@ -658,6 +652,7 @@ if(isControlBlock!_ControlType){
         private ControlType control;
     }
 }
++/
 
 
 /**
@@ -726,7 +721,7 @@ if(is(Type == class)){
     size_t result = 0;
 
     static foreach(alias T; typeof(ty.tupleof)){
-        static if(is(T == struct) && (isControlBlock!T || isMutableControlBlock!T))
+        static if(is(T == struct) && (isControlBlock!T /+|| isMutableControlBlock!T+/))
             result += 1;
     }
 
@@ -804,8 +799,8 @@ unittest{
 
 
 
-    static class Bar{
-        MutableControlBlock!int c;
+    /+static class Bar{
+        ControlBlock!int c;
     }
 
     static assert(is(
@@ -822,76 +817,31 @@ unittest{
     ));
     static assert(is(
         IntrusiveControlBlock!(immutable Bar) == ControlBlock!int
-    ));
+    ));+/
 
 
 
     static class Zee{
-        shared MutableControlBlock!int c;
+        shared ControlBlock!int c;
     }
 
     static assert(is(
         IntrusiveControlBlock!(Zee) == shared ControlBlock!int
     ));
     static assert(is(
-        IntrusiveControlBlock!(const Zee) == shared ControlBlock!int
+        IntrusiveControlBlock!(const Zee) == const shared ControlBlock!int
     ));
     static assert(is(
         IntrusiveControlBlock!(shared Zee) == shared ControlBlock!int
     ));
     static assert(is(
-        IntrusiveControlBlock!(const shared Zee) == shared ControlBlock!int
+        IntrusiveControlBlock!(const shared Zee) == const shared ControlBlock!int
     ));
     static assert(is(
-        IntrusiveControlBlock!(immutable Zee) == shared ControlBlock!int
+        IntrusiveControlBlock!(immutable Zee) == immutable ControlBlock!int
     ));
 
 
-}
-
-
-
-//mutex:
-package static auto lockPtr(alias fn, Ptr, Args...)
-(auto ref scope shared Ptr ptr, auto ref scope return Args args){
-    import std.traits : CopyConstness, CopyTypeQualifiers, Unqual;
-    import core.lifetime : forward;
-    import autoptr.internal.mutex : getMutex;
-
-    shared mutex = getMutex(ptr);
-
-    mutex.lock();
-    scope(exit)mutex.unlock();
-
-    alias Result = ChangeElementType!(
-        Unshared!Ptr,
-        CopyTypeQualifiers!(shared Ptr, Ptr.ElementType)
-    );
-
-
-    return fn(
-        *(()@trusted => cast(Result*)&ptr )(),
-        forward!args
-    );
-}
-
-
-/*
-    Change `ElementType` for type 'SharedPtr', `RcPtr`, `IntrusivePtr` or `UniquePtr`.
-*/
-package template ChangeElementType(Ptr, T){
-    import std.traits : CopyTypeQualifiers;
-
-    alias FromType = CopyTypeQualifiers!(Ptr, Ptr.ElementType);
-    alias ResultType = CopyTypeQualifiers!(FromType, T);
-
-    static if(is(Ptr : SmartPtr!(OldType, Args), alias SmartPtr, OldType, Args...)){
-        alias ChangeElementType = SmartPtr!(
-            ResultType,
-            Args
-        );
-    }
-    else static assert(0, "no impl");
 }
 
 
@@ -933,19 +883,19 @@ package auto intrusivControlBlock(Type)(scope return auto ref Type elm)pure noth
             else
                 return &elm;
         }
-        else static if(isMutableControlBlock!Type){
+        /+else static if(isMutableControlBlock!Type){
             auto control = intrusivControlBlock(elm.control);
 
             static if(is(Type == shared) || is(typeof(Unqual!Type.control) == shared))
                 return cast(shared(Unconst!(typeof(*control))*))control;
             else
                 return cast(Unconst!(typeof(*control))*)control;
-        }
+        }+/
         else{
             static assert(isIntrusive!(Unqual!Type) == 1);
 
             foreach(ref x; (*cast(Unqual!(typeof(elm))*)&elm).tupleof){
-                static if(isControlBlock!(typeof(x)) || isMutableControlBlock!(typeof(x))){
+                static if(isControlBlock!(typeof(x)) /+|| isMutableControlBlock!(typeof(x))+/){
                     auto control = intrusivControlBlock(*cast(CopyTypeQualifiers!(Type, typeof(x))*)&x);
 
                     static if(is(Type == shared) || is(typeof(x) == shared))
@@ -961,7 +911,7 @@ package auto intrusivControlBlock(Type)(scope return auto ref Type elm)pure noth
 
         static if(isIntrusiveClass!(Type, true)){
             foreach(ref x; (cast(Unqual!(typeof(elm)))elm).tupleof){
-                static if(isControlBlock!(typeof(x)) || isMutableControlBlock!(typeof(x))){
+                static if(isControlBlock!(typeof(x)) /+|| isMutableControlBlock!(typeof(x))+/){
                     auto control = intrusivControlBlock(*cast(CopyTypeQualifiers!(Type, typeof(x))*)&x);
 
                     static if(is(Type == shared) || is(typeof(x) == shared))
@@ -976,7 +926,7 @@ package auto intrusivControlBlock(Type)(scope return auto ref Type elm)pure noth
             static if(isIntrusiveClass!(T, true)){
 
                 foreach(ref x; (cast(Unqual!T)elm).tupleof){
-                    static if(isControlBlock!(typeof(x)) || isMutableControlBlock!(typeof(x))){
+                    static if(isControlBlock!(typeof(x)) /+|| isMutableControlBlock!(typeof(x))+/){
                         auto control = intrusivControlBlock(*cast(CopyTypeQualifiers!(Type, typeof(x))*)&x);
 
                         static if(is(Type == shared) || is(typeof(x) == shared))
@@ -1040,6 +990,7 @@ unittest{
     ));
 }
 
+/+
 //mutable control block
 unittest{
     import std.traits : lvalueOf;
@@ -1087,6 +1038,7 @@ unittest{
         typeof(intrusivControlBlock(lvalueOf!(immutable Foo))) == shared ControlBlock!int*
     ));
 }
++/
 
 
 
@@ -1109,14 +1061,14 @@ package size_t intrusivControlBlockOffset(Type)()pure nothrow @safe @nogc{
     
     static if(is(Type == struct)){
         static foreach(alias var; Type.tupleof){
-            static if(isControlBlock!(typeof(var)) || isMutableControlBlock!(typeof(var)))
+            static if(isControlBlock!(typeof(var)) /+|| isMutableControlBlock!(typeof(var))+/)
                 return var.offsetof;
         }
     }
     else static if(is(Type == class)){
         static if(isIntrusiveClass!(Type, true)){
             static foreach(alias var; Type.tupleof){
-                static if(isControlBlock!(typeof(var)) || isMutableControlBlock!(typeof(var)))
+                static if(isControlBlock!(typeof(var)) /+|| isMutableControlBlock!(typeof(var))+/)
                     return var.offsetof;
 
             }
@@ -1124,7 +1076,7 @@ package size_t intrusivControlBlockOffset(Type)()pure nothrow @safe @nogc{
         else static foreach(alias T; BaseClassesTuple!Type){
             static if(isIntrusiveClass!(T, true)){
                 static foreach(alias var; T.tupleof){
-                    static if(isControlBlock!(typeof(var)) || isMutableControlBlock!(typeof(var)))
+                    static if(isControlBlock!(typeof(var)) /+|| isMutableControlBlock!(typeof(var))+/)
                         return var.offsetof;
                 }
             }

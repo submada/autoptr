@@ -13,36 +13,6 @@ import autoptr.internal.traits;
 import autoptr.common;
 
 
-
-/**
-    Check if type `T` is of type `UniquePtr!(...)`
-*/
-public template isValidUniquePtr(T){
-    import std.traits : Unqual;
-
-    static if(is(Unqual!T == UniquePtr!Args, Args...)){
-        enum bool impl = true
-            && (!is(T == shared) || is(T.ControlType == shared))
-            && !isIntrusive!(T.ElementType);
-    }
-    else
-        enum bool impl = false;
-
-    enum bool isValidUniquePtr = impl;
-}
-
-///
-unittest{
-    static assert(!isValidUniquePtr!long);
-    static assert(!isValidUniquePtr!(void*));
-
-    static assert(isValidUniquePtr!(UniquePtr!long));
-
-    static assert(isValidUniquePtr!(shared UniquePtr!(long, shared ControlBlock!void)));
-    static assert(!isValidUniquePtr!(shared UniquePtr!(long, ControlBlock!void)));
-}
-
-
 /**
     Check if type `T` is of type `UniquePtr!(...)`
 */
@@ -182,6 +152,13 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 );
         }
 
+        /**/
+        package alias ChangeElementType(T) = UniquePtr!(
+            CopyTypeQualifiers!(ElementType, T),
+            DestructorType,
+            ControlType
+        );
+
         /**
             `true` if shared `UniquePtr` has lock free operations `store` and `exchange`, otherwise 'false'
         */
@@ -214,9 +191,6 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && isAliasable!(Rhs, This)
             && !is(Rhs == shared)
         ){
-            static assert(isValidUniquePtr!This, "`This` is invalid `UniquePtr`");
-            static assert(isValidUniquePtr!Rhs, "`Rhs` is invalid `UniquePtr`");
-
             this._set_element(cast(typeof(this._element))rhs._element);
             rhs._const_reset();
             //rhs._const_set_element(null);
@@ -236,7 +210,6 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         public this(this This)(typeof(null) nil)pure nothrow @safe @nogc{
-            static assert(isValidUniquePtr!This, "`This` is invalid `UniquePtr`");
         }
 
 
@@ -256,9 +229,6 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && isConstructable!(Rhs, This)
             && !is(Rhs == shared)
         ){
-            static assert(isValidUniquePtr!This, "`This` is invalid `UniquePtr`");
-            static assert(isValidUniquePtr!Rhs, "`Rhs` is invalid `UniquePtr`");
-
             this(rhs._element, Evoid.init);
             //this._element = rhs._element;   //this._set_element(rhs._element);
             rhs._const_reset();
@@ -297,15 +267,12 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         */
         public void opAssign(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null) nil)scope
         if(isMutable!This){
-            static assert(isValidUniquePtr!This, "`This` is invalid `UniquePtr`");
-
             static if(is(This == shared)){
                 static if(isLockFree){
                     import core.atomic : atomicExchange;
 
-                    alias Result = ChangeElementType!(This, ElementType);
                     ()@trusted{
-                        Result tmp;
+                        UnqualUniquePtr!This tmp;
                         tmp._set_element(cast(typeof(this._element))atomicExchange!order(
                             cast(Unqual!(This.ElementReferenceType)*)&this._element,
                             null
@@ -313,7 +280,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     }();
                 }
                 else{
-                    return this.lockPtr!(
+                    return this.lockUniquePtr!(
                         (ref scope self) => self.opAssign!order(null)
                     )();
                 }
@@ -365,16 +332,12 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && !is(Rhs == shared)
             && isMutable!This
         ){
-            static assert(isValidUniquePtr!This, "`This` is invalid `UniquePtr`");
-            static assert(isValidUniquePtr!Rhs, "`Rhs` is invalid `UniquePtr`");
-
             static if(is(This == shared)){
                 static if(isLockFree){
                     import core.atomic : atomicExchange;
 
-                    alias Result = ChangeElementType!(This, ElementType);
                     ()@trusted{
-                        Result tmp;
+                        UnqualUniquePtr!This tmp;
                         GetElementReferenceType!This source = rhs._element;    //interface/class cast
 
                         tmp._set_element(cast(typeof(this._element))atomicExchange!order(
@@ -385,7 +348,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     }();
                 }
                 else{
-                    return this.lockPtr!(
+                    return this.lockUniquePtr!(
                         (ref scope self, Rhs x) => self.opAssign!order(x.move)
                     )(rhs.move);
                 }
@@ -665,15 +628,12 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         */
         public UniquePtr exchange(MemoryOrder order = MemoryOrder.seq, this This)(typeof(null) ptr)scope
         if(isMutable!This){
-            static assert(isValidUniquePtr!This, "`This` is invalid `UniquePtr`");
-
             static if(is(This == shared)){
                 static if(isLockFree){
                     import core.atomic : atomicExchange;
 
-                    alias Result = ChangeElementType!(This, ElementType);
                     return()@trusted{
-                        Result result;
+                        UnqualUniquePtr!This result;
 
                         result._set_element(cast(typeof(this._element))atomicExchange!order(
                             cast(Unqual!(This.ElementReferenceType)*)&this._element,
@@ -684,7 +644,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     }();
                 }
                 else{
-                    return this.lockPtr!(
+                    return this.lockUniquePtr!(
                         (ref scope self) => self.exchange!order(null)
                     )();
                 }
@@ -701,16 +661,12 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && isAssignable!(Rhs, This)
             && !is(Rhs == shared)
         ){
-            static assert(isValidUniquePtr!This, "`This` is invalid `UniquePtr`");
-            static assert(isValidUniquePtr!Rhs, "`Rhs` is invalid `UniquePtr`");
-
             static if(is(This == shared)){
                 static if(isLockFree){
                     import core.atomic : atomicExchange;
 
-                    alias Result = ChangeElementType!(This, ElementType);
                     return()@trusted{
-                        Result result;
+                        UnqualUniquePtr!This result;
                         GetElementReferenceType!This source = ptr._element;    //interface/class cast
 
                         result._set_element(cast(typeof(this._element))atomicExchange!order(
@@ -724,7 +680,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     }();
                 }
                 else{
-                    return this.lockPtr!(
+                    return this.lockUniquePtr!(
                         (ref scope self, Rhs x) => self.exchange!order(x.move)
                     )(ptr.move);
                 }
@@ -1036,17 +992,17 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         }
 
 
-        package inout(ControlType)* _control()inout pure nothrow @trusted @nogc
+        package CopyTypeQualifiers!(This, ControlType)* _control(this This)()pure nothrow @trusted @nogc
         in(this._element !is null){
             static if(isDynamicArray!ElementType){
-                return cast(inout(ControlType)*)((cast(void*)this._element.ptr) - ControlType.sizeof);
+                return cast(typeof(return))((cast(void*)this._element.ptr) - ControlType.sizeof);
             }
             else static if(is(ElementType == interface)){
                 static assert(__traits(getLinkage, ElementType) == "D");
-                return cast(inout(ControlType)*)((cast(void*)cast(Object)cast(Unqual!ElementType)this._element) - ControlType.sizeof);
+                return cast(typeof(return))((cast(void*)cast(Object)cast(Unqual!ElementType)this._element) - ControlType.sizeof);
             }
             else{
-                return cast(inout(ControlType)*)((cast(void*)this._element) - ControlType.sizeof);
+                return cast(typeof(return))((cast(void*)this._element) - ControlType.sizeof);
             }
         }
 
@@ -1289,7 +1245,6 @@ unittest{
 */
 public shared(Ptr) share(Ptr)(scope Ptr ptr)
 if(isUniquePtr!Ptr){
-    static assert(isValidUniquePtr!Ptr, "`Ptr` is invalid `UniquePtr`");
 
     import core.lifetime : forward;
     static if(is(Ptr == shared)){
@@ -1302,10 +1257,6 @@ if(isUniquePtr!Ptr){
 
         static assert(is(Ptr.ElementType == shared) || is(Ptr.ElementType == immutable),
             "`UniquePtr` has not shared/immutable `ElementType`."
-        );
-
-        static assert(isValidUniquePtr!(shared Ptr),
-            "`shared(Ptr)` is invalid `UniquePtr`"
         );
 
         return typeof(return)(forward!ptr);
@@ -1335,36 +1286,6 @@ nothrow @nogc unittest{
 
 
 
-
-/+
-import std.traits : isPointer, isDynamicArray;
-
-public ChangeElementType!(Ptr, Elm) alaisToMove(Ptr, Elm)(ref Ptr ptr, Elm elm)@trusted
-if(isReferenceType!Elm || isPointer!Elm || isDynamicArray!Elm){
-    const void* from = ptr.element.elementAddress;
-
-    if(from is null)
-        return typeof(return).init;
-
-    const void* from = elm.elementAddress;
-
-
-
-    static if(isDynamicArray!ElementReferenceType)
-        return cast(const void*)this._element.ptr;
-    else static if(isRefereceType!ElementReferenceType)
-        return cast(const void*)cast(const Object)cast(const Unqual!ElementType)this._element;
-    else static if(isPointer!ElementReferenceType)
-        return cast(const void*)this._element;
-    else static if(is(Unqual!Elm : typeof(null))){
-    }
-    else static assert(0, "no impl");
-
-
-}+/
-
-
-
 /**
     Return `UniquePtr` pointing to first element of dynamic array managed by unique pointer `ptr`.
 */
@@ -1373,8 +1294,7 @@ if(isUniquePtr!Ptr && is(Ptr.ElementType : T[], T)){
     import std.traits : isDynamicArray, isStaticArray;
     import std.range : ElementEncodingType;
 
-    alias Result = ChangeElementType!(
-        Ptr,
+    alias Result = UnqualUniquePtr!Ptr.ChangeElementType!(
         ElementEncodingType!(Ptr.ElementType)
     );
 
@@ -1419,14 +1339,12 @@ pure nothrow @nogc unittest{
     If `ptr` is null or dynamic cast fail then result `UniquePtr` is null.
     Otherwise, the new `UniquePtr` will share ownership with the initial value of `ptr`.
 */
-public ChangeElementType!(Ptr, T) dynCastMove(T, Ptr)(auto ref scope Ptr ptr)
+public UnqualUniquePtr!Ptr.ChangeElementType!T dynCastMove(T, Ptr)(auto ref scope Ptr ptr)
 if(true
     && isUniquePtr!Ptr && !is(Ptr == shared)
     && isReferenceType!T && (__traits(getLinkage, T) == "D")
     && isReferenceType!(Ptr.ElementType) && (__traits(getLinkage, Ptr.ElementType) == "D")
 ){
-    static assert(isValidUniquePtr!Ptr, "`Ptr` is invalid `UniquePtr`");
-
     alias Return = typeof(return);
 
     if(auto element = dynCastElement!T(ptr._element)){
@@ -1485,14 +1403,12 @@ pure @safe nothrow @nogc unittest{
 /**
     Same as `dynCastMove` but parameter `ptr` is rvalue.
 */
-public ChangeElementType!(Ptr, T) dynCast(T, Ptr)(scope Ptr ptr)
+public UnqualUniquePtr!Ptr.ChangeElementType!T dynCast(T, Ptr)(scope Ptr ptr)
 if(true
     && isUniquePtr!Ptr && !is(Ptr == shared)
     && is(T == class) && (__traits(getLinkage, T) == "D")
     && is(Ptr.ElementType == class) && (__traits(getLinkage, Ptr.ElementType) == "D")
 ){
-    static assert(isValidUniquePtr!Ptr, "`Ptr` is invalid `UniquePtr`");
-
     return dynCastMove!T(ptr);
 }
 
@@ -1540,8 +1456,20 @@ unittest{
 
 //local traits:
 private{
-    template isOverlapable(From, To)
-    if(!isUniquePtr!From && !isUniquePtr!To){
+
+    template UnqualUniquePtr(Ptr){
+        import std.traits : CopyTypeQualifiers;
+
+        alias UnqualUniquePtr = UniquePtr!(
+            CopyTypeQualifiers!(Ptr, Ptr.ElementType),
+            Ptr.DestructorType,
+            CopyTypeQualifiers!(Ptr, Ptr.ControlType)
+        );
+    }
+
+    template isOverlapable(From, To){
+        //static assert(!isUniquePtr!From && !isUniquePtr!To);
+
         import std.traits : Unqual;
 
         static if(is(Unqual!From == Unqual!To))
@@ -1556,8 +1484,9 @@ private{
             enum bool isOverlapable = false;
     }
 
-    template isAliasable(From, To)
-    if(isUniquePtr!From && isUniquePtr!To){
+    template isAliasable(From, To){
+        //static assert(isUniquePtr!From && isUniquePtr!To);
+
         import std.traits : CopyTypeQualifiers, Unqual;
 
         alias FromType = CopyTypeQualifiers!(
@@ -1569,11 +1498,14 @@ private{
             CopyTypeQualifiers!(To.ElementType, void)
         );
 
+        alias FromControl = CopyTypeQualifiers!(From, From.ControlType);
+        alias ToControl = CopyTypeQualifiers!(To, To.ControlType);
+
         enum bool isAliasable = true
             //&& isOverlapable!(From.ElementType, To.ElementType)
             && is(FromType* : ToType*)
             && is(From.DestructorType : To.DestructorType)
-            && is(From.ControlType == To.ControlType);
+            && is(FromControl : ToControl);
     }
 
     version(unittest){
@@ -1658,6 +1590,30 @@ private{
             && isMutable!To;
     }
 
+
+    //mutex:
+    static auto lockUniquePtr(alias fn, Ptr, Args...)
+    (auto ref scope shared Ptr ptr, auto ref scope return Args args){
+        import std.traits : CopyConstness, CopyTypeQualifiers, Unqual;
+        import core.lifetime : forward;
+        import autoptr.internal.mutex : getMutex;
+
+        shared mutex = getMutex(ptr);
+
+        mutex.lock();
+        scope(exit)mutex.unlock();
+
+        alias Result = UnqualUniquePtr!(shared Ptr);/+ChangeElementType!(
+            Unshared!Ptr,
+            CopyTypeQualifiers!(shared Ptr, Ptr.ElementType)
+        );+/
+
+
+        return fn(
+            *(()@trusted => cast(Result*)&ptr )(),
+            forward!args
+        );
+    }
 }
 
 
