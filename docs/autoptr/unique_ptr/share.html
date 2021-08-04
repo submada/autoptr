@@ -93,36 +93,6 @@ $('#symbolSearchPane').show();</script>
     //shared s = share(x);
 
 </span><span class="pun">}
-}
-
-
-
-
-</span><span class="com">/+
-import std.traits : isPointer, isDynamicArray;
-
-public ChangeElementType!(Ptr, Elm) alaisToMove(Ptr, Elm)(ref Ptr ptr, Elm elm)@trusted
-if(isReferenceType!Elm || isPointer!Elm || isDynamicArray!Elm){
-const void* from = ptr.element.elementAddress;
-
-if(from is null)
-    return typeof(return).init;
-
-const void* from = elm.elementAddress;
-
-
-
-static if(isDynamicArray!ElementReferenceType)
-    return cast(const void*)this._element.ptr;
-else static if(isRefereceType!ElementReferenceType)
-    return cast(const void*)cast(const Object)cast(const Unqual!ElementType)this._element;
-else static if(isPointer!ElementReferenceType)
-    return cast(const void*)this._element;
-else static if(is(Unqual!Elm : typeof(null))){
-}
-else static assert(0, "no impl");
-
-
 </span></code></pre>
 </section>
 

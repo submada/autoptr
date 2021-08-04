@@ -59,22 +59,17 @@ $('#symbolSearchPane').show();</script>
 			<div class="prototype">
 				<code class="lang-d">
 					<div class="single-prototype">
-			<span class="typ">ChangeElementType</span>!(Ptr,T) <span class="pln">dynCastMove</span>(T, Ptr)
-			<span class="pun">(</span>
-			<br/>
-			&nbsp;&nbsp;<span class="kwd">auto scope ref </span><span class="typ">Ptr</span> <span class="pln">ptr</span>
-			<br/>
-			<span class="pun">)</span>
+			{null} <span class="pln">dynCastMove</span>(T, Ptr)<span class="pun">(</span><span class="pun">)</span>
 			<br/>
 			<span class="kwd">if</span> <span class="pun">(</span><span class="kwd">true </span><span class="pun">&amp;&amp; </span><span class="pln">isSharedPtr</span><span class="pun">!</span><span class="typ">Ptr </span><span class="pun">&amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Ptr </span><span class="pun">== </span><span class="kwd">shared</span><span class="pun">) &amp;&amp; !</span><span class="typ">Ptr<wbr/></span><span class="pun">.</span><span class="pln">weakPtr </span><span class="pun">&amp;&amp; </span><span class="pln">isReferenceType</span><span class="pun">!</span><span class="pln">T </span><span class="pun">&amp;&amp; (</span><span class="kwd">__traits</span><span class="pun">(</span><span class="pln">getLinkage</span><span class="pun">, </span><span class="pln">T</span><span class="pun">) == </span><span class="str">"D"</span><span class="pun">) &amp;&amp; </span><span class="pln">isReferenceType</span><span class="pun">!(</span><span class="typ">Ptr<wbr/></span><span class="pun">.</span><span class="typ">ElementType</span><span class="pun">) &amp;&amp; (</span><span class="kwd">__traits</span><span class="pun">(</span><span class="pln">getLinkage</span><span class="pun">, </span><span class="typ">Ptr<wbr/></span><span class="pun">.</span><span class="typ">ElementType</span><span class="pun">) == </span><span class="str">"D"</span><span class="pun">)</span><span class="pun">);</span>
 					</div>
 				</code>
 			</div>
-			<section><p>Move instance of <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> whose stored pointer is obtained from <code class="lang-d"><a href="../../autoptr/shared_ptr/dynCastMove.html#ptr"><span class="pln">ptr</span></a></code>'s stored pointer using a dynaic cast expression.
+			<section><p>Move instance of <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> whose stored pointer is obtained from <code class="lang-d"><span class="pln">ptr</span></code>'s stored pointer using a dynaic cast expression.
 </p>
 
-<p>    If <code class="lang-d"><a href="../../autoptr/shared_ptr/dynCastMove.html#ptr"><span class="pln">ptr</span></a></code> is null or dynamic cast fail then result <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> is null.
-    Otherwise, the new <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> will share ownership with the initial value of <code class="lang-d"><a href="../../autoptr/shared_ptr/dynCastMove.html#ptr"><span class="pln">ptr</span></a></code>.
+<p>    If <code class="lang-d"><span class="pln">ptr</span></code> is null or dynamic cast fail then result <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> is null.
+    Otherwise, the new <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> will share ownership with the initial value of <code class="lang-d"><span class="pln">ptr</span></code>.
 </p>
 </section>
 

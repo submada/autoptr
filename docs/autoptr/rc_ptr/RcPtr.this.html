@@ -100,9 +100,9 @@ $('#symbolSearchPane').show();</script>
 			<br/>
 			&nbsp;&nbsp;<span class="kwd">scope ref </span><span class="typ">Rhs</span> <span class="pln">rhs</span>
 			<br/>
-			<span class="pun">)</span><span class="pln"> </span><span class="kwd">@trusted</span>
+			<span class="pun">)</span><span class="pln"> </span><span class="kwd">@safe</span>
 			<br/>
-			<span class="kwd">if</span> <span class="pun">(</span><span class="kwd">true </span><span class="pun">&amp;&amp; </span><span class="pln">isRcPtr</span><span class="pun">!</span><span class="typ">Rhs </span><span class="pun">&amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Unqual</span><span class="pun">!</span><span class="typ">This </span><span class="pun">== </span><span class="typ">Unqual</span><span class="pun">!</span><span class="typ">Rhs</span><span class="pun">) &amp;&amp; </span><span class="pln">isConstructable</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; !</span><span class="pln">weakLock</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Rhs </span><span class="pun">== </span><span class="kwd">shared</span><span class="pun">)</span><span class="pun">);</span>
+			<span class="kwd">if</span> <span class="pun">(</span><span class="kwd">true </span><span class="pun">&amp;&amp; </span><span class="pln">isRcPtr</span><span class="pun">!</span><span class="typ">Rhs </span><span class="pun">&amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Unqual</span><span class="pun">!</span><span class="typ">This </span><span class="pun">== </span><span class="typ">Unqual</span><span class="pun">!</span><span class="typ">Rhs</span><span class="pun">) &amp;&amp; </span><span class="pln">isCopyable</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; !</span><span class="pln">weakLock</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Rhs </span><span class="pun">== </span><span class="kwd">shared</span><span class="pun">)</span><span class="pun">);</span>
 			<br/>
 			<br/>
 			<span class="pln">this</span>(Rhs, This)
@@ -112,7 +112,7 @@ $('#symbolSearchPane').show();</script>
 			<br/>
 			<span class="pun">)</span><span class="pln"> </span><span class="kwd">@trusted</span>
 			<br/>
-			<span class="kwd">if</span> <span class="pun">(</span><span class="kwd">true </span><span class="pun">&amp;&amp; </span><span class="pln">isRcPtr</span><span class="pun">!</span><span class="typ">Rhs </span><span class="pun">&amp;&amp; </span><span class="pln">isConstructable</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; !</span><span class="pln">weakLock</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Rhs </span><span class="pun">== </span><span class="kwd">shared</span><span class="pun">)</span><span class="pun">);</span>
+			<span class="kwd">if</span> <span class="pun">(</span><span class="kwd">true </span><span class="pun">&amp;&amp; </span><span class="pln">isRcPtr</span><span class="pun">!</span><span class="typ">Rhs </span><span class="pun">&amp;&amp; </span><span class="pln">isMovable</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; !</span><span class="pln">weakLock</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Rhs </span><span class="pun">== </span><span class="kwd">shared</span><span class="pun">)</span><span class="pun">);</span>
 			<br/>
 			<br/>
 			<span class="pln">this</span>(Rhs, This)
@@ -120,9 +120,9 @@ $('#symbolSearchPane').show();</script>
 			<br/>
 			&nbsp;&nbsp;<span class="kwd">auto scope ref </span><span class="typ">Rhs</span> <span class="pln">rhs</span>
 			<br/>
-			<span class="pun">)</span><span class="pln"> </span><span class="kwd">@trusted</span>
+			<span class="pun">)</span><span class="pln"> </span><span class="kwd">@safe</span>
 			<br/>
-			<span class="kwd">if</span> <span class="pun">(</span><span class="kwd">true </span><span class="pun">&amp;&amp; </span><span class="pln">isRcPtr</span><span class="pun">!</span><span class="typ">Rhs </span><span class="pun">&amp;&amp; </span><span class="pln">isConstructable</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; </span><span class="pln">weakLock</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Rhs </span><span class="pun">== </span><span class="kwd">shared</span><span class="pun">)</span><span class="pun">);</span>
+			<span class="kwd">if</span> <span class="pun">(</span><span class="kwd">true </span><span class="pun">&amp;&amp; </span><span class="pln">isRcPtr</span><span class="pun">!</span><span class="typ">Rhs </span><span class="pun">&amp;&amp; </span><span class="pln">isCopyable</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; </span><span class="pln">weakLock</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Rhs </span><span class="pun">== </span><span class="kwd">shared</span><span class="pun">)</span><span class="pun">);</span>
 			<br/>
 			<br/>
 			<span class="pln">this</span>(Rhs, This)
@@ -132,7 +132,7 @@ $('#symbolSearchPane').show();</script>
 			<br/>
 			<span class="pun">)</span><span class="pln"> </span><span class="kwd">@trusted</span>
 			<br/>
-			<span class="kwd">if</span> <span class="pun">(</span><span class="kwd">true </span><span class="pun">&amp;&amp; </span><span class="pln">isUniquePtr</span><span class="pun">!</span><span class="typ">Rhs </span><span class="pun">&amp;&amp; </span><span class="pln">isConstructable</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Rhs </span><span class="pun">== </span><span class="kwd">shared</span><span class="pun">)</span><span class="pun">);</span>
+			<span class="kwd">if</span> <span class="pun">(</span><span class="kwd">true </span><span class="pun">&amp;&amp; </span><span class="pln">isUniquePtr</span><span class="pun">!</span><span class="typ">Rhs </span><span class="pun">&amp;&amp; </span><span class="pln">isMovable</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Rhs </span><span class="pun">== </span><span class="kwd">shared</span><span class="pun">)</span><span class="pun">);</span>
 					</div>
 				</code>
 			</div>

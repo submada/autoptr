@@ -59,8 +59,7 @@ template UniquePtr(
     _ControlType = shared(UniqueControlType),   ///TODO make _ControlType isMutable!_ControlType and alow cast to shares.
 )
 if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
-    static assert(isMutable!_ControlType);
-    static assert(is(_ControlType == ControlBlock!(Shared, Weak), Shared, Weak));
+    //static assert(is(_ControlType == ControlBlock!(Shared, Weak), Shared, Weak));
 
     static assert(is(DestructorType!void : _DestructorType),
         _Type.stringof ~ " wrong DestructorType " ~ DestructorType!void.stringof ~ " : " ~ _DestructorType.stringof
@@ -180,7 +179,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
         private this(Elm, this This)(Elm element, Evoid ctor)pure nothrow @safe @nogc
-        if(is(Elm : GetElementReferenceType!This) && !is(Unqual!Elm == typeof(null))){
+        if(true
+            && is(Elm : GetElementReferenceType!This) 
+            && !is(Unqual!Elm == typeof(null))
+        ){
             this._element = element;
         }
 
@@ -992,7 +994,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         }
 
 
-        package CopyTypeQualifiers!(This, ControlType)* _control(this This)()pure nothrow @trusted @nogc
+        package GetControlType!This* _control(this This)()pure nothrow @trusted @nogc
         in(this._element !is null){
             static if(isDynamicArray!ElementType){
                 return cast(typeof(return))((cast(void*)this._element.ptr) - ControlType.sizeof);
@@ -1167,9 +1169,9 @@ if(true
     import autoptr.rc_ptr : RcPtr;
 
     return RcPtr!(
-        CopyTypeQualifiers!(Ptr, Ptr.ElementType),
+        GetElementType!Ptr,
         Ptr.DestructorType,
-        Ptr.ControlType,
+        GetControlType!Ptr,
     )(forward!ptr);
 }
 
@@ -1209,9 +1211,9 @@ if(true
     import autoptr.shared_ptr : SharedPtr;
 
     return SharedPtr!(
-        CopyTypeQualifiers!(Ptr, Ptr.ElementType),
+        GetElementType!Ptr,
         Ptr.DestructorType,
-        Ptr.ControlType,
+        GetControlType!Ptr,
     )(forward!ptr);
 }
 
@@ -1251,11 +1253,11 @@ if(isUniquePtr!Ptr){
         return forward!ptr;
     }
     else{
-        static assert(is(Ptr.ControlType == shared),
+        static assert(is(GetControlType!Ptr == shared) || is(GetControlType!Ptr == immutable),
             "`UniquePtr` has not shared `ControlType`."
         );
 
-        static assert(is(Ptr.ElementType == shared) || is(Ptr.ElementType == immutable),
+        static assert(is(GetElementType!Ptr == shared) || is(GetElementType!Ptr == immutable),
             "`UniquePtr` has not shared/immutable `ElementType`."
         );
 
@@ -1461,9 +1463,9 @@ private{
         import std.traits : CopyTypeQualifiers;
 
         alias UnqualUniquePtr = UniquePtr!(
-            CopyTypeQualifiers!(Ptr, Ptr.ElementType),
+            GetElementType!Ptr,
             Ptr.DestructorType,
-            CopyTypeQualifiers!(Ptr, Ptr.ControlType)
+            GetControlType!Ptr
         );
     }
 
@@ -1498,14 +1500,11 @@ private{
             CopyTypeQualifiers!(To.ElementType, void)
         );
 
-        alias FromControl = CopyTypeQualifiers!(From, From.ControlType);
-        alias ToControl = CopyTypeQualifiers!(To, To.ControlType);
-
         enum bool isAliasable = true
             //&& isOverlapable!(From.ElementType, To.ElementType)
             && is(FromType* : ToType*)
             && is(From.DestructorType : To.DestructorType)
-            && is(FromControl : ToControl);
+            && is(GetControlType!From* : GetControlType!To*);
     }
 
     version(unittest){
@@ -1578,7 +1577,7 @@ private{
             && isOverlapable!(From.ElementType, To.ElementType) //&& is(Unqual!(From.ElementType) == Unqual!(To.ElementType))
             && is(FromPtr : ToPtr)
             && is(From.DestructorType : To.DestructorType)
-            && is(From.ControlType == To.ControlType)            ;
+            && is(GetControlType!From* : GetControlType!To*);
     }
 
     template isAssignable(From, To)

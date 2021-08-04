@@ -248,9 +248,9 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
         // necessary for autoptr.unique_ptr.sharedPtr
-        package this(C, Elm, this This)(C* control, Elm element)pure nothrow @safe @nogc
+        package this(C, Elm, this This)(C* control, Elm element)@safe pure nothrow @nogc
         if(true
-            && is(C* : CopyTypeQualifiers!(This, ControlType)*)
+            && is(C* : GetControlType!This*)
             && is(Elm : GetElementReferenceType!This)
             && !is(This == shared)
         ){
@@ -259,7 +259,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         }
 
         // copy ctor
-        private this(Rhs, this This)(ref scope Rhs rhs, Evoid ctor)@trusted pure nothrow @nogc
+        private this(Rhs, this This)(ref scope Rhs rhs, Evoid ctor)@safe pure nothrow @nogc
         if(true
             && isSharedPtr!Rhs
             && isCopyable!(Rhs, This)
@@ -418,7 +418,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 }
                 --------------------
         */
-        public this(Rhs, this This)(ref scope Rhs rhs)@trusted pure nothrow @nogc
+        public this(Rhs, this This)(ref scope Rhs rhs)@safe pure nothrow @nogc
         if(true
             && isSharedPtr!Rhs
             && !is(Unqual!This == Unqual!Rhs)   ///copy ctors
@@ -445,7 +445,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         }
 
         /// ditto
-        public this(Rhs, this This)(auto ref scope Rhs rhs)@trusted
+        public this(Rhs, this This)(auto ref scope Rhs rhs)@safe
         if(true
             && isSharedPtr!Rhs
             && (isCopyable!(Rhs, This) || isMovable!(Rhs, This))
@@ -458,7 +458,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 static assert(isMovable!(Rhs, This));
 
             if(rhs._control !is null && rhs._control.add_shared_if_exists()){
-                this._control = cast(typeof(this._control))rhs._control;
+                this._control = rhs._control;
                 this._element = rhs._element;
             }
             else{
@@ -525,243 +525,45 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
 
+        //copy ctors:
+        static if(isCopyable!(typeof(this), typeof(this)))
+            this(ref scope typeof(this) rhs)@safe{this(rhs, Evoid.init);}
+        else
+            @disable this(ref scope typeof(this) rhs)@safe;
 
-    static if(!isMutable!ControlType){
-        //mutable rhs:
-        @disable this(ref scope typeof(this) rhs)@safe;
-        @disable this(ref scope typeof(this) rhs)const @safe;
-        @disable this(ref scope typeof(this) rhs)immutable @safe;
-        @disable this(ref scope typeof(this) rhs)shared @safe;
-        @disable this(ref scope typeof(this) rhs)const shared @safe;
+        static if(isCopyable!(typeof(this), const typeof(this)))
+            this(ref scope typeof(this) rhs)const @safe{this(rhs, Evoid.init);}
+        else
+            @disable this(ref scope typeof(this) rhs)const @safe;
 
-        //const rhs:
-        /+@disable this(ref scope const typeof(this) rhs)@safe;
-        @disable this(ref scope const typeof(this) rhs)const @safe;
-        @disable this(ref scope const typeof(this) rhs)immutable @safe;
-        @disable this(ref scope const typeof(this) rhs)shared @safe;
-        @disable this(ref scope const typeof(this) rhs)const shared @safe;
-
-        //immutable(Ptr) iptr;
-        @disable this(ref scope immutable typeof(this) rhs)@safe;
-        @disable this(ref scope immutable typeof(this) rhs)const @safe;
-        @disable this(ref scope immutable typeof(this) rhs)immutable @safe;
-        @disable this(ref scope immutable typeof(this) rhs)shared @safe;
-        @disable this(ref scope immutable typeof(this) rhs)const shared @safe;+/
-    }
-	//copy ctors:
-	//mutable:
-	else static if(is(Unqual!ElementType == ElementType)){
-		//mutable rhs:
-		this(ref scope typeof(this) rhs)@safe{this(rhs, Evoid.init);}
-		this(ref scope typeof(this) rhs)const @safe{this(rhs, Evoid.init);}
-		@disable this(ref scope typeof(this) rhs)immutable @safe;
-		@disable this(ref scope typeof(this) rhs)shared @safe;
-		@disable this(ref scope typeof(this) rhs)const shared @safe;
-
-		//const rhs:
-		/+@disable this(ref scope const typeof(this) rhs)@safe;
-		this(ref scope const typeof(this) rhs)const @safe{this(rhs, Evoid.init);}
-		@disable this(ref scope const typeof(this) rhs)immutable @safe;
-		@disable this(ref scope const typeof(this) rhs)shared @safe;
-		@disable this(ref scope const typeof(this) rhs)const shared @safe;
-
-		//immutable(Ptr) iptr;
-		@disable this(ref scope immutable typeof(this) rhs)@safe;
-		this(ref scope immutable typeof(this) rhs)const @safe{this(rhs, Evoid.init);}
-		this(ref scope immutable typeof(this) rhs)immutable @safe{this(rhs, Evoid.init);}
-		@disable this(ref scope immutable typeof(this) rhs)shared @safe;
-		static if(is(ControlType == shared))
-			this(ref scope immutable typeof(this) rhs)const shared @safe{this(rhs, Evoid.init);}
-		else
-			@disable this(ref scope immutable typeof(this) rhs)const shared @safe;+/
-
-	}
-	//const:
-	else static if(is(const Unqual!ElementType == ElementType)){
-		//mutable rhs:
-		this(ref scope typeof(this) rhs)@safe{this(rhs, Evoid.init);}
-		this(ref scope typeof(this) rhs)const @safe{this(rhs, Evoid.init);}
-		@disable this(ref scope typeof(this) rhs)immutable @safe;
-		@disable this(ref scope typeof(this) rhs)shared @safe;
-		@disable this(ref scope typeof(this) rhs)const shared @safe;
-
-		//const rhs:
-		/+this(ref scope const typeof(this) rhs)@safe{this(rhs, Evoid.init);}
-		this(ref scope const typeof(this) rhs)const @safe{this(rhs, Evoid.init);}
-		@disable this(ref scope const typeof(this) rhs)immutable @safe;
-		@disable this(ref scope const typeof(this) rhs)shared @safe;
-		@disable this(ref scope const typeof(this) rhs)const shared @safe;
-
-		//immutable rhs:
-		this(ref scope immutable typeof(this) rhs)@safe{this(rhs, Evoid.init);}
-		this(ref scope immutable typeof(this) rhs)const @safe{this(rhs, Evoid.init);}
-		this(ref scope immutable typeof(this) rhs)immutable @safe{this(rhs, Evoid.init);}
-		static if(is(ControlType == shared)){
-			this(ref scope immutable typeof(this) rhs)shared @safe{this(rhs, Evoid.init);}
-			this(ref scope immutable typeof(this) rhs)const shared @safe{this(rhs, Evoid.init);}
-		}
-		else{
-			@disable this(ref scope immutable typeof(this) rhs)shared @safe;
-			@disable this(ref scope immutable typeof(this) rhs)const shared @safe;
-		}+/
-	}
-	//immutable:
-	else static if(is(immutable Unqual!ElementType == ElementType)){
-		//mutable rhs:
-		this(ref scope typeof(this) rhs)@safe{this(rhs, Evoid.init);}
-		this(ref scope typeof(this) rhs)const @safe{this(rhs, Evoid.init);}
-
-        static if(is(ControlType == immutable))
-		    this(ref scope typeof(this) rhs)immutable @safe{this(rhs, Evoid.init);}
+        static if(isCopyable!(typeof(this), immutable typeof(this)))
+            this(ref scope typeof(this) rhs)immutable @safe{this(rhs, Evoid.init);}
         else
             @disable this(ref scope typeof(this) rhs)immutable @safe;
 
-        static if(is(ControlType == shared)){
-			this(ref scope typeof(this) rhs)shared @safe{this(rhs, Evoid.init);}
-			this(ref scope typeof(this) rhs)const shared @safe{this(rhs, Evoid.init);}
-		}
-		else{
-			@disable this(ref scope typeof(this) rhs)shared @safe;
-			@disable this(ref scope typeof(this) rhs)const shared @safe;
-		}
+        static if(isCopyable!(typeof(this), shared typeof(this)))
+            this(ref scope typeof(this) rhs)shared @safe{this(rhs, Evoid.init);}
+        else
+            @disable this(ref scope typeof(this) rhs)shared @safe;
 
-		//const rhs:
-		/+this(ref scope const typeof(this) rhs)@safe{this(rhs, Evoid.init);}
-		this(ref scope const typeof(this) rhs)const @safe{this(rhs, Evoid.init);}
-		this(ref scope const typeof(this) rhs)immutable @safe{this(rhs, Evoid.init);}	//??
-		static if(is(ControlType == shared)){
-			this(ref scope const typeof(this) rhs)shared @safe{this(rhs, Evoid.init);}
-			this(ref scope const typeof(this) rhs)const shared @safe{this(rhs, Evoid.init);}
-		}
-		else{
-			@disable this(ref scope const typeof(this) rhs)shared @safe;
-			@disable this(ref scope const typeof(this) rhs)const shared @safe;
-		}
-
-		//immutable rhs:
-		this(ref scope immutable typeof(this) rhs)@safe{this(rhs, Evoid.init);}	//??
-		this(ref scope immutable typeof(this) rhs)const @safe{this(rhs, Evoid.init);}
-		this(ref scope immutable typeof(this) rhs)immutable @safe{this(rhs, Evoid.init);}
-		static if(is(ControlType == shared)){
-			this(ref scope immutable typeof(this) rhs)shared @safe{this(rhs, Evoid.init);}
-			this(ref scope immutable typeof(this) rhs)const shared @safe{this(rhs, Evoid.init);}
-		}
-		else{
-			@disable this(ref scope immutable typeof(this) rhs)shared @safe;
-			@disable this(ref scope immutable typeof(this) rhs)const shared @safe;
-		}+/
-	}
-	//shared:
-	else static if(is(shared Unqual!ElementType == ElementType)){
-		//static assert(!threadLocal);
-
-		//mutable rhs:
-		this(ref scope typeof(this) rhs)@safe{this(rhs, Evoid.init);}
-		this(ref scope typeof(this) rhs)const @safe{this(rhs, Evoid.init);}
-		@disable this(ref scope typeof(this) rhs)immutable @safe;
-		static if(is(ControlType == shared)){
-			this(ref scope typeof(this) rhs)shared @safe{this(rhs, Evoid.init);}
-			this(ref scope typeof(this) rhs)const shared @safe{this(rhs, Evoid.init);}
-		}
-		else{
-			@disable this(ref scope typeof(this) rhs)shared @safe;
-			@disable this(ref scope typeof(this) rhs)const shared @safe;
-		}
-
-		//const rhs:
-		/+@disable this(ref scope const typeof(this) rhs)@safe;
-		this(ref scope const typeof(this) rhs)const @safe{this(rhs, Evoid.init);}
-		@disable this(ref scope const typeof(this) rhs)immutable @safe;
-		@disable this(ref scope const typeof(this) rhs)shared @safe;
-		static if(is(ControlType == shared))
-			this(ref scope const typeof(this) rhs)const shared @safe{this(rhs, Evoid.init);}
-		else
-			@disable this(ref scope const typeof(this) rhs)const shared @safe;
-
-		//immutable rhs:
-		@disable this(ref scope immutable typeof(this) rhs)@safe;
-		this(ref scope immutable typeof(this) rhs)const @safe{this(rhs, Evoid.init);}
-		this(ref scope immutable typeof(this) rhs)immutable @safe{this(rhs, Evoid.init);}
-		@disable this(ref scope immutable typeof(this) rhs)shared @safe;
-		static if(is(ControlType == shared))
-			this(ref scope immutable typeof(this) rhs)const shared @safe{this(rhs, Evoid.init);}
-		else
-			@disable this(ref scope immutable typeof(this) rhs)const shared @safe;+/
-	}
-	//shared const:
-	else static if(is(const shared Unqual!ElementType == ElementType)){
-		//static assert(!threadLocal);
-
-		//mutable rhs:
-		this(ref scope typeof(this) rhs)@safe{this(rhs, Evoid.init);}
-		this(ref scope typeof(this) rhs)const @safe{this(rhs, Evoid.init);}
-		@disable this(ref scope typeof(this) rhs)immutable @safe;
-		static if(is(ControlType == shared)){
-			this(ref scope typeof(this) rhs)shared @safe{this(rhs, Evoid.init);}
-			this(ref scope typeof(this) rhs)const shared @safe{this(rhs, Evoid.init);}
-		}
-		else{
-			@disable this(ref scope typeof(this) rhs)shared @safe;
-			@disable this(ref scope typeof(this) rhs)const shared @safe;
-		}
-
-		//const rhs:
-		/+this(ref scope const typeof(this) rhs)@safe{this(rhs, Evoid.init);}
-		this(ref scope const typeof(this) rhs)const @safe{this(rhs, Evoid.init);}
-		@disable this(ref scope const typeof(this) rhs)immutable @safe;
-		static if(is(ControlType == shared)){
-			this(ref scope const typeof(this) rhs)shared @safe{this(rhs, Evoid.init);}
-			this(ref scope const typeof(this) rhs)const shared @safe{this(rhs, Evoid.init);}
-		}
-		else{
-			@disable this(ref scope const typeof(this) rhs)shared @safe;
-			@disable this(ref scope const typeof(this) rhs)const shared @safe;
-		}
-
-		//immutable rhs:
-		this(ref scope immutable typeof(this) rhs)@safe{this(rhs, Evoid.init);}	//??
-		this(ref scope immutable typeof(this) rhs)const @safe{this(rhs, Evoid.init);}
-		this(ref scope immutable typeof(this) rhs)immutable @safe{this(rhs, Evoid.init);}
-		static if(is(ControlType == shared)){
-			this(ref scope immutable typeof(this) rhs)shared @safe{this(rhs, Evoid.init);}
-			this(ref scope immutable typeof(this) rhs)const shared @safe{this(rhs, Evoid.init);}
-		}
-		else{
-			@disable this(ref scope immutable typeof(this) rhs)shared @safe;
-			@disable this(ref scope immutable typeof(this) rhs)const shared @safe;
-		}+/
-
-	}
-	else static assert(0, "no impl");
-
-    //const rhs:
-    @disable this(ref scope const typeof(this) rhs)@safe;
-    @disable this(ref scope const typeof(this) rhs)const @safe;
-    @disable this(ref scope const typeof(this) rhs)immutable @safe;
-    @disable this(ref scope const typeof(this) rhs)shared @safe;
-    @disable this(ref scope const typeof(this) rhs)const shared @safe;
-
-    //immutable rhs;
-    @disable this(ref scope immutable typeof(this) rhs)@safe;
-    @disable this(ref scope immutable typeof(this) rhs)const @safe;
-    @disable this(ref scope immutable typeof(this) rhs)immutable @safe;
-    @disable this(ref scope immutable typeof(this) rhs)shared @safe;
-    @disable this(ref scope immutable typeof(this) rhs)const shared @safe;
+        static if(isCopyable!(typeof(this), const shared typeof(this)))
+            this(ref scope typeof(this) rhs)const shared @safe{this(rhs, Evoid.init);}
+        else
+            @disable this(ref scope typeof(this) rhs)const shared @safe;
 
 
-	//shared rhs:
-	@disable this(ref scope shared typeof(this) rhs)@safe;
-	@disable this(ref scope shared typeof(this) rhs)const @safe;
-	@disable this(ref scope shared typeof(this) rhs)immutable @safe;
-	@disable this(ref scope shared typeof(this) rhs)shared @safe;
-	@disable this(ref scope shared typeof(this) rhs)const shared @safe;
-
-	//const shared rhs:
-	@disable this(ref scope const shared typeof(this) rhs)@safe;
-	@disable this(ref scope const shared typeof(this) rhs)const @safe;
-	@disable this(ref scope const shared typeof(this) rhs)immutable @safe;
-	@disable this(ref scope const shared typeof(this) rhs)shared @safe;
-	@disable this(ref scope const shared typeof(this) rhs)const shared @safe;
+        static foreach(alias From; AliasSeq!(
+            const typeof(this),
+            immutable typeof(this),
+            shared typeof(this),
+            const shared typeof(this)
+        )){
+            @disable this(ref scope From rhs)@safe;
+            @disable this(ref scope From rhs)const @safe;
+            @disable this(ref scope From rhs)immutable @safe;
+            @disable this(ref scope From rhs)shared @safe;
+            @disable this(ref scope From rhs)const shared @safe;
+        }
 
 
         /**
@@ -1245,8 +1047,6 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         */
         public @property ControlType.Shared useCount(this This)()const scope nothrow @safe @nogc{
             static if(is(This == shared)){
-                static assert(is(ControlType == shared));
-
                 return this.lockSharedPtr!(
                     (ref scope return self) => self.useCount()
                 )();
@@ -1285,8 +1085,6 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         public @property ControlType.Weak weakCount(this This)()const scope nothrow @safe @nogc{
 
             static if(is(This == shared)){
-                static assert(is(ControlType == shared));
-
                 return this.lockSharedPtr!(
                     (ref scope return self) => self.weakCount()
                 )();
@@ -1351,12 +1149,9 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 }
                 --------------------
         */
-        public UnqualSharedPtr!This
-        load(MemoryOrder order = MemoryOrder.seq, this This)()scope return{
+        public UnqualSharedPtr!This load(MemoryOrder order = MemoryOrder.seq, this This)()scope return{
 
             static if(is(This == shared)){
-                static assert(is(ControlType == shared));
-
                 return this.lockSharedPtr!(
                     (ref scope return self) => self.load!order()
                 )();
@@ -1674,10 +1469,9 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(weakPtr)
-        public CopyConstness!(This, SharedType) lock(this This)()scope @safe
-        if(!is(This == shared)){
+        public SharedType lock()()scope @safe{
 
-            static assert(weakLock!(This, typeof(return)));
+            static assert(weakLock!(typeof(this), typeof(return)));
 
             return typeof(return)(this);
         }
@@ -1706,7 +1500,6 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         */
         static if(weakPtr)
         public @property bool expired(this This)()scope const{
-
             return (this.useCount == 0);
         }
 
@@ -1825,10 +1618,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 assert(wx.useCount == 0);
                 --------------------
         */
-        static if(hasWeakCounter)
-        public CopyTypeQualifiers!(This, WeakType) weak(this This)()scope @safe
-        if(!is(This == shared)){
-
+        static if(hasWeakCounter && !weakPtr)
+        public WeakType weak()()scope{
             return typeof(return)(this);
         }
 
@@ -2609,16 +2400,11 @@ if(isSharedPtr!Ptr){
         return forward!ptr;
     }
     else{
-        import std.traits : CopyTypeQualifiers;
-
-        alias Control = CopyTypeQualifiers!(Ptr, Ptr.ControlType);
-        alias Element = CopyTypeQualifiers!(Ptr, Ptr.ElementType);
-
-        static assert(is(Control == shared) || is(Control == immutable),
+        static assert(is(GetControlType!Ptr == shared) || is(GetControlType!Ptr == immutable),
             "`SharedPtr` has not shared/immutable ref counter `ControlType`."
         );
 
-        static assert(is(Element == shared) || is(Element == immutable),
+        static assert(is(GetElementType!Ptr == shared) || is(GetElementType!Ptr == immutable),
             "`SharedPtr` has not shared/immutable `ElementType`."
         );
 
@@ -2734,12 +2520,10 @@ pure nothrow @nogc unittest{
 private{
 
     template UnqualSharedPtr(Ptr){
-        import std.traits : CopyTypeQualifiers;
-
         alias UnqualSharedPtr = SharedPtr!(
-            CopyTypeQualifiers!(Ptr, Ptr.ElementType),
+            GetElementType!Ptr,
             Ptr.DestructorType,
-            CopyTypeQualifiers!(Ptr, Ptr.ControlType),
+            GetControlType!Ptr,
             Ptr.weakPtr
         );
     }
@@ -2751,14 +2535,12 @@ private{
 
     template isAliasable(From, To){
         //static assert(isSharedPtr!From && isSharedPtr!To);
-        import std.traits : CopyTypeQualifiers;
-
-        alias FromControl = CopyTypeQualifiers!(From, From.ControlType);
-        alias ToControl = CopyTypeQualifiers!(To, To.ControlType);
 
         enum bool isAliasable = true
             && is(From.DestructorType : To.DestructorType)
-            && is(FromControl : ToControl);
+            && is(GetControlType!From* : GetControlType!To*);
+
+
     }
 
     template isMovable(From, To){
@@ -2817,11 +2599,7 @@ private{
         mutex.lock();
         scope(exit)mutex.unlock();
 
-        alias Result = UnqualSharedPtr!(shared Ptr);/+ChangeElementType!(
-            Unshared!Ptr,
-            CopyTypeQualifiers!(shared Ptr, Ptr.ElementType)
-        );+/
-
+        alias Result = UnqualSharedPtr!(shared Ptr);
 
         return fn(
             *(()@trusted => cast(Result*)&ptr )(),
@@ -2924,21 +2702,6 @@ version(unittest){
                 static assert(!__traits(compiles, immutable(Ptr)(ptr)));
                 static assert(!__traits(compiles, shared(Ptr)(ptr)));
                 static assert(!__traits(compiles, const(shared(Ptr))(ptr)));
-
-                /+const(Ptr) cptr;
-                static assert(!__traits(compiles, Ptr(cptr)));
-                static assert(__traits(compiles, const(Ptr)(cptr)));
-                static assert(!__traits(compiles, immutable(Ptr)(cptr)));
-                static assert(!__traits(compiles, shared(Ptr)(cptr)));
-                static assert(!__traits(compiles, const(shared(Ptr))(cptr)));
-
-                immutable(Ptr) iptr;
-                static assert(!__traits(compiles, Ptr(iptr)));
-                static assert(__traits(compiles, const(Ptr)(iptr)));
-                static assert(__traits(compiles, immutable(Ptr)(iptr)));
-                static assert(!__traits(compiles, shared(Ptr)(iptr)));
-                static assert(__traits(compiles, const(shared(Ptr))(iptr)) == is(ControlType == shared));
-                +/
             }
 
             //const:
@@ -2950,21 +2713,6 @@ version(unittest){
                 static assert(!__traits(compiles, immutable(Ptr)(ptr)));
                 static assert(!__traits(compiles, shared(Ptr)(ptr)));
                 static assert(!__traits(compiles, const(shared(Ptr))(ptr)));
-
-                /+const(Ptr) cptr;
-                static assert(__traits(compiles, Ptr(cptr)));
-                static assert(__traits(compiles, const(Ptr)(cptr)));
-                static assert(!__traits(compiles, immutable(Ptr)(cptr)));
-                static assert(!__traits(compiles, shared(Ptr)(cptr)));
-                static assert(!__traits(compiles, const(shared(Ptr))(cptr)));
-
-                immutable(Ptr) iptr;
-                static assert(__traits(compiles, Ptr(iptr)));
-                static assert(__traits(compiles, const(Ptr)(iptr)));
-                static assert(__traits(compiles, immutable(Ptr)(iptr)));
-                static assert(__traits(compiles, shared(Ptr)(iptr)) == is(ControlType == shared));
-                static assert(__traits(compiles, const(shared(Ptr))(iptr)) == is(ControlType == shared));
-                +/
             }
 
             //immutable:
@@ -2976,78 +2724,55 @@ version(unittest){
                 static assert(!__traits(compiles, immutable(Ptr)(ptr)));
                 static assert(__traits(compiles, shared(Ptr)(ptr)) == is(ControlType == shared));
                 static assert(__traits(compiles, const(shared(Ptr))(ptr)) == is(ControlType == shared));
-
-                /+const(Ptr) cptr;
-                static assert(__traits(compiles, Ptr(cptr)));
-                static assert(__traits(compiles, const(Ptr)(cptr)));
-                static assert(__traits(compiles, immutable(Ptr)(cptr)));
-                static assert(__traits(compiles, shared(Ptr)(cptr)) == is(ControlType == shared));
-                static assert(__traits(compiles, const(shared(Ptr))(cptr)) == is(ControlType == shared));
-
-                immutable(Ptr) iptr;
-                static assert(__traits(compiles, Ptr(iptr)));
-                static assert(__traits(compiles, const(Ptr)(iptr)));
-                static assert(__traits(compiles, immutable(Ptr)(iptr)));
-                static assert(__traits(compiles, shared(Ptr)(iptr)) == is(ControlType == shared));
-                static assert(__traits(compiles, const(shared(Ptr))(iptr)) == is(ControlType == shared));
-                +/
             }
 
 
             //shared:
-            static if(is(ControlType == shared)){{
+            {
                 alias Ptr = SPtr!(shared Test);
                 Ptr ptr;
                 static assert(__traits(compiles, Ptr(ptr)));
                 static assert(__traits(compiles, const(Ptr)(ptr)));
                 static assert(!__traits(compiles, immutable(Ptr)(ptr)));
-                static assert(__traits(compiles, shared(Ptr)(ptr)));
-                static assert(__traits(compiles, const(shared(Ptr))(ptr)));
-
-                /+const(Ptr) cptr;
-                static assert(!__traits(compiles, Ptr(cptr)));
-                static assert(__traits(compiles, const(Ptr)(cptr)));
-                static assert(!__traits(compiles, immutable(Ptr)(cptr)));
-                static assert(!__traits(compiles, shared(Ptr)(cptr)));
-                static assert(__traits(compiles, const(shared(Ptr))(cptr)));
-
-                immutable(Ptr) iptr;
-                static assert(!__traits(compiles, Ptr(iptr)));
-                static assert(__traits(compiles, const(Ptr)(iptr)));
-                static assert(__traits(compiles, immutable(Ptr)(iptr)));
-                static assert(!__traits(compiles, shared(Ptr)(iptr)));
-                static assert(__traits(compiles, const(shared(Ptr))(iptr)));+/
-            }}
+                static assert(__traits(compiles, shared(Ptr)(ptr)) == is(ControlType == shared));
+                static assert(__traits(compiles, const(shared(Ptr))(ptr)) == is(ControlType == shared));
+            }
 
 
             //const shared:
-            static if(is(ControlType == shared)){{
+            {
                 alias Ptr = SPtr!(const shared Test);
                 Ptr ptr;
                 static assert(__traits(compiles, Ptr(ptr)));
                 static assert(__traits(compiles, const(Ptr)(ptr)));
                 static assert(!__traits(compiles, immutable(Ptr)(ptr)));
-                static assert(__traits(compiles, shared(Ptr)(ptr)));
-                static assert(__traits(compiles, const(shared(Ptr))(ptr)));
+                static assert(__traits(compiles, shared(Ptr)(ptr)) == is(ControlType == shared));
+                static assert(__traits(compiles, const(shared(Ptr))(ptr)) == is(ControlType == shared));
+            }
 
-                /+const(Ptr) cptr;
-                static assert(__traits(compiles, Ptr(cptr)));
-                static assert(__traits(compiles, const(Ptr)(cptr)));
+            static foreach(alias T; AliasSeq!(
+                Test,
+                const Test,
+                shared Test,
+                const shared Test,
+                immutable Test,
+            )){{
+                alias Ptr = SPtr!T;
+
+                const(Ptr) cptr;
+                static assert(!__traits(compiles, Ptr(cptr)));
+                static assert(!__traits(compiles, const(Ptr)(cptr)));
                 static assert(!__traits(compiles, immutable(Ptr)(cptr)));
-                static assert(__traits(compiles, shared(Ptr)(cptr)));
-                static assert(__traits(compiles, const(shared(Ptr))(cptr)));
+                static assert(!__traits(compiles, shared(Ptr)(cptr)));
+                static assert(!__traits(compiles, const(shared(Ptr))(cptr)));
 
                 immutable(Ptr) iptr;
-                static assert(__traits(compiles, Ptr(iptr)));
-                static assert(__traits(compiles, const(Ptr)(iptr)));
-                static assert(__traits(compiles, immutable(Ptr)(iptr)));
-                static assert(__traits(compiles, shared(Ptr)(iptr)));
-                static assert(__traits(compiles, const(shared(Ptr))(iptr)));+/
+                static assert(!__traits(compiles, Ptr(iptr)));
+                static assert(!__traits(compiles, const(Ptr)(iptr)));
+                static assert(!__traits(compiles, immutable(Ptr)(iptr)));
+                static assert(!__traits(compiles, shared(Ptr)(iptr)));
+                static assert(!__traits(compiles, const(shared(Ptr))(iptr)));
 
-
-            }}
-
-            /+{
                 shared(Ptr) sptr;
                 static assert(!__traits(compiles, Ptr(sptr)));
                 static assert(!__traits(compiles, const(Ptr)(sptr)));
@@ -3062,7 +2787,7 @@ version(unittest){
                 static assert(!__traits(compiles, shared(Ptr)(scptr)));         //need load
                 static assert(!__traits(compiles, const(shared(Ptr))(scptr)));  //need load
 
-            }+/
+            }}
 
         }}
     }

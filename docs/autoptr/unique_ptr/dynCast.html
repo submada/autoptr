@@ -54,17 +54,12 @@ $('#symbolSearchPane').show();</script>
 			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>Function dynCast</h1><p>Same as <code class="lang-d"><a href="../../autoptr/unique_ptr/dynCastMove.html"><span class="pln">dynCastMove</span></a></code> but parameter <code class="lang-d"><a href="../../autoptr/unique_ptr/dynCast.html#ptr"><span class="pln">ptr</span></a></code> is rvalue.
+			<h1>Function dynCast</h1><p>Same as <code class="lang-d"><a href="../../autoptr/unique_ptr/dynCastMove.html"><span class="pln">dynCastMove</span></a></code> but parameter <code class="lang-d"><span class="pln">ptr</span></code> is rvalue.
 </p>
 			<div class="prototype">
 				<code class="lang-d">
 					<div class="single-prototype">
-			<span class="typ">ChangeElementType</span>!(Ptr,T) <span class="pln">dynCast</span>(T, Ptr)
-			<span class="pun">(</span>
-			<br/>
-			&nbsp;&nbsp;<span class="kwd">scope </span><span class="typ">Ptr</span> <span class="pln">ptr</span>
-			<br/>
-			<span class="pun">)</span>
+			{null} <span class="pln">dynCast</span>(T, Ptr)<span class="pun">(</span><span class="pun">)</span>
 			<br/>
 			<span class="kwd">if</span> <span class="pun">(</span><span class="kwd">true </span><span class="pun">&amp;&amp; </span><span class="pln">isUniquePtr</span><span class="pun">!</span><span class="typ">Ptr </span><span class="pun">&amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Ptr </span><span class="pun">== </span><span class="kwd">shared</span><span class="pun">) &amp;&amp; </span><span class="kwd">is</span><span class="pun">(</span><span class="pln">T </span><span class="pun">== </span><span class="kwd">class</span><span class="pun">) &amp;&amp; (</span><span class="kwd">__traits</span><span class="pun">(</span><span class="pln">getLinkage</span><span class="pun">, </span><span class="pln">T</span><span class="pun">) == </span><span class="str">"D"</span><span class="pun">) &amp;&amp; </span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Ptr<wbr/></span><span class="pun">.</span><span class="typ">ElementType </span><span class="pun">== </span><span class="kwd">class</span><span class="pun">) &amp;&amp; (</span><span class="kwd">__traits</span><span class="pun">(</span><span class="pln">getLinkage</span><span class="pun">, </span><span class="typ">Ptr<wbr/></span><span class="pun">.</span><span class="typ">ElementType</span><span class="pun">) == </span><span class="str">"D"</span><span class="pun">)</span><span class="pun">);</span>
 					</div>

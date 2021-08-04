@@ -845,6 +845,18 @@ unittest{
 }
 
 
+package template GetControlType(Ptr){
+    import std.traits : CopyTypeQualifiers;
+
+    alias GetControlType = CopyTypeQualifiers!(Ptr, Ptr.ControlType);
+}
+
+package template GetElementType(Ptr){
+    import std.traits : CopyTypeQualifiers;
+
+    alias GetElementType = CopyTypeQualifiers!(Ptr, Ptr.ElementType);
+}
+
 package template GetElementReferenceType(Ptr){
     import std.traits : CopyTypeQualifiers;
 

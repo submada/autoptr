@@ -155,6 +155,58 @@ $('#symbolSearchPane').show();</script>
 
 </span><span class="kwd">static assert</span><span class="pun">(</span><span class="typ">ControlBlock</span><span class="pun">!</span><span class="typ">void<wbr/></span><span class="pun">.</span><span class="pln">hasSharedCounter </span><span class="pun">== </span><span class="kwd">false</span><span class="pun">);
 </span><span class="kwd">static assert</span><span class="pun">(</span><span class="typ">ControlBlock</span><span class="pun">!</span><span class="typ">void<wbr/></span><span class="pun">.</span><span class="pln">hasWeakCounter </span><span class="pun">== </span><span class="kwd">false</span><span class="pun">);
+}
+
+
+
+</span><span class="com">/+
+/**
+Check if type `T` is of type `MutableControlBlock!(...)`.
+*/
+public template isMutableControlBlock(T...)
+if(T.length == 1){
+import std.traits : Unqual;
+
+enum bool isMutableControlBlock = is(
+    Unqual!(T[0]) == MutableControlBlock!Args, Args...
+);
+}
+
+
+import std.traits : isIntegral;
+
+/**
+Mutable intrusive `ControlBlock`, this control block can be modified even if is `const` / `immutable`.
+
+Necessary for `IntrusivePtr`.
+
+Examples are in `IntrusiveControlBlock`.
+*/
+template MutableControlBlock(_Shared, _Weak = void)
+if(isIntegral!_Shared){
+import std.traits : Unqual, isUnsigned, isIntegral, isMutable;
+
+static assert(isIntegral!_Shared &amp;&amp; !isUnsigned!_Shared || is(_Weak == void));
+static assert(is(Unqual!_Shared == _Shared));
+
+static assert((isIntegral!_Weak &amp;&amp; !isUnsigned!_Weak) || is(_Weak == void));
+static assert(is(Unqual!_Weak == _Weak));
+
+alias MutableControlBlock = MutableControlBlock!(ControlBlock!(_Shared, _Weak));
+}
+
+/// ditto
+template MutableControlBlock(_ControlType)
+if(isControlBlock!_ControlType){
+import std.traits : isMutable;
+
+static assert(isMutable!_ControlType);
+
+struct MutableControlBlock{
+    public alias ControlType = _ControlType;
+
+    private ControlType control;
+}
 </span></code></pre>
 </section>
 
