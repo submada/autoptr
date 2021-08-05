@@ -10,7 +10,6 @@ import autoptr.internal.mallocator : Mallocator;
 import autoptr.internal.traits;
 
 import autoptr.common;
-//import autoptr.unique_ptr : UniquePtr;
 
 
 /**

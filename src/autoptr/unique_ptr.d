@@ -9,8 +9,33 @@ module autoptr.unique_ptr;
 import autoptr.internal.mallocator : Mallocator;
 import autoptr.internal.traits;
 
-public import autoptr.rc_ptr;
+static import autoptr.rc_ptr;
 import autoptr.common;
+
+/**
+    Alias to `autoptr.rc_ptr.dynCast`.
+*/
+public alias dynCast = autoptr.rc_ptr.dynCast;
+
+/**
+    Alias to `autoptr.rc_ptr.dynCastMove`.
+*/
+public alias dynCastMove = autoptr.rc_ptr.dynCastMove;
+
+/**
+    Alias to `autoptr.rc_ptr.first`.
+*/
+public alias first = autoptr.rc_ptr.first;
+
+/**
+    Alias to `autoptr.rc_ptr.share`.
+*/
+public alias share = autoptr.rc_ptr.share;
+
+/**
+    Alias to `autoptr.rc_ptr.sharedPtr`.
+*/
+public alias sharedPtr = autoptr.rc_ptr.sharedPtr;
 
 
 /**
@@ -44,7 +69,7 @@ public template UniquePtr(
 if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
     static assert(is(_ControlType == immutable));
 
-    alias UniquePtr = RcPtr!(_Type, _DestructorType, _ControlType);
+    alias UniquePtr = autoptr.rc_ptr.RcPtr!(_Type, _DestructorType, _ControlType);
 }
 
 /// ditto
@@ -56,7 +81,7 @@ public template UniquePtr(
 if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
     static assert(is(_ControlType == immutable));
 
-    alias UniquePtr = RcPtr!(_Type, _DestructorType, _ControlType);
+    alias UniquePtr = autoptr.rc_ptr.RcPtr!(_Type, _DestructorType, _ControlType);
 }
 
 ///
