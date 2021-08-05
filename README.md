@@ -14,7 +14,7 @@ This library contains:
 * `_ControlType` type representing control block. This parameter specify reference counting for smart pointer. 
   * Default value for `UniquePtr` is `autoptr.common.ControlBlock!void` which mean that there is no reference counting.
   * Default value for `SharedPtr` and `RefPtr` is `autoptr.common.ControlBlock!(int, int)` which mean that type of reference counter is `int` and  weak reference counter type is `int`. `autoptr.common.ControlBlock!(int, void)` disable weak reference counting.
-  * If control block is `shared` then reference counting is atomic. Qualiffier `shared` is inferred from `_Type` for `_ControlType`. If `_Type` is `shared` then `_ControlType` is `shared` too.
+  * If control block is shared then reference counting is atomic. Qualiffier shared is inferred from `_Type` for `_ControlType`. If `_Type` is shared then `_ControlType` is shared too.
 
 `IntrusivePtr` has only 1 template parameters, `_Type`.
 * `_DestructorType` is inferred from `_Type`.
@@ -27,9 +27,9 @@ Smart pointers can be created with static methods `make` and `alloc`.
 Constructors of smart pointers never allocate memory, only static methods `make` and `alloc` allocate.
 
 @safe:
-* Creating smart pointer with `make` or `alloc` is `@safe` if constructor of type `_Type` is `@safe` (assumption is that constructor doesn't leak `this` pointer).
-* Smart pointers assume that deallocation with custom allocator is `@safe` if allocation is `@safe` even if method `deallcoate` is `@system`.
-* Methods returning reference/pointer (`get()`, `element()`, `opUnary!"*"()`) to managed object are all `@system` because of this:
+* Creating smart pointer with `make` or `alloc` is @safe if constructor of type `_Type` is @safe (assumption is that constructor doesn't leak `this` pointer).
+* Smart pointers assume that deallocation with custom allocator is @safe if allocation is @safe even if method `deallcoate` is @system.
+* Methods returning reference/pointer (`get()`, `element()`, `opUnary!"*"()`) to managed object are all @system because of this:
     ```d
     auto trustedGet(Ptr)(ref scope Ptr ptr)@trusted{
         return ptr.get();
