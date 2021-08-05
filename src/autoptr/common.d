@@ -509,7 +509,18 @@ public template ControlBlock(_Shared, _Weak = void){
             enum bool atomic = is(This == shared);
             auto self = cast(Unconst!This*)&this;
 
-            static if(weak){
+            static if(is(This == immutable)){
+                static if(hasSharedCounter)
+                    assert(this.count!(false) == 0);
+                static if(hasWeakCounter)
+                    assert(this.count!(true) == 0);
+            }
+
+            static if(!hasSharedCounter){
+                static assert(is(This == immutable));
+                self.manual_destroy(true);  ///TODO
+            }
+            else static if(weak){
                 static if(hasWeakCounter){
                     static if(atomic){
                         if(atomicLoad!(MemoryOrder.acq)(self.weak_count) == 0)
@@ -527,14 +538,14 @@ public template ControlBlock(_Shared, _Weak = void){
                 }
             }
             else{
-                static if(hasSharedCounter){
-                    if(rc_decrement!atomic(self.shared_count) == -1){
-                        //auto tmp = &this;
-                        //auto self = &this;
-                        self.on_zero_shared();
+                static assert(hasSharedCounter);
 
-                        self.release!true;
-                    }
+                if(rc_decrement!atomic(self.shared_count) == -1){
+                    //auto tmp = &this;
+                    //auto self = &this;
+                    self.on_zero_shared();
+
+                    self.release!true;
                 }
             }
         }
@@ -845,6 +856,10 @@ unittest{
 }
 
 
+package template weakLock(From, To){
+    enum weakLock = (From.weakPtr && !To.weakPtr);
+}
+
 package template GetControlType(Ptr){
     import std.traits : CopyTypeQualifiers;
 
@@ -860,9 +875,7 @@ package template GetElementType(Ptr){
 package template GetElementReferenceType(Ptr){
     import std.traits : CopyTypeQualifiers;
 
-    alias ElementType = CopyTypeQualifiers!(Ptr, Ptr.ElementType);
-
-    alias GetElementReferenceType = ElementReferenceTypeImpl!ElementType;
+    alias GetElementReferenceType = ElementReferenceTypeImpl!(GetElementType!Ptr);
 }
 
 package template ElementReferenceTypeImpl(Type){
@@ -1332,6 +1345,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
                 );
             }
 
+        @disable public this(this)pure nothrow @safe @nogc;
 
         public @property _ControlType* base()return scope pure nothrow @trusted @nogc{
             //static assert(this.control.offsetof == 0);
@@ -1635,6 +1649,8 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _Allocat
                     &virtual_manual_destroy
                 );
             }
+
+        @disable public this(this)pure nothrow @safe @nogc;
 
         public @property _ControlType* base()return scope pure nothrow @trusted @nogc{
             return &this.control;
@@ -2165,6 +2181,8 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
                 );
             }
 
+
+        @disable public this(this)pure nothrow @safe @nogc;
 
         public _ControlType* base()pure nothrow @safe @nogc{
             return &this.control;

@@ -10,7 +10,7 @@ import autoptr.internal.mallocator : Mallocator;
 import autoptr.internal.traits;
 
 import autoptr.common;
-import autoptr.unique_ptr : isUniquePtr, UniquePtr;
+//import autoptr.unique_ptr : isUniquePtr, UniquePtr;
 
 
 /**
@@ -53,7 +53,7 @@ unittest{
 
     A `IntrusivePtr` may also own no objects, in which case it is called empty.
 
-    `_Type` must contain one property of type `ControlBlock` or `MutableControlBlock` (this property contains ref counting). If this property is `shared` then ref counting is atomic.
+    `_Type` must contain one property of type `ControlBlock` (this property contains ref counting). If this property is `shared` then ref counting is atomic.
 
     If `_Type` is const/immutable then ControlBlock cannot be modified => ref counting doesn't work and `IntrusivePtr` can be only moved.
 
@@ -387,6 +387,7 @@ if(isIntrusive!_Type){
             @disable this(ref scope From rhs)immutable @safe;
             @disable this(ref scope From rhs)shared @safe;
             @disable this(ref scope From rhs)const shared @safe;
+            //@disable this(ref scope From rhs)pure nothrow @safe @nogc;
         }
 
 
@@ -2385,62 +2386,43 @@ private{
         );
     }
 
-    template weakLock(From, To)
-    if(isIntrusivePtr!From && isIntrusivePtr!To){
-        enum weakLock = (From.weakPtr && !To.weakPtr);
-    }
-
     template isMovable(From, To){
-        //static assert(isIntrusivePtr!From && isIntrusivePtr!To);
-
         import std.traits : Unqual, CopyTypeQualifiers;
 
-        alias FromPtr = CopyTypeQualifiers!(From, From.ElementReferenceType);
-        alias ToPtr = CopyTypeQualifiers!(To, To.ElementReferenceType);
+        alias FromElementType = GetElementType!From;
+        alias ToElementType = GetElementType!To;
 
-        alias FromElm = CopyTypeQualifiers!(From, From.ElementType);
-        alias ToElm = CopyTypeQualifiers!(To, To.ElementType);
-
-        static if(is(Unqual!FromElm == Unqual!ToElm))
-            enum bool aliasable = is(FromPtr : ToPtr);
-
-        else static if(is(FromElm == class) && is(ToElm == class))
+        static if(is(Unqual!FromElementType == Unqual!ToElementType)){
+            enum bool aliasable = is(GetElementReferenceType!From : GetElementReferenceType!To);
+        }
+        else static if(is(FromElementType == class) && is(ToElementType == class)){
             enum bool aliasable = true
-                && is(FromElm : ToElm);
-                //&& isIntrusive!FromElm;
-
-        else static if(is(FromElm == struct) && is(ToElm == struct))
+                && is(FromElementType : ToElementType);
+        }
+        /+else static if(is(FromElementType == struct) && is(ToElementType == struct)){
             enum bool aliasable = false;
-
-        else
+        }+/
+        else{
             enum bool aliasable = false;
+        }
 
         enum bool isMovable = true
             && aliasable
-            //&& isOverlapable!(From.ElementType, To.ElementType) //&& is(Unqual!(From.ElementType) == Unqual!(To.ElementType))
-            //&& is(FromPtr : ToPtr)
             && is(From.DestructorType : To.DestructorType)
             && is(GetControlType!From* : GetControlType!To*);
     }
 
     template isCopyable(From, To){
-        //static assert(isIntrusivePtr!From && isIntrusivePtr!To);
-
         import std.traits : isMutable, CopyTypeQualifiers;
 
-        static if(isMovable!(From, To)){
-            enum bool isCopyable = isMutable!(IntrusiveControlBlock!(
+        enum bool isCopyable = true
+            && isMovable!(From, To)
+            && isMutable!(IntrusiveControlBlock!(
                 GetElementType!From
             ));
-        }
-        else{
-            enum bool isCopyable = false;
-        }
     }
 
-
     template isMoveAssignable(From, To){
-        //static assert(isIntrusivePtr!From && isIntrusivePtr!To);
         import std.traits : isMutable;
 
         enum bool isMoveAssignable = true
@@ -2450,7 +2432,6 @@ private{
     }
 
     template isCopyAssignable(From, To){
-        //static assert(isIntrusivePtr!From && isIntrusivePtr!To);
         import std.traits : isMutable;
 
         enum bool isCopyAssignable = true
@@ -2472,10 +2453,7 @@ private{
         mutex.lock();
         scope(exit)mutex.unlock();
 
-        alias Result = UnqualIntrusivePtr!(shared Ptr);/+ChangeElementType!(
-            Unshared!Ptr,
-            CopyTypeQualifiers!(shared Ptr, Ptr.ElementType)
-        );+/
+        alias Result = UnqualIntrusivePtr!(shared Ptr);
 
 
         return fn(

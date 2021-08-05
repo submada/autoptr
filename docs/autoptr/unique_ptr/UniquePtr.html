@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="UTF-8"/>
-		<title>Struct UniquePtr</title>
+		<title>Alias UniquePtr</title>
 		<link rel="stylesheet" type="text/css" href="../../styles/ddox.css"/>
 		<link rel="stylesheet" href="../../prettify/prettify.css" type="text/css"/>
 		<script type="text/javascript" src="../../scripts/jquery.js">/**/</script><script type="text/javascript" src="../../scripts/ddox.js">/**/</script>
@@ -54,30 +54,30 @@ $('#symbolSearchPane').show();</script>
 			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>Struct UniquePtr</h1><p><code class="lang-d"><span class="typ">UniquePtr</span></code> is a smart pointer that owns and manages object through a pointer and disposes of that object when the <code class="lang-d"><span class="typ">UniquePtr</span></code> goes out of scope.
+			<h1>Alias UniquePtr</h1><p><code class="lang-d"><span class="typ">UniquePtr</span></code> is a smart pointer that owns and manages object through a pointer and disposes of that object when the <code class="lang-d"><span class="typ">UniquePtr</span></code> goes out of scope.
 </p>
 			<div class="prototype">
 				<code class="lang-d">
 					<div class="single-prototype">
-			<span class="kwd">struct</span> <span class="typ">UniquePtr</span>(_Type, _DestructorType, _ControlType)
-			<br/>
-			&nbsp;&nbsp;
-			<br/>
-			<span class="kwd">if</span> <span class="pun">(</span><span class="pln">isControlBlock</span><span class="pun">!</span><span class="pln">_ControlType </span><span class="pun">&amp;&amp; </span><span class="pln">isDestructorType</span><span class="pun">!</span><span class="pln">_DestructorType</span><span class="pun">);</span>
+			<span class="kwd">alias</span> <span class="pln">UniquePtr</span>(_Type, _DestructorType, _ControlType)
+			 <span class="pun">=</span> <a href="../../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a>!(_Type,_DestructorType,_ControlType)<span class="pun">;</span>
 					</div>
 					<div class="single-prototype">
 			<span class="kwd">alias</span> <span class="pln">UniquePtr</span>(_Type, _ControlType, _DestructorType)
-			 <span class="pun">=</span> <a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a>!(_Type,_DestructorType,_ControlType)<span class="pun">;</span>
+			 <span class="pun">=</span> <a href="../../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a>!(_Type,_DestructorType,_ControlType)<span class="pun">;</span>
 					</div>
 				</code>
 			</div>
-			<section><p>The object is destroyed and its memory deallocated when either of the following happens:
+			<section><p><code class="lang-d"><span class="typ">UniquePtr</span></code> is alias to <code class="lang-d"><a href="../../autoptr/rc_ptr/RcPtr.html" title="autoptr.rc_ptr.RcPtr"><span class="typ">RcPtr</span></a></code> with immutable <code class="lang-d"><span class="pln">_ControlType</span></code>.
+</p>
+
+<p>    The object is destroyed and its memory deallocated when either of the following happens:
 </p>
 
 <p>        1. the managing <code class="lang-d"><span class="typ">UniquePtr</span></code> object is destroyed
 </p>
 
-<p>        2. the managing <code class="lang-d"><span class="typ">UniquePtr</span></code> object is assigned another pointer via various methods like <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.opAssign.html"><span class="pln">opAssign</span></a></code> and <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.store.html"><span class="pln">store</span></a></code>.
+<p>        2. the managing <code class="lang-d"><span class="typ">UniquePtr</span></code> object is assigned another pointer via various methods like <code class="lang-d"><span class="pln">opAssign</span></code> and <code class="lang-d"><span class="pln">store</span></code>.
 </p>
 
 <p>    The object is destroyed using delete-expression or a custom deleter that is supplied to <code class="lang-d"><span class="typ">UniquePtr</span></code> during construction.
@@ -95,283 +95,157 @@ $('#symbolSearchPane').show();</script>
 <p>        <code class="lang-d"><span class="pln">_DestructorType</span></code> function pointer with attributes of destructor, to get attributes of destructor from type use <code class="lang-d"><a href="../../autoptr/common/DestructorType.html" title="autoptr.common.DestructorType"><span class="typ">DestructorType</span></a><span class="pun">!</span><span class="pln">T</span></code>. Destructor of type <code class="lang-d"><span class="pln">_Type</span></code> must be compatible with <code class="lang-d"><span class="pln">_DestructorType</span></code>
 </p>
 
-<p>        <code class="lang-d"><span class="pln">_ControlType</span></code> represent type of counter, must by of type <code class="lang-d"><a href="../../autoptr/common/ControlBlock.html" title="autoptr.common.ControlBlock"><span class="typ">ControlBlock</span></a></code>.
+<p>        <code class="lang-d"><span class="pln">_ControlType</span></code> represent type of counter, must by of type immutable <code class="lang-d"><a href="../../autoptr/common/ControlBlock.html" title="autoptr.common.ControlBlock"><span class="typ">ControlBlock</span></a></code>.
 </p>
 </section>
-<h2>Struct UniquePtr</h2>
-			<section><h3>Constructors</h3>
-				<table>
-					<col class="caption"/>
-					<tr>
-						<th>Name</th><th>Description</th>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.this.html" class="public">
-								<code>this</code>
-							</a>
-							<span class="tableEntryAnnotation">(nil)</span>
-						</td>
-						<td>Constructs a <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code> without managed object. Same as <code class="lang-d"><span class="typ">UniquePtr<wbr/></span><span class="pun">.</span><span class="pln">init</span></code>
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.this.html" class="public">
-								<code>this</code>
-							</a>
-							<span class="tableEntryAnnotation">(rhs)</span>
-						</td>
-						<td>Move constructor.
-</td>
-					</tr>
-				</table>
-			</section>
-			<section><h3>Properties</h3>
-				<table>
-					<col class="caption"/>
-					<tr>
-						<th>Name</th><th>Type</th><th>Description</th>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.element.html" class="public property"><code>element</code></a><span class="tableEntryAnnotation">[get]</span>
-						</td>
-						<td class="typecol"><code class="prettyprint lang-d"><span class="typ">ElementReferenceTypeImpl</span>!(inout(ElementType))</code></td><td>Get pointer to managed object of <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a></code> or reference if <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a></code> is reference type (class or interface)
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.get.html" class="public property"><code>get</code></a><span class="tableEntryAnnotation">[get]</span>
-						</td>
-						<td class="typecol"><code class="prettyprint lang-d"><span class="kwd">inout</span><span class="pun">(</span><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">UniquePtr<wbr/></span><span class="pun">.<wbr/></span><span class="typ">ElementType</span></a><span class="pun">)</span></code></td><td>Get reference to managed object of <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a></code>, same as <code class="lang-d"><span class="pln">operator</span><span class="pun">*</span></code>`
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.length.html" class="public property"><code>length</code></a><span class="tableEntryAnnotation">[get]</span>
-						</td>
-						<td class="typecol"><code class="prettyprint lang-d"><span class="pln">size_t</span></code></td><td>Returns length of dynamic array (isDynamicArray!ElementType == true).
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.toHash.html" class="public property"><code>toHash</code></a><span class="tableEntryAnnotation">[get]</span>
-						</td>
-						<td class="typecol"><code class="prettyprint lang-d"><span class="pln">size_t</span></code></td><td>Generate hash
-</td>
-					</tr>
-				</table>
-			</section>
-			<section><h3>Methods</h3>
-				<table>
-					<col class="caption"/>
-					<tr>
-						<th>Name</th><th>Description</th>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.alloc.html" class="public">
-								<code>alloc</code>
-							</a>
-							<span class="tableEntryAnnotation">(a, args)</span>
-						</td>
-						<td>Constructs an object of type <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a></code> and wraps it in a <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code> using args as the parameter list for the constructor of <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a></code>.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.alloc.html" class="public">
-								<code>alloc</code>
-							</a>
-							<span class="tableEntryAnnotation">(a, n, args)</span>
-						</td>
-						<td>Constructs an object of array type <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a></code> including its array elements and wraps it in a <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code>.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.exchange.html" class="public">
-								<code>exchange</code>
-							</a>
-							<span class="tableEntryAnnotation">(ptr)</span>
-						</td>
-						<td>Stores the non <code class="lang-d"><span class="kwd">shared</span></code> rvalue <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code> parameter <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.exchange.html#ptr"><span class="pln">ptr</span></a></code> to <code class="lang-d"><span class="kwd">this</span></code> and returns the value formerly pointed-to by this.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.make.html" class="public">
-								<code>make</code>
-							</a>
-							<span class="tableEntryAnnotation">(args)</span>
-						</td>
-						<td>Constructs an object of type <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a></code> and wraps it in a <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code> using args as the parameter list for the constructor of <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a></code>.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.make.html" class="public">
-								<code>make</code>
-							</a>
-							<span class="tableEntryAnnotation">(n, args)</span>
-						</td>
-						<td>Constructs an object of array type <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a></code> including its array elements and wraps it in a <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code>.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.move.html" class="public">
-								<code>move</code>
-							</a>
-							<span class="tableEntryAnnotation">()</span>
-						</td>
-						<td>Move <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code>
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.opAssign.html" class="public">
-								<code>opAssign</code>
-							</a>
-							<span class="tableEntryAnnotation">(nil)</span>
-						</td>
-						<td>Releases the ownership of the managed object, if any.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.opAssign.html" class="public">
-								<code>opAssign</code>
-							</a>
-							<span class="tableEntryAnnotation">(rhs)</span>
-						</td>
-						<td>Move ownership of the object managed by <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.opAssign.html#rhs"><span class="pln">rhs</span></a></code>.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.opCast.html" class="public">
-								<code>opCast</code>
-							</a>
-							<span class="tableEntryAnnotation">()</span>
-						</td>
-						<td>Checks if <code class="lang-d"><span class="kwd">this</span></code> stores a non-null pointer, i.e. whether <code class="lang-d"><span class="kwd">this </span><span class="pun">!= </span><span class="kwd">null</span></code>.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.opCmp.html" class="public">
-								<code>opCmp</code>
-							</a>
-							<span class="tableEntryAnnotation">(nil)</span>
-						</td>
-						<td>Operators &lt;, &lt;=, &gt;, &gt;= for <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code>.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.opEquals.html" class="public">
-								<code>opEquals</code>
-							</a>
-							<span class="tableEntryAnnotation">(nil)</span>
-						</td>
-						<td>Operator == and != .
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.proxySwap.html" class="public">
-								<code>proxySwap</code>
-							</a>
-							<span class="tableEntryAnnotation">(rhs)</span>
-						</td>
-						<td>Swap <code class="lang-d"><span class="kwd">this</span></code> with <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.proxySwap.html#rhs"><span class="pln">rhs</span></a></code>
-</td>
-					</tr>
-				</table>
-			</section>
-			<section><h3>Aliases</h3>
-				<table>
-					<col class="caption"/>
-					<tr>
-						<th>Name</th><th>Description</th>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.ControlType.html" class="public">
-								<code>ControlType</code>
-							</a>
-						</td>
-						<td>Type of control block.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.DestructorType.html" class="public">
-								<code>DestructorType</code>
-							</a>
-						</td>
-						<td>Type of destructor (<code class="lang-d"><span class="typ">void </span><span class="kwd">function</span><span class="pun">(</span><span class="typ">void</span><span class="pun">*)@</span><span class="pln">attributes</span></code>).
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.ElementReferenceType.html" class="public">
-								<code>ElementReferenceType</code>
-							</a>
-						</td>
-						<td>Same as <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a><span class="pun">*</span></code> or <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html"><span class="typ">ElementType</span></a></code> if is class/interface/slice.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.ElementType.html" class="public">
-								<code>ElementType</code>
-							</a>
-						</td>
-						<td>Type of element managed by <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code>.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.isLockFree.html" class="public">
-								<code>isLockFree</code>
-							</a>
-						</td>
-						<td><code class="lang-d"><span class="kwd">true</span></code> if shared <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code> has lock free operations <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.store.html"><span class="pln">store</span></a></code> and <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.exchange.html"><span class="pln">exchange</span></a></code>, otherwise 'false'
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.opUnary.html" class="public">
-								<code>opUnary</code>
-							</a>
-						</td>
-						<td>Operator *
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.store.html" class="public">
-								<code>store</code>
-							</a>
-						</td>
-						<td>Stores the non <code class="lang-d"><span class="kwd">shared</span></code> rvalue <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code> parameter <code class="lang-d"><span class="pln">ptr</span></code> to <code class="lang-d"><span class="kwd">this</span></code>.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/unique_ptr/UniquePtr.ThreadLocal.html" class="public">
-								<code>ThreadLocal</code>
-							</a>
-						</td>
-						<td>Return thhread local <code class="lang-d"><a href="../../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code> if specified:
-</td>
-					</tr>
-				</table>
-			</section><h2>Alias UniquePtr</h2>
-			
+
+			<section><h2>Example</h2>
+
+<pre class="code"><code class="lang-d"><span class="pln">
+</span><span class="kwd">static class </span><span class="typ">Foo</span><span class="pun">{
+    </span><span class="typ">int </span><span class="pln">i</span><span class="pun">;
+
+    </span><span class="kwd">this</span><span class="pun">(</span><span class="typ">int </span><span class="pln">i</span><span class="pun">)</span><span class="kwd">pure nothrow @safe @nogc</span><span class="pun">{
+        </span><span class="kwd">this<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">= </span><span class="pln">i</span><span class="pun">;
+    }
+}
+
+</span><span class="kwd">static class </span><span class="typ">Bar </span><span class="pun">: </span><span class="typ">Foo</span><span class="pun">{
+    </span><span class="typ">double </span><span class="pln">d</span><span class="pun">;
+
+    </span><span class="kwd">this</span><span class="pun">(</span><span class="typ">int </span><span class="pln">i</span><span class="pun">, </span><span class="typ">double </span><span class="pln">d</span><span class="pun">)</span><span class="kwd">pure nothrow @safe @nogc</span><span class="pun">{
+        </span><span class="kwd">super</span><span class="pun">(</span><span class="pln">i</span><span class="pun">);
+        </span><span class="kwd">this<wbr/></span><span class="pun">.</span><span class="pln">d </span><span class="pun">= </span><span class="pln">d</span><span class="pun">;
+    }
+}
+
+</span><span class="com">//implicit qualifier cast
+</span><span class="pun">{
+    </span><span class="typ">UniquePtr</span><span class="pun">!(</span><span class="kwd">const </span><span class="typ">Foo</span><span class="pun">) </span><span class="pln">foo </span><span class="pun">=  </span><span class="typ">UniquePtr</span><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
+
+    </span><span class="kwd">const </span><span class="typ">UniquePtr</span><span class="pun">!</span><span class="typ">Foo </span><span class="pln">foo2 </span><span class="pun">= </span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">move</span><span class="pun">;
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo2<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
+
+}
+
+</span><span class="com">//polymorphic classes:
+</span><span class="pun">{
+    </span><span class="typ">UniquePtr</span><span class="pun">!</span><span class="typ">Foo </span><span class="pln">foo </span><span class="pun">= </span><span class="typ">UniquePtr</span><span class="pun">!</span><span class="typ">Bar<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">, </span><span class="lit">3.14</span><span class="pun">);
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo </span><span class="pun">!= </span><span class="kwd">null</span><span class="pun">);
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
+
+    </span><span class="com">//dynamic cast:
+    </span><span class="pun">{
+        </span><span class="typ">UniquePtr</span><span class="pun">!</span><span class="typ">Bar </span><span class="pln">bar </span><span class="pun">= </span><span class="pln">dynCastMove</span><span class="pun">!</span><span class="typ">Bar</span><span class="pun">(</span><span class="pln">foo</span><span class="pun">);
+        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo </span><span class="pun">== </span><span class="kwd">null</span><span class="pun">);
+        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">bar </span><span class="pun">!= </span><span class="kwd">null</span><span class="pun">);
+
+        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">bar<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
+        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">bar<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">d </span><span class="pun">== </span><span class="lit">3.14</span><span class="pun">);
+    }
+
+}
+
+</span><span class="com">//dynamic array
+</span><span class="pun">{
+    </span><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">algorithm </span><span class="pun">: </span><span class="pln">all</span><span class="pun">;
+
+    {
+        </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= </span><span class="typ">UniquePtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">10</span><span class="pun">, -</span><span class="lit">1</span><span class="pun">);
+
+        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">length </span><span class="pun">== </span><span class="lit">10</span><span class="pun">);
+        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">all</span><span class="pun">!(</span><span class="pln">x </span><span class="pun">=&gt; </span><span class="pln">x </span><span class="pun">== -</span><span class="lit">1</span><span class="pun">));
+    }
+
+    {
+        </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= </span><span class="typ">UniquePtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">8</span><span class="pun">);
+        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">length </span><span class="pun">== </span><span class="lit">8</span><span class="pun">);
+        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">all</span><span class="pun">!(</span><span class="pln">x </span><span class="pun">=&gt; </span><span class="pln">x </span><span class="pun">== </span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">init</span><span class="pun">));
+    }
+}
+
+</span><span class="com">//static array
+</span><span class="pun">{
+    </span><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">algorithm </span><span class="pun">: </span><span class="pln">all</span><span class="pun">;
+
+    {
+        </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= </span><span class="typ">UniquePtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[</span><span class="lit">4</span><span class="pun">])<wbr/>.</span><span class="pln">make</span><span class="pun">(-</span><span class="lit">1</span><span class="pun">);
+        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">get</span><span class="pun">[]<wbr/>.</span><span class="pln">all</span><span class="pun">!(</span><span class="pln">x </span><span class="pun">=&gt; </span><span class="pln">x </span><span class="pun">== -</span><span class="lit">1</span><span class="pun">));
+
+    }
+
+    {
+        </span><span class="typ">long</span><span class="pun">[</span><span class="lit">4</span><span class="pun">] </span><span class="pln">tmp </span><span class="pun">= [</span><span class="lit">0</span><span class="pun">, </span><span class="lit">1</span><span class="pun">, </span><span class="lit">2</span><span class="pun">, </span><span class="lit">3</span><span class="pun">];
+        </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= </span><span class="typ">UniquePtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[</span><span class="lit">4</span><span class="pun">])<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="pln">tmp</span><span class="pun">);
+        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">get</span><span class="pun">[] == </span><span class="pln">tmp</span><span class="pun">[]);
+    }
+}
+
+</span></code></pre>
+</section>
+<section><h2>Example</h2>
+
+<pre class="code"><code class="lang-d"><span class="com">//make UniquePtr object
+</span><span class="kwd">static struct </span><span class="typ">Foo</span><span class="pun">{
+    </span><span class="typ">int </span><span class="pln">i</span><span class="pun">;
+
+    </span><span class="kwd">this</span><span class="pun">(</span><span class="typ">int </span><span class="pln">i</span><span class="pun">)</span><span class="kwd">pure nothrow @safe @nogc</span><span class="pun">{
+        </span><span class="kwd">this<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">= </span><span class="pln">i</span><span class="pun">;
+    }
+}
+
+{
+    </span><span class="kwd">auto </span><span class="pln">foo </span><span class="pun">= </span><span class="typ">UniquePtr</span><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
+    </span><span class="kwd">auto </span><span class="pln">foo2 </span><span class="pun">= </span><span class="typ">UniquePtr</span><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">!</span><span class="typ">Mallocator</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);  </span><span class="com">//explicit stateless allocator
+</span><span class="pun">}
+
+{
+    </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= </span><span class="typ">UniquePtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">10</span><span class="pun">); </span><span class="com">//dynamic array with length 10
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">length </span><span class="pun">== </span><span class="lit">10</span><span class="pun">);
+}
+</span></code></pre>
+</section>
+<section><h2>Example</h2>
+
+<pre class="code"><code class="lang-d"><span class="com">//alloc UniquePtr object
+</span><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">experimental<wbr/></span><span class="pun">.</span><span class="pln">allocator </span><span class="pun">: </span><span class="pln">make</span><span class="pun">, </span><span class="pln">dispose</span><span class="pun">, </span><span class="pln">allocatorObject</span><span class="pun">;
+
+</span><span class="kwd">auto </span><span class="pln">allocator </span><span class="pun">= </span><span class="pln">allocatorObject</span><span class="pun">(</span><span class="typ">Mallocator<wbr/></span><span class="pun">.</span><span class="pln">instance</span><span class="pun">);
+
+{
+    </span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= </span><span class="typ">UniquePtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">)<wbr/>.</span><span class="pln">alloc</span><span class="pun">(</span><span class="pln">allocator</span><span class="pun">, </span><span class="lit">42</span><span class="pun">);
+}
+
+{
+    </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= </span><span class="typ">UniquePtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">alloc</span><span class="pun">(</span><span class="pln">allocator</span><span class="pun">, </span><span class="lit">10</span><span class="pun">); </span><span class="com">//dynamic array with length 10
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">length </span><span class="pun">== </span><span class="lit">10</span><span class="pun">);
+}
+
+</span></code></pre>
+</section>
+<section><h2>Example</h2>
+
+<pre class="code"><code class="lang-d"><span class="pun">{
+    </span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= </span><span class="typ">UniquePtr</span><span class="pun">!(</span><span class="kwd">shared </span><span class="typ">long</span><span class="pun">)<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
+
+    </span><span class="kwd">shared </span><span class="pln">s </span><span class="pun">= </span><span class="pln">share</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">move</span><span class="pun">);
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">== </span><span class="kwd">null</span><span class="pun">);
+
+    </span><span class="kwd">auto </span><span class="pln">y </span><span class="pun">= </span><span class="pln">s<wbr/></span><span class="pun">.</span><span class="pln">exchange</span><span class="pun">(</span><span class="kwd">null</span><span class="pun">);
+    </span><span class="kwd">assert</span><span class="pun">(*</span><span class="pln">y </span><span class="pun">== </span><span class="lit">123</span><span class="pun">);
+}
+
+{
+    </span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= </span><span class="typ">UniquePtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">)<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
+
+    </span><span class="com">///error `shared UniquePtr` need shared `ControlType` and shared `ElementType`.
+    //shared s = share(x);
+
+</span><span class="pun">}
+</span></code></pre>
+</section>
+
 			<footer>
 				<table class="license-info">
 					<tr>

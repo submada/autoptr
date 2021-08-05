@@ -13,7 +13,7 @@ import autoptr.internal.mallocator : Mallocator;
 import autoptr.internal.traits;
 
 import autoptr.common;
-import autoptr.unique_ptr : UniquePtr, isUniquePtr;
+//import autoptr.unique_ptr : UniquePtr;
 import autoptr.rc_ptr : RcPtr, isRcPtr;
 import autoptr.intrusive_ptr : IntrusivePtr, isIntrusivePtr;
 
@@ -82,8 +82,9 @@ public template SharedPtr(
     bool _weakPtr = false
 )
 if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
-    //static assert(isMutable!_ControlType);
-    static assert(_ControlType.hasSharedCounter);
+    static assert(_ControlType.hasSharedCounter || is(_ControlType == immutable),
+        "ControlType must have `ControlBlock` with shared counter or `ControlBlock` must be immutable."
+    );
 
 
     static if(_weakPtr)
@@ -468,7 +469,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         }
 
         /// ditto
-        public this(Rhs, this This)(scope Rhs rhs)@trusted
+        /+public this(Rhs, this This)(scope Rhs rhs)@trusted
         if(true
             && isUniquePtr!Rhs
             && isMovable!(Rhs, This)
@@ -484,7 +485,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 this(rhs._control, rhs.element);
                 rhs._const_reset();
             }
-        }
+        }+/
 
         /// ditto
         public this(Rhs, this This)(scope Rhs rhs)@trusted
@@ -563,6 +564,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             @disable this(ref scope From rhs)immutable @safe;
             @disable this(ref scope From rhs)shared @safe;
             @disable this(ref scope From rhs)const shared @safe;
+            //@disable this(ref scope From rhs)pure nothrow @safe @nogc;
         }
 
 
@@ -726,7 +728,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         ///ditto
         public void opAssign(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs desired)scope
         if(true
-            && (isRcPtr!Rhs || isIntrusivePtr!Rhs || isUniquePtr!Rhs)
+            && (isRcPtr!Rhs || isIntrusivePtr!Rhs)
             && isMoveAssignable!(Rhs, This)
             && !is(Rhs == shared)
         ){
@@ -1874,7 +1876,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             self._control = c;
         }
 
-        private void _release()scope /*pure nothrow @safe @nogc*/ {
+        private void _release()scope{
             if(false){
                 DestructorType dt;
                 dt(null);
@@ -1883,10 +1885,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             import std.traits : hasIndirections;
             import core.memory : GC;
 
-            if(this._control is null)
-                return;
-
-            this._control.release!weakPtr;
+            if(this._control !is null)
+                this._control.release!weakPtr;
         }
 
         private void _reset()scope pure nothrow @system @nogc{
@@ -2528,37 +2528,21 @@ private{
         );
     }
 
-    template weakLock(From, To)
-    if(isSharedPtr!From && isSharedPtr!To){
-        enum weakLock = (From.weakPtr && !To.weakPtr);
-    }
-
     template isAliasable(From, To){
-        //static assert(isSharedPtr!From && isSharedPtr!To);
-
         enum bool isAliasable = true
             && is(From.DestructorType : To.DestructorType)
             && is(GetControlType!From* : GetControlType!To*);
-
-
     }
 
     template isMovable(From, To){
-        //static assert((isSharedPtr!From || isUniquePtr!From || isRcPtr!From || isIntrusivePtr!From) && isSharedPtr!To);
-
         import std.traits : CopyTypeQualifiers;
-
-        alias FromPtr = CopyTypeQualifiers!(From, From.ElementReferenceType);
-        alias ToPtr = CopyTypeQualifiers!(To, To.ElementReferenceType);
 
         enum bool isMovable = true
             && isAliasable!(From, To)
-            && is(FromPtr : ToPtr);
+            && is(GetElementReferenceType!From : GetElementReferenceType!To);
     }
 
     template isCopyable(From, To){
-        //static assert((isSharedPtr!From || isUniquePtr!From || isRcPtr!From || isIntrusivePtr!From) && isSharedPtr!To);
-
         import std.traits : isMutable;
 
         enum bool isCopyable = true
@@ -2568,7 +2552,6 @@ private{
     }
 
     template isMoveAssignable(From, To){
-        //static assert((isSharedPtr!From || isUniquePtr!From || isRcPtr!From || isIntrusivePtr!From) && isSharedPtr!To);
         import std.traits : isMutable;
 
         enum bool isMoveAssignable = true
@@ -2578,7 +2561,6 @@ private{
     }
 
     template isCopyAssignable(From, To){
-        //static assert((isSharedPtr!From || isUniquePtr!From || isRcPtr!From || isIntrusivePtr!From) && isSharedPtr!To);
         import std.traits : isMutable;
 
         enum bool isCopyAssignable = true
@@ -3498,7 +3480,7 @@ version(unittest){
             assert(d.useCount == 2);+/
         }
 
-        {
+        /+{
             import core.lifetime : move;
             auto u = UniquePtr!(long, SharedControlType).make(123);
 
@@ -3509,7 +3491,7 @@ version(unittest){
             SharedPtr!long s2 = UniquePtr!(long, SharedControlType).init;
             assert(s2 == null);
 
-        }
+        }+/
 
         {
             import core.lifetime : move;

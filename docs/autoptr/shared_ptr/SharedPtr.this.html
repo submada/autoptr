@@ -72,6 +72,11 @@ $('#symbolSearchPane').show();</script>
 							Function <code>SharedPtr.this</code>
 						</a>
 					</li>
+					<li>
+						<a href="#3">
+							Function <code>SharedPtr.this</code>
+						</a>
+					</li>
 				</ul>
 			</nav><h2 id="0">Function SharedPtr.this</h2><p>Constructs a <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> without managed object. Same as <code class="lang-d"><span class="typ">SharedPtr<wbr/></span><span class="pun">.</span><span class="pln">init</span></code>
 </p>
@@ -178,36 +183,6 @@ $('#symbolSearchPane').show();</script>
 			<span class="pun">)</span><span class="pln"> </span><span class="kwd">@safe</span>
 			<br/>
 			<span class="kwd">if</span> <span class="pun">(</span><span class="kwd">true </span><span class="pun">&amp;&amp; </span><span class="pln">isSharedPtr</span><span class="pun">!</span><span class="typ">Rhs </span><span class="pun">&amp;&amp; (</span><span class="pln">isCopyable</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) || </span><span class="pln">isMovable</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">)) &amp;&amp; </span><span class="pln">weakLock</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Rhs </span><span class="pun">== </span><span class="kwd">shared</span><span class="pun">)</span><span class="pun">);</span>
-			<br/>
-			<br/>
-			<span class="pln">this</span>(Rhs, This)
-			<span class="pun">(</span>
-			<br/>
-			&nbsp;&nbsp;<span class="kwd">scope </span><span class="typ">Rhs</span> <span class="pln">rhs</span>
-			<br/>
-			<span class="pun">)</span><span class="pln"> </span><span class="kwd">@trusted</span>
-			<br/>
-			<span class="kwd">if</span> <span class="pun">(</span><span class="kwd">true </span><span class="pun">&amp;&amp; </span><span class="pln">isUniquePtr</span><span class="pun">!</span><span class="typ">Rhs </span><span class="pun">&amp;&amp; </span><span class="pln">isMovable</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; (</span><span class="pln">weakPtr </span><span class="pun">== </span><span class="kwd">false</span><span class="pun">) &amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Rhs </span><span class="pun">== </span><span class="kwd">shared</span><span class="pun">)</span><span class="pun">);</span>
-			<br/>
-			<br/>
-			<span class="pln">this</span>(Rhs, This)
-			<span class="pun">(</span>
-			<br/>
-			&nbsp;&nbsp;<span class="kwd">scope </span><span class="typ">Rhs</span> <span class="pln">rhs</span>
-			<br/>
-			<span class="pun">)</span><span class="pln"> </span><span class="kwd">@trusted</span>
-			<br/>
-			<span class="kwd">if</span> <span class="pun">(</span><span class="kwd">true </span><span class="pun">&amp;&amp; </span><span class="pln">isRcPtr</span><span class="pun">!</span><span class="typ">Rhs </span><span class="pun">&amp;&amp; </span><span class="pln">isMovable</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Rhs </span><span class="pun">== </span><span class="kwd">shared</span><span class="pun">)</span><span class="pun">);</span>
-			<br/>
-			<br/>
-			<span class="pln">this</span>(Rhs, This)
-			<span class="pun">(</span>
-			<br/>
-			&nbsp;&nbsp;<span class="kwd">scope </span><span class="typ">Rhs</span> <span class="pln">rhs</span>
-			<br/>
-			<span class="pun">)</span><span class="pln"> </span><span class="kwd">@trusted</span>
-			<br/>
-			<span class="kwd">if</span> <span class="pun">(</span><span class="kwd">true </span><span class="pun">&amp;&amp; </span><span class="pln">isIntrusivePtr</span><span class="pun">!</span><span class="typ">Rhs </span><span class="pun">&amp;&amp; </span><span class="pln">isMovable</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Rhs </span><span class="pun">== </span><span class="kwd">shared</span><span class="pun">)</span><span class="pun">);</span>
 					</div>
 				</code>
 			</div>
@@ -282,7 +257,37 @@ $('#symbolSearchPane').show();</script>
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">s2 </span><span class="pun">== </span><span class="kwd">null</span><span class="pun">);
 }</span></code></pre>
 </section>
+<h2 id="3">Function SharedPtr.this</h2><p>ditto
+</p>
+			<div class="prototype">
+				<code class="lang-d">
+					<div class="single-prototype">
+			<span class="pln">this</span>(Rhs, This)
+			<span class="pun">(</span>
+			<br/>
+			&nbsp;&nbsp;<span class="kwd">scope </span><span class="typ">Rhs</span> <span class="pln">rhs</span>
+			<br/>
+			<span class="pun">)</span><span class="pln"> </span><span class="kwd">@trusted</span>
+			<br/>
+			<span class="kwd">if</span> <span class="pun">(</span><span class="kwd">true </span><span class="pun">&amp;&amp; </span><span class="pln">isRcPtr</span><span class="pun">!</span><span class="typ">Rhs </span><span class="pun">&amp;&amp; </span><span class="pln">isMovable</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Rhs </span><span class="pun">== </span><span class="kwd">shared</span><span class="pun">)</span><span class="pun">);</span>
+			<br/>
+			<br/>
+			<span class="pln">this</span>(Rhs, This)
+			<span class="pun">(</span>
+			<br/>
+			&nbsp;&nbsp;<span class="kwd">scope </span><span class="typ">Rhs</span> <span class="pln">rhs</span>
+			<br/>
+			<span class="pun">)</span><span class="pln"> </span><span class="kwd">@trusted</span>
+			<br/>
+			<span class="kwd">if</span> <span class="pun">(</span><span class="kwd">true </span><span class="pun">&amp;&amp; </span><span class="pln">isIntrusivePtr</span><span class="pun">!</span><span class="typ">Rhs </span><span class="pun">&amp;&amp; </span><span class="pln">isMovable</span><span class="pun">!(</span><span class="typ">Rhs</span><span class="pun">, </span><span class="typ">This</span><span class="pun">) &amp;&amp; !</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">Rhs </span><span class="pun">== </span><span class="kwd">shared</span><span class="pun">)</span><span class="pun">);</span>
+					</div>
+				</code>
+			</div>
+			<section><p>ditto
+</p>
+</section>
 
+			
 			<footer>
 				<table class="license-info">
 					<tr>

@@ -88,7 +88,7 @@ $('#symbolSearchPane').show();</script>
 <p>    A <code class="lang-d"><span class="typ">IntrusivePtr</span></code> may also own no objects, in which case it is called empty.
 </p>
 
-<p>    <code class="lang-d"><span class="pln">_Type</span></code> must contain one property of type <code class="lang-d"><span class="typ">ControlBlock</span></code> or <code class="lang-d"><span class="typ">MutableControlBlock</span></code> (this property contains ref counting). If this property is <code class="lang-d"><span class="kwd">shared</span></code> then ref counting is atomic.
+<p>    <code class="lang-d"><span class="pln">_Type</span></code> must contain one property of type <code class="lang-d"><span class="typ">ControlBlock</span></code> (this property contains ref counting). If this property is <code class="lang-d"><span class="kwd">shared</span></code> then ref counting is atomic.
 </p>
 
 <p>    If <code class="lang-d"><span class="pln">_Type</span></code> is const/immutable then ControlBlock cannot be modified =&gt; ref counting doesn't work and <code class="lang-d"><span class="typ">IntrusivePtr</span></code> can be only moved.

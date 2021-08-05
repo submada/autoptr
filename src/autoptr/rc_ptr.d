@@ -10,7 +10,7 @@ import autoptr.internal.mallocator : Mallocator;
 import autoptr.internal.traits;
 
 import autoptr.common;
-import autoptr.unique_ptr : UniquePtr, isUniquePtr;
+//import autoptr.unique_ptr : UniquePtr;
 
 
 /**
@@ -74,7 +74,9 @@ public template RcPtr(
     bool _weakPtr = false
 )
 if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
-    static assert(_ControlType.hasSharedCounter);
+    static assert(_ControlType.hasSharedCounter || is(_ControlType == immutable),
+        "ControlType must have `ControlBlock` with shared counter or `ControlBlock` must be immutable."
+    );
 
 
     static if(_weakPtr)
@@ -366,7 +368,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         }
 
         /// ditto
-        public this(Rhs, this This)(scope Rhs rhs)@trusted
+        /+public this(Rhs, this This)(scope Rhs rhs)@trusted
         if(true
             && isUniquePtr!Rhs
             && isMovable!(Rhs, This)
@@ -379,7 +381,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 this(rhs.element, Evoid.init);
                 rhs._const_reset();
             }
-        }
+        }+/
 
 
         static if(isCopyable!(typeof(this), typeof(this)))
@@ -419,6 +421,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             @disable this(ref scope From rhs)immutable @safe;
             @disable this(ref scope From rhs)shared @safe;
             @disable this(ref scope From rhs)const shared @safe;
+            //@disable this(ref scope From rhs)pure nothrow @safe @nogc;
         }
 
 
@@ -480,7 +483,9 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             }
             else{
                 this._release();
-                this._reset();
+                ()@trusted{
+                    this._reset();
+                }();
             }
         }
 
@@ -868,7 +873,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         */
         public @property ControlType.Shared useCount(this This)()const scope nothrow @trusted @nogc{
 
-            static if(is(This == shared))
+            static if(is(ControlType.Shared == void))
+                return;
+
+            else static if(is(This == shared))
                 return this.lockRcPtr!(
                     (ref scope return self) => self.useCount()
                 )();
@@ -904,7 +912,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         */
         public @property ControlType.Weak weakCount(this This)()const scope nothrow @safe @nogc{
 
-            static if(is(This == shared))
+            static if(is(ControlType.Weak == void))
+                return;
+
+            else static if(is(This == shared))
                 return this.lockSharedPtr!(
                     (ref scope return self) => self.weakCount()
                 )();
@@ -1753,8 +1764,17 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
         private ElementReferenceType _element;
 
+        private void _release()scope{
+            if(false){
+                DestructorType dt;
+                dt(null);
+            }
 
-        package CopyTypeQualifiers!(This, ControlType)* _control(this This)()pure nothrow @trusted @nogc
+            if(this._element !is null)
+                this._control.release!weakPtr;
+        }
+
+        package GetControlType!This* _control(this This)()pure nothrow @trusted @nogc
         in(this._element !is null){
             static if(isDynamicArray!ElementType){
                 return cast(typeof(return))((cast(void*)this._element.ptr) - ControlType.sizeof);
@@ -1768,45 +1788,27 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             }
         }
 
-        private void _set_element(ElementReferenceType e)pure nothrow @trusted @nogc{
-            static if(isMutable!ElementReferenceType)
-                this._element = e;
-            else
-                (*cast(Unqual!ElementReferenceType*)&this._element) = cast(Unqual!ElementReferenceType)e;
+        private void _reset()scope pure nothrow @system @nogc{
+            this._set_element(null);
         }
 
-        private void _const_set_element(ElementReferenceType e)const pure nothrow @trusted @nogc{
+        package void _const_reset()scope const pure nothrow @system @nogc{
+            auto self = cast(Unqual!(typeof(this))*)&this;
+
+            self._reset();
+        }
+
+        private void _set_element(ElementReferenceType e)pure nothrow @system @nogc{
+            (*cast(Unqual!ElementReferenceType*)&this._element) = cast(Unqual!ElementReferenceType)e;
+        }
+
+        private void _const_set_element(ElementReferenceType e)const pure nothrow @system @nogc{
             auto self = cast(Unqual!(typeof(this))*)&this;
 
             static if(isMutable!ElementReferenceType)
                 self._element = e;
             else
                 (*cast(Unqual!ElementReferenceType*)&self._element) = cast(Unqual!ElementReferenceType)e;
-        }
-
-        private void _release()scope /*pure nothrow @safe @nogc*/ {
-            if(false){
-                DestructorType dt;
-                dt(null);
-            }
-
-            import std.traits : hasIndirections;
-            import core.memory : GC;
-
-            if(this._element is null)
-                return;
-
-            this._control.release!weakPtr;
-        }
-
-        private void _reset()scope pure nothrow @trusted @nogc{
-            this._set_element(null);
-        }
-
-        package void _const_reset()scope const pure nothrow @trusted @nogc{
-            auto self = cast(Unqual!(typeof(this))*)&this;
-
-            self._reset();
         }
 
         private alias MakeEmplace(AllocatorType, bool supportGC) = .MakeEmplace!(
@@ -1975,7 +1977,7 @@ nothrow unittest{
     auto allocator = allocatorObject(Mallocator.instance);
 
     {
-        auto x = RcPtr!(long, void function(Evoid* )nothrow).alloc(allocator, 42);
+        auto x = RcPtr!(long).alloc(allocator, 42);
     }
 
     {
@@ -2102,7 +2104,9 @@ if(true
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){
     if(auto element = dynCastElement!T(ptr._element)){
-        ptr._const_reset();
+        ()@trusted{
+            ptr._const_reset();
+        }();
         return typeof(return)(element, Evoid.init);
     }
 
@@ -2363,17 +2367,8 @@ private{
         );
     }
 
-    template weakLock(From, To)
-    if(isRcPtr!From && isRcPtr!To){
-        enum weakLock = (From.weakPtr && !To.weakPtr);
-    }
-
     template isMovable(From, To){
-        //static assert((isRcPtr!From || isUniquePtr!From) && isRcPtr!To);
         import std.traits : Unqual, CopyTypeQualifiers;
-
-        alias FromPtr = CopyTypeQualifiers!(From, From.ElementReferenceType);
-        alias ToPtr = CopyTypeQualifiers!(To, To.ElementReferenceType);
 
         static if(is(Unqual!(From.ElementType) == Unqual!(To.ElementType)))
             enum bool overlapable = true;
@@ -2388,14 +2383,12 @@ private{
 
         enum bool isMovable = true
             && overlapable    //isOverlapable!(From.ElementType, To.ElementType) //&& is(Unqual!(From.ElementType) == Unqual!(To.ElementType))
-            && is(FromPtr : ToPtr)
+            && is(GetElementReferenceType!From : GetElementReferenceType!To)
             && is(From.DestructorType : To.DestructorType)
             && is(GetControlType!From* : GetControlType!To*);
     }
 
     template isCopyable(From, To){
-        //static assert((isRcPtr!From || isUniquePtr!From) && isRcPtr!To);
-
         import std.traits : isMutable;
 
         enum bool isCopyable = true
@@ -2406,7 +2399,6 @@ private{
     }
 
     template isMoveAssignable(From, To){
-        //static assert(isRcPtr!From && isRcPtr!To);
         import std.traits : isMutable;
 
         enum bool isMoveAssignable = true
@@ -2416,7 +2408,6 @@ private{
     }
 
     template isCopyAssignable(From, To){
-        //static assert(isRcPtr!From && isRcPtr!To);
         import std.traits : isMutable;
 
         enum bool isCopyAssignable = true
@@ -2438,11 +2429,7 @@ private{
         mutex.lock();
         scope(exit)mutex.unlock();
 
-        alias Result = UnqualRcPtr!(shared Ptr);/+ChangeElementType!(
-            Unshared!Ptr,
-            CopyTypeQualifiers!(shared Ptr, Ptr.ElementType)
-        );+/
-
+        alias Result = UnqualRcPtr!(shared Ptr);
 
         return fn(
             *(()@trusted => cast(Result*)&ptr )(),
@@ -3290,7 +3277,7 @@ version(unittest){
             assert(d.useCount == 2);+/
         }
 
-        {
+        /+{
             import core.lifetime : move;
             auto u = UniquePtr!(long, SharedControlType).make(123);
 
@@ -3301,7 +3288,7 @@ version(unittest){
             RcPtr!long s2 = UniquePtr!(long, SharedControlType).init;
             assert(s2 == null);
 
-        }
+        }+/
 
     }
 

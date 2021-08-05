@@ -54,111 +54,10 @@ $('#symbolSearchPane').show();</script>
 			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>Module autoptr.unique_ptr</h1><p>Implementation of unique pointer <code class="lang-d"><a href="../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code> (similar to c++ <code class="lang-d"><span class="pln">std</span><span class="pun">::</span><span class="pln">unique_ptr</span></code>).
+			<h1>Module autoptr.unique_ptr</h1><p>Implementation of unique pointer <code class="lang-d"><a href="../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code> (alias to <code class="lang-d"><span class="typ">RcPtr</span></code> with immutable control block).
 </p><section></section>
 
 			<section></section>
-			<section>
-				<h2>Functions</h2>
-				<table>
-					<col class="caption"/>
-					<tr>
-						<th>Name</th><th>Description</th>
-					</tr>
-					<tr>
-						<td>
-							<code>
-								<a id="dynCast" class="public" href="../autoptr/unique_ptr/dynCast.html">dynCast</a><span class="tableEntryAnnotation">()</span>
-							</code>
-						</td>
-						<td>Same as <code class="lang-d"><a href="../autoptr/unique_ptr/dynCastMove.html"><span class="pln">dynCastMove</span></a></code> but parameter <code class="lang-d"><span class="pln">ptr</span></code> is rvalue.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<code>
-								<a id="dynCastMove" class="public" href="../autoptr/unique_ptr/dynCastMove.html">dynCastMove</a><span class="tableEntryAnnotation">()</span>
-							</code>
-						</td>
-						<td>Dynamic cast for shared pointers if <code class="lang-d"><span class="typ">ElementType</span></code> is class with D linkage.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<code>
-								<a id="first" class="public" href="../autoptr/unique_ptr/first.html">first</a><span class="tableEntryAnnotation">(ptr)</span>
-							</code>
-						</td>
-						<td>Return <code class="lang-d"><a href="../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a></code> pointing to first element of dynamic array managed by unique pointer <code class="lang-d"><a href="../autoptr/unique_ptr/first.html#ptr"><span class="pln">ptr</span></a></code>.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<code>
-								<a id="rcPtr" class="public" href="../autoptr/unique_ptr/rcPtr.html">rcPtr</a><span class="tableEntryAnnotation">(ptr)</span>
-							</code>
-						</td>
-						<td>Create <code class="lang-d"><span class="typ">RcPtr</span></code> from parameter <code class="lang-d"><a href="../autoptr/unique_ptr/rcPtr.html#ptr"><span class="pln">ptr</span></a></code> if <code class="lang-d"><span class="typ">ControlType</span></code> of <code class="lang-d"><a href="../autoptr/unique_ptr/rcPtr.html#ptr"><span class="pln">ptr</span></a></code> has shared counter.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<code>
-								<a id="share" class="public" href="../autoptr/unique_ptr/share.html">share</a><span class="tableEntryAnnotation">(ptr)</span>
-							</code>
-						</td>
-						<td>Return <code class="lang-d"><span class="kwd">shared <a href="../autoptr/unique_ptr/UniquePtr.html"></span><span class="typ">UniquePtr</span></a></code> pointing to same managed object like parameter <code class="lang-d"><a href="../autoptr/unique_ptr/share.html#ptr"><span class="pln">ptr</span></a></code>.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<code>
-								<a id="sharedPtr" class="public" href="../autoptr/unique_ptr/sharedPtr.html">sharedPtr</a><span class="tableEntryAnnotation">(ptr)</span>
-							</code>
-						</td>
-						<td>Create <code class="lang-d"><span class="typ">SharedPtr</span></code> from parameter <code class="lang-d"><a href="../autoptr/unique_ptr/sharedPtr.html#ptr"><span class="pln">ptr</span></a></code> if <code class="lang-d"><span class="typ">ControlType</span></code> of <code class="lang-d"><a href="../autoptr/unique_ptr/sharedPtr.html#ptr"><span class="pln">ptr</span></a></code> has shared counter.
-</td>
-					</tr>
-				</table>
-			</section>
-			<section>
-				<h2>Structs</h2>
-				<table>
-					<col class="caption"/>
-					<tr>
-						<th>Name</th><th>Description</th>
-					</tr>
-					<tr>
-						<td>
-							<code>
-								<a id="UniquePtr" class="public" href="../autoptr/unique_ptr/UniquePtr.html">UniquePtr</a>
-							</code>
-						</td>
-						<td><code class="lang-d"><span class="typ">UniquePtr</span></code> is a smart pointer that owns and manages object through a pointer and disposes of that object when the <code class="lang-d"><span class="typ">UniquePtr</span></code> goes out of scope.
-</td>
-					</tr>
-				</table>
-			</section>
-			<section>
-				<h2>Manifest constants</h2>
-				<table>
-					<col class="caption"/>
-					<tr>
-						<th>Name</th><th>Type</th><th>Description</th>
-					</tr>
-					<tr>
-						<td>
-							<a id="isUniquePtr" class="public" href="../autoptr/unique_ptr/isUniquePtr.html">
-								<code>isUniquePtr</code>
-							</a>
-						</td>
-						<td>
-						</td>
-						<td>Check if type <code class="lang-d"><span class="pln">T</span></code> is of type <code class="lang-d"><a href="../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a><span class="pun">!(...)</span></code>
-</td>
-					</tr>
-				</table>
-			</section>
 			<section>
 				<h2>Aliases</h2>
 				<table>
@@ -173,7 +72,7 @@ $('#symbolSearchPane').show();</script>
 							</a>
 						</td>
 						<td>
-							<code class="prettyprint lang-d"><a href="../autoptr/unique_ptr/UniquePtr.html"><span class="typ">UniquePtr</span></a>!(_Type,_DestructorType,_ControlType)</code>
+							<code class="prettyprint lang-d"><a href="../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a>!(_Type,_DestructorType,_ControlType)</code>
 						</td>
 						<td><code class="lang-d"><span class="typ">UniquePtr</span></code> is a smart pointer that owns and manages object through a pointer and disposes of that object when the <code class="lang-d"><span class="typ">UniquePtr</span></code> goes out of scope.
 </td>
