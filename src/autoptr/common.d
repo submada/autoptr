@@ -779,9 +779,11 @@ if(isIntrusive!Type && is(Type == class) || is(Type == struct)){
     import std.traits : CopyTypeQualifiers, PointerTarget, Unconst;
 
     static if(mutable && is(PtrControlBlock == shared))
-        alias IntrusiveControlBlock = shared(Unconst!(PointerTarget!PtrControlBlock));
+        alias impl = shared(Unconst!(PointerTarget!PtrControlBlock));
     else
-        alias IntrusiveControlBlock = PointerTarget!PtrControlBlock;
+        alias impl = PointerTarget!PtrControlBlock;
+
+    alias IntrusiveControlBlock = impl;
     
 }
 

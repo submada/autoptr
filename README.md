@@ -364,7 +364,7 @@ unittest{
 ```d
 nothrow unittest{
     static struct Struct{
-        MutableControlBlock!(int, int) control;
+        ControlBlock!(int, int) control;
         int i;
 
         this(int i)pure nothrow @safe @nogc{
@@ -374,7 +374,7 @@ nothrow unittest{
 
     static class Base{
         int i;
-        MutableControlBlock!(int, int) control;
+        ControlBlock!(int, int) control;
 
         this(int i)pure nothrow @safe @nogc{
             this.i = i;
@@ -395,8 +395,8 @@ nothrow unittest{
             this.b = b;
         }
 
-        ~this()nothrow @system{
-        }
+        /+~this()nothrow @system{
+        }+/
     }
 
     ///simple:
@@ -433,7 +433,7 @@ nothrow unittest{
         //IntrusivePtr!Class x = zee;
 
         ///this does work:
-        IntrusivePtr!(Base, DestructorType!(Base, Class)) x = zee;
+        IntrusivePtr!Base x = zee;
         assert(zee.useCount == 2);
     }
 
