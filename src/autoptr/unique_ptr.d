@@ -9,7 +9,7 @@ module autoptr.unique_ptr;
 import autoptr.internal.mallocator : Mallocator;
 import autoptr.internal.traits;
 
-import autoptr.rc_ptr;
+public import autoptr.rc_ptr;
 import autoptr.common;
 
 

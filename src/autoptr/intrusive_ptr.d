@@ -3385,8 +3385,6 @@ version(unittest){
             }
         }
 
-        import std.conv;
-
         IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
         assert(x.useCount == 1
         );

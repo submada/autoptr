@@ -6,9 +6,6 @@
 */
 module autoptr.shared_ptr;
 
-import std.stdio : writeln;
-import std.conv : to;
-
 import autoptr.internal.mallocator : Mallocator;
 import autoptr.internal.traits;
 

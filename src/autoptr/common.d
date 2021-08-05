@@ -7,7 +7,6 @@
 module autoptr.common;
 
 import std.meta : AliasSeq;
-import std.stdio;
 
 import autoptr.internal.traits;
 import autoptr.internal.mallocator;
@@ -1312,7 +1311,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
 
         version(D_BetterC)
             private static void shared_static_this()pure nothrow @safe @nogc{
-                assumePure((){
+                assumePure(()@trusted{
                     Vtable* vptr = cast(Vtable*)&vtable;
                     
                     static if(hasSharedCounter)
@@ -1617,7 +1616,7 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _Allocat
 
         version(D_BetterC)
             private static void shared_static_this()pure nothrow @safe @nogc{
-                assumePure((){
+                assumePure(()@trusted{
                     Vtable* vptr = cast(Vtable*)&vtable;
                     
                     static if(hasSharedCounter)
@@ -1886,7 +1885,7 @@ if(isIntrusive!_Type == 1){
 
         version(D_BetterC)
             private static void shared_static_this()pure nothrow @safe @nogc{
-                assumePure((){
+                assumePure(()@trusted{
                     Vtable* vptr = cast(Vtable*)&vtable;
                     
                     static if(hasSharedCounter)
@@ -2148,7 +2147,7 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
 
         version(D_BetterC)
             private static void shared_static_this()pure nothrow @safe @nogc{
-                assumePure((){
+                assumePure(()@trusted{
                     Vtable* vptr = cast(Vtable*)&vtable;
                     
                     static if(hasSharedCounter)

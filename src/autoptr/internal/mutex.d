@@ -82,22 +82,22 @@ static if(supportMutex){
                 pthread_mutexattr_t attr = void;
 
                 if(pthread_mutexattr_init(&attr))
-                    assert(0, "Error: pthread_mutexattr_init failed.");
+                    abort("Error: pthread_mutexattr_init failed.");
                 /+!pthread_mutexattr_init(&attr) ||
                     abort("Error: pthread_mutexattr_init failed.");+/
 
                 scope (exit) if(pthread_mutexattr_destroy(&attr))
-                    assert(0, "Error: pthread_mutexattr_destroy failed.");
+                    abort("Error: pthread_mutexattr_destroy failed.");
                 /+scope (exit) !pthread_mutexattr_destroy(&attr) ||
                     abort("Error: pthread_mutexattr_destroy failed.");+/
 
                 if(pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE))
-                    assert(0, "Error: pthread_mutexattr_settype failed.");
+                    abort("Error: pthread_mutexattr_settype failed.");
                 /+!pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE) ||
                     abort("Error: pthread_mutexattr_settype failed.");+/
 
                 if(pthread_mutex_init(cast(pthread_mutex_t*) &m_hndl, &attr))
-                    assert(0, "Error: pthread_mutex_init failed.");
+                    abort("Error: pthread_mutex_init failed.");
                 /+!pthread_mutex_init(cast(pthread_mutex_t*) &m_hndl, &attr) ||
                     abort("Error: pthread_mutex_init failed.");+/
             }
