@@ -2319,6 +2319,9 @@ nothrow @nogc unittest{
 */
 auto intrusivePtr(Elm)(Elm elm)
 if(is(Elm == class) && isIntrusive!Elm){
+    import std.traits : isMutable;
+    static assert(isMutable!(IntrusiveControlBlock!Elm), "control block for intrusive parameter `elm` for function `intrusivePtr` must be mutable");
+
     auto result = IntrusivePtr!Elm(elm, Evoid.init);
     result._control.add!false;
     return result;
@@ -2327,6 +2330,9 @@ if(is(Elm == class) && isIntrusive!Elm){
 /// ditto
 auto intrusivePtr(Ptr : Elm*, Elm)(Ptr elm)
 if(is(Elm == struct) && isIntrusive!Elm){
+    import std.traits : isMutable;
+    static assert(isMutable!(IntrusiveControlBlock!Elm), "control block for intrusive parameter `elm` for function `intrusivePtr` must be mutable");
+
     auto result = IntrusivePtr!Elm(elm, Evoid.init);
     result._control.add!false;
     return result;
