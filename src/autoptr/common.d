@@ -722,7 +722,7 @@ unittest{
 
 }
 
-private size_t isIntrusiveClass(Type, bool ignoreBase)()pure nothrow @safe @nogc
+private size_t isIntrusiveClass(Type, bool ignoreBase)()pure nothrow @trusted @nogc
 if(is(Type == class)){
     import std.traits : BaseClassesTuple;
 
