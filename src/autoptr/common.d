@@ -1231,7 +1231,7 @@ if(isIntrusive!T){
     import core.lifetime : forward, emplace;
 
 
-    static if (args.length == 0){
+    static if (args.length == 0 && !is(T == class)){
         static assert(is(typeof({static T i;})),
             "Cannot emplace a " ~ T.stringof ~ " because " ~ T.stringof ~
             ".this() is annotated with @disable."
