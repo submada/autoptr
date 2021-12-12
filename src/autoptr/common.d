@@ -61,7 +61,7 @@ private string genDestructorTypes(){
 
 //create all possible DestructorType types, DestructorType can return type with some hidden information and comparsion with it can fail (bug in D compiler).
 //If type is created before calling DestructorType then DestructorType return existing type free of hidden informations and comparsion is ok.
-/+public alias DestructorTypes = AliasSeq!(
+public alias DestructorTypes = AliasSeq!(
     void function(Evoid* )pure nothrow @safe @nogc,
     void function(Evoid* )pure nothrow @safe,
     void function(Evoid* )pure nothrow @system @nogc,
@@ -78,7 +78,7 @@ private string genDestructorTypes(){
     void function(Evoid* )@safe,
     void function(Evoid* )@system @nogc,
     void function(Evoid* )@system,
-);+/
+);
 
 
 /**
@@ -744,7 +744,7 @@ if(is(Type == class)){
 
 }
 
-private size_t isIntrusiveStruct(Type)()pure nothrow @safe @nogc
+private size_t isIntrusiveStruct(Type)()pure nothrow @trusted @nogc
 if(is(Type == struct)){
     Type* ty = null;
 
@@ -900,7 +900,7 @@ import std.meta : AliasSeq;
     For example if control block is immutable, then return type can be immtuable(ControlBlock)* or shared(immutable(ControlBlock)*).
     If result pointer is shared then atomic ref counting is necessary.
 */
-package auto intrusivControlBlock(Type)(scope return auto ref Type elm)pure nothrow @trusted @nogc{
+package auto intrusivControlBlock(Type)(return auto ref Type elm)pure nothrow @trusted @nogc{
 
     static if(is(Type == struct)){
         static if(isControlBlock!Type){
@@ -1348,7 +1348,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
 
         @disable public this(this)pure nothrow @safe @nogc;
 
-        public @property _ControlType* base()return scope pure nothrow @trusted @nogc{
+        public @property _ControlType* base()return pure nothrow @trusted @nogc{
             //static assert(this.control.offsetof == 0);
             /+return function _ControlType*(ref _ControlType ct)@trusted{
                 return &ct;
@@ -1610,7 +1610,7 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _Allocat
 
         static assert(control.offsetof + typeof(control).sizeof == data_impl.offsetof);
 
-        @property inout(ElementEncodingType!_Type)[] data()return scope inout pure nothrow @trusted @nogc{
+        @property inout(ElementEncodingType!_Type)[] data()return inout pure nothrow @trusted @nogc{
             return data_impl.ptr[0 .. this.length];
         }
 
@@ -1653,11 +1653,11 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _Allocat
 
         @disable public this(this)pure nothrow @safe @nogc;
 
-        public @property _ControlType* base()return scope pure nothrow @trusted @nogc{
+        public @property _ControlType* base()return pure nothrow @trusted @nogc{
             return &this.control;
         }
 
-        public @property auto get()return scope pure nothrow @trusted @nogc{
+        public @property auto get()return pure nothrow @trusted @nogc{
             return this.data;
         }
 
@@ -1920,7 +1920,7 @@ if(isIntrusive!_Type == 1){
                 );
             }
 
-        public @property PtrOrRef!_Type get()scope return pure nothrow @trusted @nogc{
+        public @property PtrOrRef!_Type get()return pure nothrow @trusted @nogc{
             return cast(PtrOrRef!_Type)this.data.ptr;
         }
 

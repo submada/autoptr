@@ -238,7 +238,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         }
 
         //copy ctor
-        package this(Rhs, this This)(ref scope Rhs rhs, Evoid ctor)@safe
+        package this(Rhs, this This)(ref scope Rhs rhs, Evoid ctor)@trusted
         if(true
             && isRcPtr!Rhs
             && isCopyable!(Rhs, This)
