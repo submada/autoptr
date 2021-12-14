@@ -333,7 +333,6 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && isRcPtr!Rhs
             //&& !is(Unqual!This == Unqual!Rhs) //TODO move ctors need this
             && (isCopyable!(Rhs, This) || isMovable!(Rhs, This))
-            && isMovable!(Rhs, This)
             && !weakLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
@@ -1902,6 +1901,7 @@ pure nothrow @nogc unittest{
 
     //weak references:
     {
+
         auto x = RcPtr!double.make(3.14);
         assert(x.useCount == 1);
         assert(x.weakCount == 0);
@@ -1919,6 +1919,38 @@ pure nothrow @nogc unittest{
         x = null;
         assert(w2.expired == true);
     }
+
+    //weak references:
+    /+{
+
+        static struct Zee{
+            Foo foo;
+            this(double d)pure nothrow @safe @nogc{}
+        }
+    import std.stdio;
+        debug writeln("rcptr: start");
+        debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
+        {
+            auto x = RcPtr!Zee.make(3.14);
+            assert(x.useCount == 1);
+            assert(x.weakCount == 0);
+
+            debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
+            {
+                auto w = x.weak();  //weak pointer
+                debug writeln("x.weakCount: ", x.weakCount);
+                debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
+
+            }
+            debug writeln("x.weakCount: ", x.weakCount);
+
+            debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
+
+        }
+        debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
+        debug writeln("rcptr: end");
+
+    }+/
 
     //dynamic array
     {
@@ -3495,4 +3527,11 @@ version(unittest){
 
 pure nothrow @safe @nogc unittest{
     RcPtr!void u = RcPtr!void.make();
+}
+
+
+version(unittest){
+    struct Foo{
+        RcPtr!int i;
+    }
 }

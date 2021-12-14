@@ -310,19 +310,29 @@ if(isIntrusive!_Type){
                 }
                 --------------------
         */
-        public this(Rhs, this This)(ref scope Rhs rhs)@safe
+        public this(Rhs, this This)(auto ref scope Rhs rhs)@trusted
         if(true
             && isIntrusivePtr!Rhs
-            && !is(Unqual!This == Unqual!Rhs)   ///copy ctors
-            && isCopyable!(Rhs, This)
+            //&& !is(Unqual!This == Unqual!Rhs)   ///copy ctors
+            && (isCopyable!(Rhs, This) || isMovable!(Rhs, This))
             && !weakLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
-            this(rhs, Evoid.init);
+            static if(isRef!rhs){
+                static assert(isCopyable!(Rhs, This));
+
+                this(rhs, Evoid.init);
+            }
+            else{
+                static assert(isMovable!(Rhs, This));
+
+                this._element = rhs._element;
+                rhs._const_reset();
+            }
         }
 
-        /// ditto
-        public this(Rhs, this This)(scope Rhs rhs)@trusted
+        // ditto
+        /*public this(Rhs, this This)(scope Rhs rhs)@trusted
         if(true
             && isIntrusivePtr!Rhs
             //&& !is(Unqual!This == Unqual!Rhs) //TODO move ctors need this
@@ -332,7 +342,7 @@ if(isIntrusive!_Type){
         ){
             this._element = rhs._element;
             rhs._const_reset();
-        }
+        }*/
 
         /// ditto
         public this(Rhs, this This)(auto ref scope Rhs rhs)@trusted
@@ -1990,6 +2000,36 @@ pure nothrow @nogc unittest{
         x = null;
         assert(w2.expired == true);
     }
+
+
+    //weak references:
+    /+{
+        import std.stdio;
+        debug writeln("intrusive: start");
+        debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
+        {
+            auto x = IntrusivePtr!Foo.make(314);
+            assert(x.useCount == 1);
+            assert(x.weakCount == 0);
+
+            debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
+            {
+                auto w = x.weak();  //weak pointer
+                //assert(x.weakCount == 1);
+                debug writeln("x.weakCount: ", x.weakCount);
+
+                debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
+
+            }
+                debug writeln("x.weakCount: ", x.weakCount);
+            assert(x.weakCount == 0);
+
+            debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
+
+        }
+        debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
+        debug writeln("intrusive: end");
+    }+/
 }
 
 ///
@@ -3572,3 +3612,12 @@ version(unittest){
     }
 }
 
+
+version(unittest){
+    struct Bar{
+        ControlBlock!int cb;
+    }
+    struct Foo{
+        IntrusivePtr!Bar bar;
+    }
+}
