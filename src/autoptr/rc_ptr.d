@@ -328,7 +328,30 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 }
                 --------------------
         */
-        public this(Rhs, this This)(ref scope Rhs rhs)@safe
+        public this(Rhs, this This)(auto ref scope Rhs rhs)@trusted
+        if(true
+            && isRcPtr!Rhs
+            //&& !is(Unqual!This == Unqual!Rhs) //TODO move ctors need this
+            && (isCopyable!(Rhs, This) || isMovable!(Rhs, This))
+            && isMovable!(Rhs, This)
+            && !weakLock!(Rhs, This)
+            && !is(Rhs == shared)
+        ){
+            static if(isRef!rhs){
+                static assert(isCopyable!(Rhs, This));
+
+                this(rhs, Evoid.init);
+            }
+            else{
+                static assert(isMovable!(Rhs, This));
+
+                this._element = rhs._element;
+                rhs._const_reset();
+            }
+        }
+
+        // ditto
+        /*public this(Rhs, this This)(ref scope Rhs rhs)@safe
         if(true
             && isRcPtr!Rhs
             && !is(Unqual!This == Unqual!Rhs)   ///copy ctors
@@ -337,20 +360,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && !is(Rhs == shared)
         ){
             this(rhs, Evoid.init);
-        }
+        }*/
 
-        /// ditto
-        public this(Rhs, this This)(scope Rhs rhs)@trusted
-        if(true
-            && isRcPtr!Rhs
-            //&& !is(Unqual!This == Unqual!Rhs) //TODO move ctors need this
-            && isMovable!(Rhs, This)
-            && !weakLock!(Rhs, This)
-            && !is(Rhs == shared)
-        ){
-            this._element = rhs._element;
-            rhs._const_reset();
-        }
 
         /// ditto
         public this(Rhs, this This)(auto ref scope Rhs rhs)@safe
