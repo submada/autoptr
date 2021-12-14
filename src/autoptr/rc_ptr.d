@@ -332,7 +332,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         if(true
             && isRcPtr!Rhs
             //&& !is(Unqual!This == Unqual!Rhs) //TODO move ctors need this
-            && (isCopyable!(Rhs, This) || isMovable!(Rhs, This))
+            && (false
+                || (isRef!rhs && isCopyable!(Rhs, This))
+                || (!isRef!rhs && isMovable!(Rhs, This))
+            )
             && !weakLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
