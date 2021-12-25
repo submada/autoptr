@@ -513,6 +513,36 @@ $('#symbolSearchPane').show();</script>
     </span><span class="pln">x </span><span class="pun">= </span><span class="kwd">null</span><span class="pun">;
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">w2<wbr/></span><span class="pun">.</span><span class="pln">expired </span><span class="pun">== </span><span class="kwd">true</span><span class="pun">);
 }
+
+
+</span><span class="com">//weak references:
+/+{
+    import std.stdio;
+    debug writeln("intrusive: start");
+    debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
+    {
+        auto x = IntrusivePtr!Foo.make(314);
+        assert(x.useCount == 1);
+        assert(x.weakCount == 0);
+
+        debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
+        {
+            auto w = x.weak();  //weak pointer
+            //assert(x.weakCount == 1);
+            debug writeln("x.weakCount: ", x.weakCount);
+
+            debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
+
+        }
+            debug writeln("x.weakCount: ", x.weakCount);
+        assert(x.weakCount == 0);
+
+        debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
+
+    }
+    debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
+    debug writeln("intrusive: end");
+}+/
 </span></code></pre>
 </section>
 <section><h2>Example</h2>

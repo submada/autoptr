@@ -737,7 +737,7 @@ if(isIntrusive!_Type){
         static if(!weakPtr)
         public static IntrusivePtr!ElementType
         alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, auto ref Args args)
-        if(stateSize!AllocatorType >= 0){
+        if(stateSize!AllocatorType > 0){
             static assert(!weakPtr);
 
             static assert(is(DestructorAllocatorType!AllocatorType : DestructorType));

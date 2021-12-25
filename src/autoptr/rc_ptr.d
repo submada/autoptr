@@ -798,7 +798,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         static if(!weakPtr)
         public static RcPtr!(ElementType, .DestructorType!(.DestructorType!ElementType, DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
         alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, auto ref Args args)
-        if(stateSize!AllocatorType >= 0 && !isDynamicArray!ElementType){
+        if(stateSize!AllocatorType > 0 && !isDynamicArray!ElementType){
             static assert(!weakPtr);
 
             auto m = typeof(return).MakeEmplace!(AllocatorType, supportGC).make(forward!(a, args));
@@ -840,7 +840,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         static if(!weakPtr)
         public static RcPtr!(ElementType, .DestructorType!(.DestructorType!ElementType, DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
         alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, const size_t n, auto ref Args args)
-        if(stateSize!AllocatorType >= 0 && isDynamicArray!ElementType){
+        if(stateSize!AllocatorType > 0 && isDynamicArray!ElementType){
             static assert(!weakPtr);
 
             auto m = typeof(return).MakeDynamicArray!(AllocatorType, supportGC).make(forward!(a, n, args));

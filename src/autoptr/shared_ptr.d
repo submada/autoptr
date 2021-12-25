@@ -924,7 +924,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         static if(!weakPtr)
         public static SharedPtr!(ElementType, .DestructorType!(ElementDestructorType, DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
         alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, auto ref Args args)
-        if(stateSize!AllocatorType >= 0 && !isDynamicArray!ElementType){
+        if(stateSize!AllocatorType > 0 && !isDynamicArray!ElementType){
             static assert(!weakPtr);
 
             auto m = typeof(return).MakeEmplace!(AllocatorType, supportGC).make(forward!(a, args));
@@ -959,7 +959,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         static if(!weakPtr)
         public static SharedPtr!(ElementType, .DestructorType!(ElementDestructorType, DestructorType, DestructorAllocatorType!AllocatorType, DestructorDeleterType!(ElementType, DeleterType)), ControlType)
         alloc(bool supportGC = platformSupportGC, AllocatorType, DeleterType)(AllocatorType allocator, ElementReferenceType element, DeleterType deleter)
-        if(stateSize!AllocatorType >= 0 && isCallable!DeleterType){
+        if(stateSize!AllocatorType > 0 && isCallable!DeleterType){
             static assert(!weakPtr);
 
             auto m = typeof(return).MakeDeleter!(DeleterType, AllocatorType, supportGC).make(forward!(element, deleter, allocator));
@@ -1001,7 +1001,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         static if(!weakPtr)
         public static SharedPtr!(ElementType, .DestructorType!(ElementDestructorType, DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
         alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, const size_t n, auto ref Args args)
-        if(stateSize!AllocatorType >= 0 && isDynamicArray!ElementType){
+        if(stateSize!AllocatorType > 0 && isDynamicArray!ElementType){
             static assert(!weakPtr);
 
             auto m = typeof(return).MakeDynamicArray!(AllocatorType, supportGC).make(forward!(a, n, args));
