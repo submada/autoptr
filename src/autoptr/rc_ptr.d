@@ -3554,3 +3554,21 @@ version(unittest){
         RcPtr!int i;
     }
 }
+
+
+
+//test strong ptr -> weak ptr move ctor
+unittest{
+    {
+        import core.lifetime : move;
+
+        auto a = RcPtr!int.make(1);
+        auto b = a;
+        assert(a.useCount == 2);
+        assert(a.weakCount == 0);
+
+        RcPtr!int.WeakType x = move(a);
+        assert(b.useCount == 1);
+        assert(b.weakCount == 1);
+    }
+}

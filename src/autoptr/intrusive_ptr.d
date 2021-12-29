@@ -3639,3 +3639,31 @@ version(unittest){
         IntrusivePtr!Bar bar;
     }
 }
+
+
+
+
+//test strong ptr -> weak ptr move ctor
+unittest{
+    static struct Foo{
+        ControlBlock!(int, int) c;
+        int i;
+
+        this(int i)pure nothrow @safe @nogc{
+            this.i = i;
+        }
+    }
+
+    {
+        import core.lifetime : move;
+
+        auto a = IntrusivePtr!Foo.make(1);
+        auto b = a;
+        assert(a.useCount == 2);
+        assert(a.weakCount == 0);
+
+        IntrusivePtr!Foo.WeakType x = move(a);
+        assert(b.useCount == 1);
+        assert(b.weakCount == 1);
+    }
+}
