@@ -69,21 +69,30 @@ unittest{
 public template IntrusivePtr(
     _Type,
     bool _weakPtr = false
-)
-if(isIntrusive!_Type){
-    static assert(is(_Type == struct) || is(_Type == class));
-    static assert(isIntrusive!_Type == 1);
+){
+    static assert(is(_Type == struct) || is(_Type == class),
+        "intrusive pointer type must be class or struct"
+    );
 
-    alias _ControlType = IntrusiveControlBlock!_Type;
+    static assert(isIntrusive!_Type,
+        "type `" ~ _Type.stringof ~ "` must have member of type `ControlBlock`"
+    );
 
-    static assert(_ControlType.hasSharedCounter);
+    static assert(isIntrusive!_Type == 1,
+        "type `" ~ _Type.stringof ~ "` must have only one member of type `ControlBlock`"
+    );
 
+    static assert(!_weakPtr || _ControlType.hasWeakCounter,
+        "weak pointer must have control block with weak counter"
+    );
 
-    static if(_weakPtr)
-    static assert(_ControlType.hasWeakCounter);
+    static assert(!__traits(isNested, _Type),
+        "IntrusivePtr does not support nested types."
+    );
 
-    static if (is(_Type == class) || is(_Type == interface) || is(_Type == struct) || is(_Type == union))
-        static assert(!__traits(isNested, _Type), "IntrusivePtr does not support nested types.");
+    static assert(_ControlType.hasSharedCounter,
+        "ControlBlock in IntrusivePtr must have shared counter"
+    );
 
 
     import std.experimental.allocator : stateSize;
@@ -95,6 +104,9 @@ if(isIntrusive!_Type){
 
     import core.atomic : MemoryOrder;
     import core.lifetime : forward;
+
+
+    alias _ControlType = IntrusiveControlBlock!_Type;
 
     enum bool hasWeakCounter = _ControlType.hasWeakCounter;
 

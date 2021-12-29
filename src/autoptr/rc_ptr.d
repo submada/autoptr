@@ -73,14 +73,19 @@ public template RcPtr(
     bool _weakPtr = false
 )
 if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
+
     static assert(_ControlType.hasSharedCounter || is(_ControlType == immutable),
-        "ControlType must have `ControlBlock` with shared counter or `ControlBlock` must be immutable."
+        "_ControlType must be `ControlBlock` with shared counter or `autoptr.common.ControlBlock` must be immutable."
     );
 
+    static assert(!_weakPtr || _ControlType.hasWeakCounter,
+        "weak pointer must have control block with weak counter"
+    );
 
-    static if(_weakPtr)
-    static assert(_ControlType.hasWeakCounter);
-
+    static if (is(_Type == class) || is(_Type == interface) || is(_Type == struct) || is(_Type == union))
+        static assert(!__traits(isNested, _Type),
+            "RcPtr does not support nested types."
+        );
 
     static assert(is(DestructorType!void : _DestructorType),
         _Type.stringof ~ " wrong DestructorType " ~ DestructorType!void.stringof ~
@@ -91,9 +96,6 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         "destructor of type '" ~ _Type.stringof ~
         "' doesn't support specified finalizer " ~ _DestructorType.stringof
     );
-
-    static if (is(_Type == class) || is(_Type == interface) || is(_Type == struct) || is(_Type == union))
-        static assert(!__traits(isNested, _Type), "RcPtr does not support nested types.");
 
 
     import std.experimental.allocator : stateSize;
