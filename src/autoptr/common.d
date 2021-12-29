@@ -613,58 +613,6 @@ unittest{
 
 
 
-/+
-/**
-    Check if type `T` is of type `MutableControlBlock!(...)`.
-*/
-public template isMutableControlBlock(T...)
-if(T.length == 1){
-    import std.traits : Unqual;
-
-    enum bool isMutableControlBlock = is(
-        Unqual!(T[0]) == MutableControlBlock!Args, Args...
-    );
-}
-
-
-import std.traits : isIntegral;
-
-/**
-    Mutable intrusive `ControlBlock`, this control block can be modified even if is `const` / `immutable`.
-
-    Necessary for `IntrusivePtr`.
-    
-    Examples are in `IntrusiveControlBlock`.
-*/
-template MutableControlBlock(_Shared, _Weak = void)
-if(isIntegral!_Shared){
-    import std.traits : Unqual, isUnsigned, isIntegral, isMutable;
-
-    static assert(isIntegral!_Shared && !isUnsigned!_Shared || is(_Weak == void));
-    static assert(is(Unqual!_Shared == _Shared));
-
-    static assert((isIntegral!_Weak && !isUnsigned!_Weak) || is(_Weak == void));
-    static assert(is(Unqual!_Weak == _Weak));
-
-    alias MutableControlBlock = MutableControlBlock!(ControlBlock!(_Shared, _Weak));
-}
-
-/// ditto
-template MutableControlBlock(_ControlType)
-if(isControlBlock!_ControlType){
-    import std.traits : isMutable;
-
-    static assert(isMutable!_ControlType);
-
-    struct MutableControlBlock{
-        public alias ControlType = _ControlType;
-
-        private ControlType control;
-    }
-}
-+/
-
-
 /**
     Return number of `ControlBlock`s in type `Type`.
 
@@ -731,7 +679,7 @@ if(is(Type == class)){
     size_t result = 0;
 
     static foreach(alias T; typeof(ty.tupleof)){
-        static if(is(T == struct) && (isControlBlock!T /+|| isMutableControlBlock!T+/))
+        static if(is(T == struct) && isControlBlock!T)
             result += 1;
     }
 
@@ -751,7 +699,7 @@ if(is(Type == struct)){
     size_t result = 0;
 
     static foreach(alias T; typeof((*ty).tupleof)){
-        static if(is(T == struct) && (isControlBlock!T || isMutableControlBlock!T))
+        static if(is(T == struct) && isControlBlock!T)
             result += 1;
     }
 
@@ -909,19 +857,11 @@ package auto intrusivControlBlock(Type)(return auto ref Type elm)pure nothrow @t
             else
                 return &elm;
         }
-        /+else static if(isMutableControlBlock!Type){
-            auto control = intrusivControlBlock(elm.control);
-
-            static if(is(Type == shared) || is(typeof(Unqual!Type.control) == shared))
-                return cast(shared(Unconst!(typeof(*control))*))control;
-            else
-                return cast(Unconst!(typeof(*control))*)control;
-        }+/
         else{
             static assert(isIntrusive!(Unqual!Type) == 1);
 
             foreach(ref x; (*cast(Unqual!(typeof(elm))*)&elm).tupleof){
-                static if(isControlBlock!(typeof(x)) /+|| isMutableControlBlock!(typeof(x))+/){
+                static if(isControlBlock!(typeof(x))){
                     auto control = intrusivControlBlock(*cast(CopyTypeQualifiers!(Type, typeof(x))*)&x);
 
                     static if(is(Type == shared) || is(typeof(x) == shared))
@@ -937,7 +877,7 @@ package auto intrusivControlBlock(Type)(return auto ref Type elm)pure nothrow @t
 
         static if(isIntrusiveClass!(Type, true)){
             foreach(ref x; (cast(Unqual!(typeof(elm)))elm).tupleof){
-                static if(isControlBlock!(typeof(x)) /+|| isMutableControlBlock!(typeof(x))+/){
+                static if(isControlBlock!(typeof(x))){
                     auto control = intrusivControlBlock(*cast(CopyTypeQualifiers!(Type, typeof(x))*)&x);
 
                     static if(is(Type == shared) || is(typeof(x) == shared))
@@ -952,7 +892,7 @@ package auto intrusivControlBlock(Type)(return auto ref Type elm)pure nothrow @t
             static if(isIntrusiveClass!(T, true)){
 
                 foreach(ref x; (cast(Unqual!T)elm).tupleof){
-                    static if(isControlBlock!(typeof(x)) /+|| isMutableControlBlock!(typeof(x))+/){
+                    static if(isControlBlock!(typeof(x))){
                         auto control = intrusivControlBlock(*cast(CopyTypeQualifiers!(Type, typeof(x))*)&x);
 
                         static if(is(Type == shared) || is(typeof(x) == shared))
@@ -1087,14 +1027,14 @@ package size_t intrusivControlBlockOffset(Type)()pure nothrow @safe @nogc{
     
     static if(is(Type == struct)){
         static foreach(alias var; Type.tupleof){
-            static if(isControlBlock!(typeof(var)) /+|| isMutableControlBlock!(typeof(var))+/)
+            static if(isControlBlock!(typeof(var)))
                 return var.offsetof;
         }
     }
     else static if(is(Type == class)){
         static if(isIntrusiveClass!(Type, true)){
             static foreach(alias var; Type.tupleof){
-                static if(isControlBlock!(typeof(var)) /+|| isMutableControlBlock!(typeof(var))+/)
+                static if(isControlBlock!(typeof(var)))
                     return var.offsetof;
 
             }
@@ -1102,7 +1042,7 @@ package size_t intrusivControlBlockOffset(Type)()pure nothrow @safe @nogc{
         else static foreach(alias T; BaseClassesTuple!Type){
             static if(isIntrusiveClass!(T, true)){
                 static foreach(alias var; T.tupleof){
-                    static if(isControlBlock!(typeof(var)) /+|| isMutableControlBlock!(typeof(var))+/)
+                    static if(isControlBlock!(typeof(var)))
                         return var.offsetof;
                 }
             }
