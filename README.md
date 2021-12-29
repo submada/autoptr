@@ -4,7 +4,7 @@
 This library contains:
 * `SharedPtr` is a smart pointer that retains shared ownership of an object through a pointer. Support weak pointers and aliasing like C++ std::shared_ptr. Pointer to managed object is separated from pointer to control block conataining reference counter. `SharedPtr` contains 2 pointers or 2 pointers + length if managed object is slice). 
 * `RcPtr`     is a smart pointer that retains shared ownership of an object through a pointer. Support weak pointers and only limited aliasing unlike `SharedPtr`. Managed object must be allcoated with control block (reference counter) in one continuous memory block. `RcPtr` contains only 1 pointer or 1 pointer + length if managed object is slice.
-* `IntrusivePtr` is a smart pointer that retains shared ownership of an object through a pointer. Support weak pointers and only limited aliasing unlike `SharedPtr`. Managed object must contain control block (`autoptr.common.ControlBlock` or `autoptr.common.MutableControlBlock`). `IntrusivePtr` contains only 1 pointer and type of managed object must be `struct` or `class`
+* `IntrusivePtr` is a smart pointer that retains shared ownership of an object through a pointer. Support weak pointers and only limited aliasing unlike `SharedPtr`. Managed object must contain control block (`autoptr.common.ControlBlock`). `IntrusivePtr` contains only 1 pointer and type of managed object must be `struct` or `class`
 * `UniquePtr` is a smart pointer that owns and manages object through a pointer and disposes of that object when the `UniquePtr` goes out of scope. `UniquePtr` is alias to `RcPtr` with immutable `_ControlType`.
 
 `SharedPtr`, `RcPtr` and `UniquePtr` have 3 template parameters:
