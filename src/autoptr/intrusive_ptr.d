@@ -330,7 +330,14 @@ if(isIntrusive!_Type){
                 static assert(isMovable!(Rhs, This));
 
                 this._element = rhs._element;
-                rhs._const_reset();
+
+                static if(weakPtr && !Rhs.weakPtr){
+                    if(this._element !is null)
+                        this._control.add!weakPtr;
+                }
+                else{
+                    rhs._const_reset();
+                }
             }
         }
 

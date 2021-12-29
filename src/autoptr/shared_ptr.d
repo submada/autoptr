@@ -338,7 +338,13 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             this._control = rhs._control;
             this._element = element;
 
-            rhs._const_set_counter(null);
+            static if(weakPtr && !Rhs.weakPtr){
+                if(this._control !is null)
+                    rhs._control.add!weakPtr;
+            }
+            else{
+                rhs._const_set_counter(null);
+            }
         }
 
 

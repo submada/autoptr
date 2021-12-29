@@ -1089,56 +1089,51 @@ unittest{
     static assert(isIntrusive!Bar == 2);
 }
 
-/+
-import std.traits : isMutable, isBasicType, 
-    isPointer, PointerTarget,
-    isArray;
-import std.range : ElementEncodingType;
+package enum string emplacableErrorMsg(_Type, Args...) = "cannot call constructor of type `" ~ _Type.stringof ~ "` with arguments: " ~ Args.stringof;
 
-template isSafeCtorCallArg(T){
+package template isEmplacable(_Type, args...){
+    import std.traits : isStaticArray, isDynamicArray, PointerTarget;
+    import std.range : ElementEncodingType;
+    import core.lifetime : forward, emplace;
 
-    static if(!isMutable!T || isBasicType!T || is(immutable T == immutable typeof(null)))
-        enum bool isSafeCtorCallArg = true;
+    static if(is(Unqual!_Type == void)){
+        enum bool isEmplacable = true;//nothing
+    }
+    else static if(isStaticArray!_Type){
+        static if(args.length == 1 && is(typeof(args[0]) : _Type)){
+            enum bool isEmplacable = __traits(compiles, emplace(cast(_Type*)null, forward!args));
+        }
+        else{
 
-    else static if(isPointer!T)
-        enum bool isSafeCtorCallArg = .isSafeCtorCallArg!(PointerTarget!T);
+            static if(isReferenceType!(ElementEncodingType!_Type)){
+                static if(args.length == 0)
+                    enum bool isEmplacable = true;
+                else static if(args.length == 1)
+                    enum bool isEmplacable = __traits(compiles, _Type(args[0]));
+                else
+                    enum bool isEmplacable = false;
 
-    else static if(isArray!T)
-        enum bool isSafeCtorCallArg = .isSafeCtorCallArg!(ElementEncodingType!T);
-
-    else
-        enum bool isSafeCtorCallArg = false;
-}
-
-/*
-    Return `true` if type `T` can be constructed with parameters `Args` in @safe code.
-*/
-template hasSafeCtorCall(T){
-    static if(is(T == struct) || is(T == union) || is(T == class)){
-        bool hasSafeCtorCall(Args...)(auto ref Args args){
-            import core.lifetime : forward;
-            T chunk;
-
-            static if(is(typeof(chunk.__ctor(forward!args)))){
-                import std.traits : isMutable, isBasicType, isPointer, PointerTarget;
-                bool safe = true;
-
-                static foreach(alias Arg; Args)
-                    safe = isSafeCtorCallArg!Arg;   
-
-                return safe;
             }
             else{
-                return true;
+                enum bool isEmplacable = isEmplacable!(ElementEncodingType!_Type, args);
             }
         }
     }
-    else{
-        bool hasSafeCtorCall(Args...)(auto ref Args args){
-            return true;
-        }
+    else static if(isDynamicArray!_Type){
+        alias T = ElementEncodingType!_Type;
+        static if(is(T == class) || is(T == interface))
+            enum bool isEmplacable = isEmplacable!(T, args);
+        else
+            enum bool isEmplacable = isEmplacable!(ElementEncodingType!_Type, args);
     }
-}+/
+    else{
+        static if(isReferenceType!_Type)
+            enum bool isEmplacable = __traits(compiles, emplace(cast(_Type)null, forward!args));
+        else
+            enum bool isEmplacable = __traits(compiles, emplace(cast(_Type*)null, forward!args));
+    }
+
+}
 
 
 /*
