@@ -733,6 +733,7 @@ version(unittest){
     }
 
     //opCast : bool
+    /+TODO
     pure nothrow @nogc unittest{
 
         UniquePtr!long x = UniquePtr!long.make(123);
@@ -742,6 +743,8 @@ version(unittest){
         assert(!cast(bool)x);   //explicit cast
         assert(!x);             //implicit cast
     }
+    +/
+
 
     //opEquals
     pure nothrow @nogc unittest{

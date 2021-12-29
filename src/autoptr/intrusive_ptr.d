@@ -1576,6 +1576,8 @@ if(isIntrusive!_Type){
         /**
             Checks if `this` stores a non-null pointer, i.e. whether `this != null`.
 
+            BUG: qualfied variable of struct with dtor cannot be inside other struct (generated dtor will use opCast to mutable before dtor call ). opCast is renamed to opCastImpl
+
             Examples:
                 --------------------
                 static struct Foo{
@@ -1595,7 +1597,7 @@ if(isIntrusive!_Type){
                 assert(!x);             //implicit cast
                 --------------------
         */
-        public bool opCast(To : bool)()const scope pure nothrow @safe @nogc
+        public bool opCastImpl(To : bool)()const scope pure nothrow @safe @nogc
         if(is(To : bool)){ //docs
             return (this != null);
         }
@@ -1603,6 +1605,8 @@ if(isIntrusive!_Type){
 
         /**
             Cast `this` to different type `To` when `isIntrusivePtr!To`.
+
+            BUG: qualfied variable of struct with dtor cannot be inside other struct (generated dtor will use opCast to mutable before dtor call ). opCast is renamed to opCastImpl
 
             Examples:
                 --------------------
@@ -1633,7 +1637,7 @@ if(isIntrusive!_Type){
                 assert(x.useCount == 4);
                 --------------------
         */
-        public To opCast(To, this This)()scope
+        public To opCastImpl(To, this This)()scope
         if(isIntrusivePtr!To && !is(This == shared)){
             ///copy this -> return
             return To(this);
@@ -3404,6 +3408,7 @@ version(unittest){
     }
 
     //opCast bool
+    /+TODO
     @safe pure nothrow @nogc unittest{
         static struct Foo{
             ControlBlock!(int, int) c;
@@ -3421,8 +3426,10 @@ version(unittest){
         assert(!cast(bool)x);   //explicit cast
         assert(!x);             //implicit cast
     }
+    +/
 
     //opCast IntrusivePtr
+    /+TODO
     @safe pure nothrow @nogc unittest{
         static struct Foo{
             ControlBlock!(int, int) c;
@@ -3448,6 +3455,7 @@ version(unittest){
         auto u = cast(const IntrusivePtr!(const Foo))x;
         assert(x.useCount == 4);
     }
+    +/
 
     //opEquals IntrusivePtr
     pure @safe nothrow @nogc unittest{

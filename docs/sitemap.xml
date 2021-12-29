@@ -46,8 +46,8 @@
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.opAssign.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.opAssign.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.opAssign.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.opCast.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.opCast.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.opCastImpl.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.opCastImpl.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.opCmp.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.opCmp.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.opCmp.html</loc></url>
@@ -104,8 +104,8 @@
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.opAssign.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.opAssign.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.opAssign.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.opCast.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.opCast.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.opCastImpl.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.opCastImpl.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.opCmp.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.opCmp.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.opCmp.html</loc></url>
@@ -162,8 +162,8 @@
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opAssign.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opAssign.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opAssign.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opCast.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opCast.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opCastImpl.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opCastImpl.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opCmp.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opCmp.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opCmp.html</loc></url>
