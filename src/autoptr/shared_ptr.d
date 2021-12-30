@@ -84,9 +84,9 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 		"_ControlType must be `ControlBlock` with shared counter or `ControlBlock` must be immutable."
 	);
 
-    static assert(!_weakPtr || _ControlType.hasWeakCounter,
-        "weak pointer must have control block with weak counter"
-    );
+	static assert(!_weakPtr || _ControlType.hasWeakCounter,
+		"weak pointer must have control block with weak counter"
+	);
 
 	static if (is(_Type == class) || is(_Type == interface) || is(_Type == struct) || is(_Type == union))
 		static assert(!__traits(isNested, _Type),
