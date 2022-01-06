@@ -3574,3 +3574,10 @@ unittest{
         assert(b.weakCount == 1);
     }
 }
+
+//compare strong and weak ptr
+unittest{
+    auto a = RcPtr!int.make(1);
+    auto b = a.weak;
+    assert(a == b);
+}

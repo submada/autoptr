@@ -240,12 +240,14 @@ public template DestructorType(Types...){
 				// generate a body that calls all the destructors in the chain,
 				// compiler should infer the intersection of attributes
 				foreach (B; AliasSeq!(Type, BaseClassesTuple!Type)) {
+                    alias UB = Unqual!B;
+
 					// __dtor, i.e. B.~this
 					static if (__traits(hasMember, B, "__dtor"))
-						() { B obj; obj.__dtor; } ();
+						() { UB obj; obj.__dtor; } ();
 					// __xdtor, i.e. dtors for all RAII members
 					static if (__traits(hasMember, B, "__xdtor"))
-						() { B obj; obj.__xdtor; } ();
+						() { UB obj; obj.__xdtor; } ();
 				}
 			}
 			else static if(isDynamicArray!Type){

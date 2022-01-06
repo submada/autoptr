@@ -107,7 +107,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 	import std.experimental.allocator : stateSize;
 	import std.meta : AliasSeq;
 	import std.range : ElementEncodingType;
-	import std.traits: Unqual, CopyTypeQualifiers, CopyConstness,
+	import std.traits: Unqual, Unconst, CopyTypeQualifiers, CopyConstness,
 		hasIndirections, hasElaborateDestructor,
 		isMutable, isAbstractClass, isDynamicArray, isStaticArray, isCallable, Select, isArray;
 
@@ -195,7 +195,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
 		/**
-			Return thhread local `SharedPtr` if specified:
+			Return thread local `SharedPtr` if specified:
 
 				1.  if parameter `threadLocal` is `true` then result type is thread local `SharedPtr` (!is(_ControlType == shared)).
 
@@ -206,7 +206,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				alias ThreadLocal = SharedPtr!(
 					_Type,
 					_DestructorType,
-					Unqual!_ControlType,
+					Unshared!_ControlType,
 					weakPtr
 				);
 			else
@@ -1858,6 +1858,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 			return move_impl(this);
 		}
+
 
 
 		private ControlType* _control;
@@ -3732,4 +3733,11 @@ unittest{
 		assert(b.useCount == 1);
 		assert(b.weakCount == 1);
 	}
+}
+
+//compare strong and weak ptr
+unittest{
+    auto a = SharedPtr!int.make(1);
+    auto b = a.weak;
+    assert(a == b);
 }

@@ -3679,3 +3679,20 @@ unittest{
         assert(b.weakCount == 1);
     }
 }
+
+//compare strong and weak ptr
+unittest{
+    static struct Foo{
+        ControlBlock!(int, int) c;
+        int i;
+
+        this(int i)pure nothrow @safe @nogc{
+            this.i = i;
+        }
+    }
+
+    auto a = IntrusivePtr!Foo.make(1);
+    auto b = a.weak;
+    assert(a == b);
+
+}
