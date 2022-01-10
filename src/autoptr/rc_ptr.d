@@ -337,17 +337,20 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             && isConstructable!(rhs, This)
             && !is(Rhs == shared)
         ){
+            //lock (copy):
             static if(weakLock!(Rhs, This)){
                 if(rhs._element !is null && rhs._control.add_shared_if_exists())
                     this._element = rhs._element;
                 else
                     this._element = null;
             }
+            //copy
             else static if(isRef!rhs){
                 static assert(isCopyConstructable!(Rhs, This));
 
                 this(rhs, Evoid.init);
             }
+            //move
             else{
                 static assert(isMoveConstructable!(Rhs, This));
 
