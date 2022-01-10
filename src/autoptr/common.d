@@ -319,11 +319,13 @@ unittest{
 public template ControlTypeDeduction(Type, ControlType){
 	import std.traits : Select;
 
-	alias ControlTypeDeduction = Select!(
+	alias impl = Select!(
 		is(Type == shared), /+|| is(Type == immutable)+/
 		shared(ControlType),
 		ControlType
 	);
+
+    alias ControlTypeDeduction = impl;
 }
 
 ///
