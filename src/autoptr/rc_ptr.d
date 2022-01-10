@@ -649,16 +649,25 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(!weakPtr)
-        public static RcPtr!(ElementType, .DestructorType!(.DestructorType!ElementType, DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
-        make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(auto ref Args args)
+        public static auto make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(auto ref Args args)
         if(stateSize!AllocatorType == 0 && !isDynamicArray!ElementType){
             static assert(!weakPtr);
 
-            auto m = typeof(return).MakeEmplace!(AllocatorType, supportGC).make(forward!(args));
+            alias ReturnType = RcPtr!(
+                ElementType,
+                .DestructorType!(
+                    .DestructorType!ElementType,
+                    DestructorType,
+                    DestructorAllocatorType!AllocatorType
+                ),
+                ControlType
+            );
+
+            auto m = ReturnType.MakeEmplace!(AllocatorType, supportGC).make(forward!(args));
 
             return (m is null)
-                ? typeof(return).init
-                : typeof(return)(m.get, Evoid.init);
+                ? ReturnType.init
+                : ReturnType(m.get, Evoid.init);
         }
 
 
@@ -689,16 +698,25 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(!weakPtr)
-        public static RcPtr!(ElementType, .DestructorType!(.DestructorType!ElementType, DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
-        make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(const size_t n, auto ref Args args)
+        public static auto make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(const size_t n, auto ref Args args)
         if(stateSize!AllocatorType == 0 && isDynamicArray!ElementType){
             static assert(!weakPtr);
 
-            auto m = typeof(return).MakeDynamicArray!(AllocatorType, supportGC).make(n, forward!(args));
+            alias ReturnType = RcPtr!(
+                ElementType,
+                .DestructorType!(
+                    .DestructorType!ElementType,
+                    DestructorType,
+                    DestructorAllocatorType!AllocatorType
+                ),
+                ControlType
+            );
+
+            auto m = ReturnType.MakeDynamicArray!(AllocatorType, supportGC).make(n, forward!(args));
 
             return (m is null)
-                ? typeof(return).init
-                : typeof(return)(m.get, Evoid.init);
+                ? ReturnType.init
+                : ReturnType(m.get, Evoid.init);
         }
 
 
@@ -753,16 +771,24 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(!weakPtr)
-        public static RcPtr!(ElementType, .DestructorType!(.DestructorType!ElementType, DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
-        alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, auto ref Args args)
+        public static auto alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, auto ref Args args)
         if(!isDynamicArray!ElementType){
             static assert(!weakPtr);
 
-            auto m = typeof(return).MakeEmplace!(AllocatorType, supportGC).make(forward!(a, args));
+            alias ReturnType = RcPtr!(
+                ElementType,
+                .DestructorType!(
+                    .DestructorType!ElementType,
+                    DestructorType,
+                    DestructorAllocatorType!AllocatorType
+                ),
+                ControlType
+            );
+            auto m = ReturnType.MakeEmplace!(AllocatorType, supportGC).make(forward!(a, args));
 
             return (m is null)
-                ? typeof(return).init
-                : typeof(return)(m.get, Evoid.init);
+                ? ReturnType.init
+                : ReturnType(m.get, Evoid.init);
         }
 
 
@@ -795,16 +821,25 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         static if(!weakPtr)
-        public static RcPtr!(ElementType, .DestructorType!(.DestructorType!ElementType, DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
-        alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, const size_t n, auto ref Args args)
+        public static auto alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, const size_t n, auto ref Args args)
         if(isDynamicArray!ElementType){
             static assert(!weakPtr);
 
-            auto m = typeof(return).MakeDynamicArray!(AllocatorType, supportGC).make(forward!(a, n, args));
+            alias ReturnType = RcPtr!(
+                ElementType,
+                .DestructorType!(
+                    .DestructorType!ElementType,
+                    DestructorType,
+                    DestructorAllocatorType!AllocatorType
+                ),
+                ControlType
+            );
+
+            auto m = ReturnType.MakeDynamicArray!(AllocatorType, supportGC).make(forward!(a, n, args));
 
             return (m is null)
-                ? typeof(return).init
-                : typeof(return)(m.get, Evoid.init);
+                ? ReturnType.init
+                : ReturnType(m.get, Evoid.init);
         }
 
 
@@ -1803,7 +1838,9 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 }
 
-/// ditto
+
+
+/// Alias to `RcPtr` with different order of template parameters
 public template RcPtr(
     _Type,
     _ControlType,

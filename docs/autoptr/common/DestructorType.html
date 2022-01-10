@@ -71,24 +71,24 @@ $('#symbolSearchPane').show();</script>
 
 
 </span><span class="kwd">static struct </span><span class="typ">Struct</span><span class="pun">{
-    ~</span><span class="kwd">this</span><span class="pun">()</span><span class="kwd">nothrow @system</span><span class="pun">{
-    }
+	~</span><span class="kwd">this</span><span class="pun">()</span><span class="kwd">nothrow @system</span><span class="pun">{
+	}
 }
 </span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">DestructorType</span><span class="pun">!</span><span class="typ">Struct </span><span class="pun">== </span><span class="typ">void </span><span class="kwd">function</span><span class="pun">(<a href="../../autoptr/common/Evoid.html"></span><span class="typ">Evoid</span></a><span class="pun">*)</span><span class="kwd">nothrow @system</span><span class="pun">));
 
 
 </span><span class="kwd">version</span><span class="pun">(</span><span class="typ">D_BetterC</span><span class="pun">)
-    </span><span class="kwd">static extern</span><span class="pun">(</span><span class="pln">C</span><span class="pun">)</span><span class="kwd">class </span><span class="typ">Class</span><span class="pun">{
-        ~</span><span class="kwd">this</span><span class="pun">()</span><span class="kwd">pure @trusted</span><span class="pun">{
+	</span><span class="kwd">static extern</span><span class="pun">(</span><span class="pln">C</span><span class="pun">)</span><span class="kwd">class </span><span class="typ">Class</span><span class="pun">{
+		~</span><span class="kwd">this</span><span class="pun">()</span><span class="kwd">pure @trusted</span><span class="pun">{
 
-        }
-    }
+		}
+	}
 </span><span class="kwd">else
-    static class </span><span class="typ">Class</span><span class="pun">{
-        ~</span><span class="kwd">this</span><span class="pun">()</span><span class="kwd">pure @trusted</span><span class="pun">{
+	static class </span><span class="typ">Class</span><span class="pun">{
+		~</span><span class="kwd">this</span><span class="pun">()</span><span class="kwd">pure @trusted</span><span class="pun">{
 
-        }
-    }
+		}
+	}
 
 </span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">DestructorType</span><span class="pun">!</span><span class="typ">Class </span><span class="pun">== </span><span class="typ">void </span><span class="kwd">function</span><span class="pun">(<a href="../../autoptr/common/Evoid.html"></span><span class="typ">Evoid</span></a><span class="pun">*)</span><span class="kwd">pure @safe</span><span class="pun">));
 
@@ -96,7 +96,7 @@ $('#symbolSearchPane').show();</script>
 </span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(</span><span class="typ">DestructorType</span><span class="pun">!(</span><span class="typ">Class</span><span class="pun">, </span><span class="typ">Struct</span><span class="pun">, </span><span class="typ">long</span><span class="pun">) == </span><span class="typ">void </span><span class="kwd">function</span><span class="pun">(<a href="../../autoptr/common/Evoid.html"></span><span class="typ">Evoid</span></a><span class="pun">*)</span><span class="kwd">@system</span><span class="pun">));
 
 </span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
-    </span><span class="typ">DestructorType</span><span class="pun">!(</span><span class="typ">Class</span><span class="pun">, </span><span class="typ">DestructorType</span><span class="pun">!</span><span class="typ">long</span><span class="pun">, </span><span class="typ">DestructorType</span><span class="pun">!</span><span class="typ">Struct</span><span class="pun">) == </span><span class="typ">DestructorType</span><span class="pun">!(</span><span class="typ">Class</span><span class="pun">, </span><span class="typ">Struct</span><span class="pun">, </span><span class="typ">long</span><span class="pun">)
+	</span><span class="typ">DestructorType</span><span class="pun">!(</span><span class="typ">Class</span><span class="pun">, </span><span class="typ">DestructorType</span><span class="pun">!</span><span class="typ">long</span><span class="pun">, </span><span class="typ">DestructorType</span><span class="pun">!</span><span class="typ">Struct</span><span class="pun">) == </span><span class="typ">DestructorType</span><span class="pun">!(</span><span class="typ">Class</span><span class="pun">, </span><span class="typ">Struct</span><span class="pun">, </span><span class="typ">long</span><span class="pun">)
 ));
 </span></code></pre>
 </section>

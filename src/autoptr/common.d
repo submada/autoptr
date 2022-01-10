@@ -176,8 +176,10 @@ public template DestructorAllocatorType(Allocator){
 	alias Get(T) = T;
 
 	static void impl()(Evoid*){
-		{
-			Allocator allocator;
+        static if(stateSize!Allocator > 0){
+            {
+			    Allocator allocator;
+            }
 		}
 		void[] data;
 		const size_t size;
@@ -761,46 +763,24 @@ unittest{
 
 
 
-	/+static class Bar{
-		ControlBlock!int c;
+	static class Bar{
+		shared ControlBlock!int c;
 	}
 
 	static assert(is(
-		IntrusiveControlBlock!(Bar) == ControlBlock!int
+		IntrusiveControlBlock!(Bar) == shared ControlBlock!int
 	));
 	static assert(is(
-		IntrusiveControlBlock!(const Bar) == ControlBlock!int
+		IntrusiveControlBlock!(const Bar) == const shared ControlBlock!int
 	));
 	static assert(is(
 		IntrusiveControlBlock!(shared Bar) == shared ControlBlock!int
 	));
 	static assert(is(
-		IntrusiveControlBlock!(const shared Bar) == shared ControlBlock!int
+		IntrusiveControlBlock!(const shared Bar) == const shared ControlBlock!int
 	));
 	static assert(is(
-		IntrusiveControlBlock!(immutable Bar) == ControlBlock!int
-	));+/
-
-
-
-	static class Zee{
-		shared ControlBlock!int c;
-	}
-
-	static assert(is(
-		IntrusiveControlBlock!(Zee) == shared ControlBlock!int
-	));
-	static assert(is(
-		IntrusiveControlBlock!(const Zee) == const shared ControlBlock!int
-	));
-	static assert(is(
-		IntrusiveControlBlock!(shared Zee) == shared ControlBlock!int
-	));
-	static assert(is(
-		IntrusiveControlBlock!(const shared Zee) == const shared ControlBlock!int
-	));
-	static assert(is(
-		IntrusiveControlBlock!(immutable Zee) == immutable ControlBlock!int
+		IntrusiveControlBlock!(immutable Bar) == immutable ControlBlock!int
 	));
 
 
@@ -958,59 +938,8 @@ unittest{
 	));
 }
 
-/+
-//mutable control block
-unittest{
-	import std.traits : lvalueOf;
-	static struct Foo{
-		MutableControlBlock!int c;
-	}
 
-	static assert(is(
-		typeof(intrusivControlBlock(lvalueOf!Foo)) == ControlBlock!int*
-	));
-	static assert(is(
-		typeof(intrusivControlBlock(lvalueOf!(shared(Foo)))) == shared ControlBlock!int*
-	));
-	static assert(is(
-		typeof(intrusivControlBlock(lvalueOf!(const Foo))) == ControlBlock!int*
-	));
-	static assert(is(
-		typeof(intrusivControlBlock(lvalueOf!(shared const Foo))) == shared ControlBlock!int*
-	));
-	static assert(is(
-		typeof(intrusivControlBlock(lvalueOf!(immutable Foo))) == ControlBlock!int*
-	));
-}
-
-//shared mutable control block
-unittest{
-	import std.traits : lvalueOf;
-	static struct Foo{
-		shared MutableControlBlock!int c;
-	}
-
-	static assert(is(
-		typeof(intrusivControlBlock(lvalueOf!Foo)) == shared ControlBlock!int*
-	));
-	static assert(is(
-		typeof(intrusivControlBlock(lvalueOf!(shared(Foo)))) == shared ControlBlock!int*
-	));
-	static assert(is(
-		typeof(intrusivControlBlock(lvalueOf!(const Foo))) == shared ControlBlock!int*
-	));
-	static assert(is(
-		typeof(intrusivControlBlock(lvalueOf!(shared const Foo))) == shared ControlBlock!int*
-	));
-	static assert(is(
-		typeof(intrusivControlBlock(lvalueOf!(immutable Foo))) == shared ControlBlock!int*
-	));
-}
-+/
-
-
-
-
+//std dynamic cast.
 package auto dynCastElement(To, From)(scope return From from)pure nothrow @trusted @nogc
 if(isReferenceType!From && isReferenceType!To){
 	import std.traits : CopyTypeQualifiers, Unqual;

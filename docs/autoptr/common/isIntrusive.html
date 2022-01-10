@@ -75,32 +75,32 @@ $('#symbolSearchPane').show();</script>
 </span><span class="kwd">static assert</span><span class="pun">(</span><span class="pln">isIntrusive</span><span class="pun">!(<a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int</span><span class="pun">) == </span><span class="lit">0</span><span class="pun">);
 
 </span><span class="kwd">static class </span><span class="typ">Foo</span><span class="pun">{
-    </span><span class="typ">long </span><span class="pln">x</span><span class="pun">;
-    <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int </span><span class="pln">control</span><span class="pun">;
+	</span><span class="typ">long </span><span class="pln">x</span><span class="pun">;
+	<a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int </span><span class="pln">control</span><span class="pun">;
 }
 
 </span><span class="kwd">static assert</span><span class="pun">(</span><span class="pln">isIntrusive</span><span class="pun">!</span><span class="typ">Foo </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
 
 </span><span class="kwd">static struct </span><span class="typ">Struct</span><span class="pun">{
-    </span><span class="typ">long </span><span class="pln">x</span><span class="pun">;
-    <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int </span><span class="pln">control</span><span class="pun">;
-    </span><span class="typ">Foo </span><span class="pln">foo</span><span class="pun">;
+	</span><span class="typ">long </span><span class="pln">x</span><span class="pun">;
+	<a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int </span><span class="pln">control</span><span class="pun">;
+	</span><span class="typ">Foo </span><span class="pln">foo</span><span class="pun">;
 }
 </span><span class="kwd">static assert</span><span class="pun">(</span><span class="pln">isIntrusive</span><span class="pun">!</span><span class="typ">Struct </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
 
 
 </span><span class="kwd">static class </span><span class="typ">Bar </span><span class="pun">: </span><span class="typ">Foo</span><span class="pun">{
-    </span><span class="kwd">const <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int </span><span class="pln">control2</span><span class="pun">;
-    </span><span class="typ">Struct </span><span class="pln">s</span><span class="pun">;
+	</span><span class="kwd">const <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int </span><span class="pln">control2</span><span class="pun">;
+	</span><span class="typ">Struct </span><span class="pln">s</span><span class="pun">;
 
 }
 </span><span class="kwd">static assert</span><span class="pun">(</span><span class="pln">isIntrusive</span><span class="pun">!</span><span class="typ">Bar </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
 
 
 </span><span class="kwd">static class </span><span class="typ">Zee</span><span class="pun">{
-    </span><span class="typ">long </span><span class="pln">l</span><span class="pun">;
-    </span><span class="typ">double </span><span class="pln">x</span><span class="pun">;
-    </span><span class="typ">Struct </span><span class="pln">str</span><span class="pun">;
+	</span><span class="typ">long </span><span class="pln">l</span><span class="pun">;
+	</span><span class="typ">double </span><span class="pln">x</span><span class="pun">;
+	</span><span class="typ">Struct </span><span class="pln">str</span><span class="pun">;
 }
 </span><span class="kwd">static assert</span><span class="pun">(</span><span class="pln">isIntrusive</span><span class="pun">!</span><span class="typ">Zee </span><span class="pun">== </span><span class="lit">0</span><span class="pun">);
 

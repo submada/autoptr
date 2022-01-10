@@ -54,7 +54,7 @@ $('#symbolSearchPane').show();</script>
 			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>Alias SharedPtr.ThreadLocal</h1><p>Return thhread local <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> if specified:
+			<h1>Alias SharedPtr.ThreadLocal</h1><p>Return thread local <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> if specified:
 </p>
 			<div class="prototype">
 				<code class="lang-d">
@@ -68,7 +68,7 @@ $('#symbolSearchPane').show();</script>
 			&nbsp;&nbsp;<span class="com">// ...</span>
 			<br/>
 			&nbsp;&nbsp;<span class="kwd">alias</span> <span class="pln">ThreadLocal</span>(<span class="typ">bool</span> threadLocal<span class="pln"> </span><span class="pun">= </span><span class="kwd">true</span>)
-			 <span class="pun">=</span> <a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a>!(_Type,_DestructorType,Unqual!_ControlType,weakPtr)<span class="pun">;</span>
+			 <span class="pun">=</span> <a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a>!(_Type,_DestructorType,Unshared!_ControlType,weakPtr)<span class="pun">;</span>
 			<br/>
 			&nbsp;&nbsp;<span class="com">// ...</span>
 			<br/>
@@ -79,7 +79,7 @@ $('#symbolSearchPane').show();</script>
 			<section><p>1.  if parameter <code class="lang-d"><span class="pln">threadLocal</span></code> is <code class="lang-d"><span class="kwd">true</span></code> then result type is thread local <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> (!is(ControlType == shared)).
 </p>
 
-<p>                2.  if parameter <code class="lang-d"><span class="pln">threadLocal</span></code> is <code class="lang-d"><span class="kwd">false</span></code> then result type is not thread local <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> (is(ControlType == shared)).
+<p>				2.  if parameter <code class="lang-d"><span class="pln">threadLocal</span></code> is <code class="lang-d"><span class="kwd">false</span></code> then result type is not thread local <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> (is(ControlType == shared)).
 </p>
 </section>
 

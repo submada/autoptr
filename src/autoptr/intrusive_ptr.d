@@ -649,8 +649,7 @@ public template IntrusivePtr(
                 --------------------
         */
         static if(!weakPtr)
-        public static IntrusivePtr!ElementType
-        make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(auto ref Args args)
+        public static IntrusivePtr!ElementType make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(auto ref Args args)
         if(stateSize!AllocatorType == 0 && !isDynamicArray!ElementType){
             static assert(!weakPtr);
 
@@ -715,8 +714,7 @@ public template IntrusivePtr(
                 --------------------
         */
         static if(!weakPtr)
-        public static IntrusivePtr!ElementType
-        alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, auto ref Args args){
+        public static IntrusivePtr!ElementType alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, auto ref Args args){
             static assert(!weakPtr);
 
             static assert(is(DestructorAllocatorType!AllocatorType : DestructorType));

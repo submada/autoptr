@@ -60,7 +60,7 @@ $('#symbolSearchPane').show();</script>
 				<code class="lang-d">
 					<div class="single-prototype">
 			<span class="kwd">enum</span> <span class="pln">isSharedPtr</span>(T)
-			 <span class="pun">=</span> <span class="kwd">is</span><span class="pun">(</span><span class="typ">Unqual</span><span class="pun">!</span><span class="pln">T </span><span class="pun">== </span><span class="typ">SharedPtr</span><span class="pun">!</span><span class="typ">Args</span><span class="pun">, </span><span class="typ">Args</span><span class="pun">...)</span><span class="pun">;</span>
+			 <span class="pun">=</span> <span class="pln">isInstanceOf</span><span class="pun">!(</span><span class="typ">SharedPtr</span><span class="pun">, </span><span class="pln">T</span><span class="pun">)</span><span class="pun">;</span>
 					</div>
 				</code>
 			</div>

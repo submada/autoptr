@@ -55,7 +55,7 @@ $('#symbolSearchPane').show();</script>
 		</nav>
 		<div id="main-contents">
 			<h1>Function SharedPtr.opEquals</h1><p>Operator == and != .
-            Compare pointers.
+			Compare pointers.
 </p>
 			<div class="prototype">
 				<code class="lang-d">
@@ -93,34 +93,34 @@ $('#symbolSearchPane').show();</script>
 
 			<section><h2>Examples</h2>
 <pre class="code"><code class="lang-d"><span class="pun">{
-    <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">0</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">!= </span><span class="kwd">null</span><span class="pun">);
-    </span><span class="pln">x </span><span class="pun">= </span><span class="kwd">null</span><span class="pun">;
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">== </span><span class="kwd">null</span><span class="pun">);
+	<a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">0</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">!= </span><span class="kwd">null</span><span class="pun">);
+	</span><span class="pln">x </span><span class="pun">= </span><span class="kwd">null</span><span class="pun">;
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">== </span><span class="kwd">null</span><span class="pun">);
 }
 
 {
-    <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
-    <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long </span><span class="pln">y </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">== </span><span class="pln">x</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">y </span><span class="pun">== </span><span class="pln">y</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">!= </span><span class="pln">y</span><span class="pun">);
+	<a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
+	<a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long </span><span class="pln">y </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">== </span><span class="pln">x</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">y </span><span class="pun">== </span><span class="pln">y</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">!= </span><span class="pln">y</span><span class="pun">);
 }
 
 {
-    <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long </span><span class="pln">x</span><span class="pun">;
-    <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!(</span><span class="kwd">const </span><span class="typ">long</span><span class="pun">) </span><span class="pln">y</span><span class="pun">;
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">== </span><span class="pln">x</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">y </span><span class="pun">== </span><span class="pln">y</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">== </span><span class="pln">y</span><span class="pun">);
+	<a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long </span><span class="pln">x</span><span class="pun">;
+	<a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!(</span><span class="kwd">const </span><span class="typ">long</span><span class="pun">) </span><span class="pln">y</span><span class="pun">;
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">== </span><span class="pln">x</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">y </span><span class="pun">== </span><span class="pln">y</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">== </span><span class="pln">y</span><span class="pun">);
 }
 
 {
-    <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
-    <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long </span><span class="pln">y </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">== </span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">element</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">y<wbr/></span><span class="pun">.</span><span class="pln">element </span><span class="pun">== </span><span class="pln">y</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">!= </span><span class="pln">y<wbr/></span><span class="pun">.</span><span class="pln">element</span><span class="pun">);
+	<a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
+	<a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long </span><span class="pln">y </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">== </span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">element</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">y<wbr/></span><span class="pun">.</span><span class="pln">element </span><span class="pun">== </span><span class="pln">y</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">!= </span><span class="pln">y<wbr/></span><span class="pun">.</span><span class="pln">element</span><span class="pun">);
 }</span></code></pre>
 </section>
 

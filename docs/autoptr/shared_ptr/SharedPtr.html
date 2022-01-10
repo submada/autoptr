@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="UTF-8"/>
-		<title>Struct SharedPtr</title>
+		<title>SharedPtr - multiple declarations</title>
 		<link rel="stylesheet" type="text/css" href="../../styles/ddox.css"/>
 		<link rel="stylesheet" href="../../prettify/prettify.css" type="text/css"/>
 		<script type="text/javascript" src="../../scripts/jquery.js">/**/</script><script type="text/javascript" src="../../scripts/ddox.js">/**/</script>
@@ -54,7 +54,21 @@ $('#symbolSearchPane').show();</script>
 			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>Struct SharedPtr</h1><p><code class="lang-d"><span class="typ">SharedPtr</span></code> is a smart pointer that retains shared ownership of an object through a pointer.
+			<h1>SharedPtr - multiple declarations</h1>
+			<nav class="page-nav">
+				<ul>
+					<li>
+						<a href="#0">
+							Struct <code>SharedPtr</code>
+						</a>
+					</li>
+					<li>
+						<a href="#1">
+							Alias <code>SharedPtr</code>
+						</a>
+					</li>
+				</ul>
+			</nav><h2 id="0">Struct SharedPtr</h2><p><code class="lang-d"><span class="typ">SharedPtr</span></code> is a smart pointer that retains shared ownership of an object through a pointer.
 </p>
 			<div class="prototype">
 				<code class="lang-d">
@@ -65,59 +79,55 @@ $('#symbolSearchPane').show();</script>
 			<br/>
 			<span class="kwd">if</span> <span class="pun">(</span><span class="pln">isControlBlock</span><span class="pun">!</span><span class="pln">_ControlType </span><span class="pun">&amp;&amp; </span><span class="pln">isDestructorType</span><span class="pun">!</span><span class="pln">_DestructorType</span><span class="pun">);</span>
 					</div>
-					<div class="single-prototype">
-			<span class="kwd">alias</span> <span class="pln">SharedPtr</span>(_Type, _ControlType, _DestructorType)
-			 <span class="pun">=</span> <a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a>!(_Type,_DestructorType,_ControlType,false)<span class="pun">;</span>
-					</div>
 				</code>
 			</div>
 			<section><p>Several <code class="lang-d"><span class="typ">SharedPtr</span></code> objects may own the same object.
 </p>
 
-<p>    The object is destroyed and its memory deallocated when either of the following happens:
+<p>	The object is destroyed and its memory deallocated when either of the following happens:
 </p>
 
-<p>        1. the last remaining <code class="lang-d"><span class="typ">SharedPtr</span></code> owning the object is destroyed.
+<p>		1. the last remaining <code class="lang-d"><span class="typ">SharedPtr</span></code> owning the object is destroyed.
 </p>
 
-<p>        2. the last remaining <code class="lang-d"><span class="typ">SharedPtr</span></code> owning the object is assigned another pointer via various methods like <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.opAssign.html"><span class="pln">opAssign</span></a></code> and <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.store.html"><span class="pln">store</span></a></code>.
+<p>		2. the last remaining <code class="lang-d"><span class="typ">SharedPtr</span></code> owning the object is assigned another pointer via various methods like <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.opAssign.html"><span class="pln">opAssign</span></a></code> and <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.store.html"><span class="pln">store</span></a></code>.
 </p>
 
-<p>    The object is destroyed using delete-expression or a custom deleter that is supplied to <code class="lang-d"><span class="typ">SharedPtr</span></code> during construction.
+<p>	The object is destroyed using delete-expression or a custom deleter that is supplied to <code class="lang-d"><span class="typ">SharedPtr</span></code> during construction.
 </p>
 
-<p>    A <code class="lang-d"><span class="typ">SharedPtr</span></code> can share ownership of an object while storing a pointer to another object.
-    This feature can be used to point to member objects while owning the object they belong to.
-    The stored pointer is the one accessed by <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.get.html"><span class="pln">get</span></a><span class="pun">()</span></code>, the dereference and the comparison operators.
-    The managed pointer is the one passed to the deleter when use count reaches zero.
+<p>	A <code class="lang-d"><span class="typ">SharedPtr</span></code> can share ownership of an object while storing a pointer to another object.
+	This feature can be used to point to member objects while owning the object they belong to.
+	The stored pointer is the one accessed by <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.get.html"><span class="pln">get</span></a><span class="pun">()</span></code>, the dereference and the comparison operators.
+	The managed pointer is the one passed to the deleter when use count reaches zero.
 </p>
 
-<p>    A <code class="lang-d"><span class="typ">SharedPtr</span></code> may also own no objects, in which case it is called empty (an empty <code class="lang-d"><span class="typ">SharedPtr</span></code> may have a non-null stored pointer if the aliasing constructor was used to create it).
+<p>	A <code class="lang-d"><span class="typ">SharedPtr</span></code> may also own no objects, in which case it is called empty (an empty <code class="lang-d"><span class="typ">SharedPtr</span></code> may have a non-null stored pointer if the aliasing constructor was used to create it).
 </p>
 
-<p>    If template parameter <code class="lang-d"><span class="pln">_ControlType</span></code> is <code class="lang-d"><span class="kwd">shared</span></code>  then all member functions (including copy constructor and copy assignment)
-    can be called by multiple threads on different instances of <code class="lang-d"><span class="typ">SharedPtr</span></code> without additional synchronization even if these instances are copies and share ownership of the same object.
+<p>	If template parameter <code class="lang-d"><span class="pln">_ControlType</span></code> is <code class="lang-d"><span class="kwd">shared</span></code>  then all member functions (including copy constructor and copy assignment)
+	can be called by multiple threads on different instances of <code class="lang-d"><span class="typ">SharedPtr</span></code> without additional synchronization even if these instances are copies and share ownership of the same object.
 </p>
 
-<p>    If multiple threads of execution access the same <code class="lang-d"><span class="typ">SharedPtr</span></code> (<code class="lang-d"><span class="kwd">shared </span><span class="typ">SharedPtr</span></code>) then only some methods can be called (<code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.load.html"><span class="pln">load</span></a></code>, <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.store.html"><span class="pln">store</span></a></code>, <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.exchange.html"><span class="pln">exchange</span></a></code>, <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.compareExchange.html"><span class="pln">compareExchange</span></a></code>, <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.useCount.html"><span class="pln">useCount</span></a></code>).
+<p>	If multiple threads of execution access the same <code class="lang-d"><span class="typ">SharedPtr</span></code> (<code class="lang-d"><span class="kwd">shared </span><span class="typ">SharedPtr</span></code>) then only some methods can be called (<code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.load.html"><span class="pln">load</span></a></code>, <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.store.html"><span class="pln">store</span></a></code>, <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.exchange.html"><span class="pln">exchange</span></a></code>, <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.compareExchange.html"><span class="pln">compareExchange</span></a></code>, <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.useCount.html"><span class="pln">useCount</span></a></code>).
 </p>
 
-<p>    Template parameters:
+<p>	Template parameters:
 </p>
 
-<p>        <code class="lang-d"><span class="pln">_Type</span></code> type of managed object
+<p>		<code class="lang-d"><span class="pln">_Type</span></code> type of managed object
 </p>
 
-<p>        <code class="lang-d"><span class="pln">_DestructorType</span></code> function pointer with attributes of destructor, to get attributes of destructor from type use <code class="lang-d"><a href="../../autoptr/common/DestructorType.html" title="autoptr.common.DestructorType"><span class="typ">DestructorType</span></a><span class="pun">!</span><span class="pln">T</span></code>. Destructor of type <code class="lang-d"><span class="pln">_Type</span></code> must be compatible with <code class="lang-d"><span class="pln">_DestructorType</span></code>
+<p>		<code class="lang-d"><span class="pln">_DestructorType</span></code> function pointer with attributes of destructor, to get attributes of destructor from type use <code class="lang-d"><a href="../../autoptr/common/DestructorType.html" title="autoptr.common.DestructorType"><span class="typ">DestructorType</span></a><span class="pun">!</span><span class="pln">T</span></code>. Destructor of type <code class="lang-d"><span class="pln">_Type</span></code> must be compatible with <code class="lang-d"><span class="pln">_DestructorType</span></code>
 </p>
 
-<p>        <code class="lang-d"><span class="pln">_ControlType</span></code> represent type of counter, must by of type <code class="lang-d"><a href="../../autoptr/common/ControlBlock.html" title="autoptr.common.ControlBlock"><span class="typ">ControlBlock</span></a></code>. if is shared then ref counting is atomic.
+<p>		<code class="lang-d"><span class="pln">_ControlType</span></code> represent type of counter, must by of type <code class="lang-d"><a href="../../autoptr/common/ControlBlock.html" title="autoptr.common.ControlBlock"><span class="typ">ControlBlock</span></a></code>. if is shared then ref counting is atomic.
 </p>
 
-<p>        <code class="lang-d"><span class="pln">_weakPtr</span></code> if <code class="lang-d"><span class="kwd">true</span></code> then <code class="lang-d"><span class="typ">SharedPtr</span></code> represent weak ptr
+<p>		<code class="lang-d"><span class="pln">_weakPtr</span></code> if <code class="lang-d"><span class="kwd">true</span></code> then <code class="lang-d"><span class="typ">SharedPtr</span></code> represent weak ptr
 </p>
 </section>
-<h2>Struct SharedPtr</h2>
+
 			<section><h3>Constructors</h3>
 				<table>
 					<col class="caption"/>
@@ -152,16 +162,6 @@ $('#symbolSearchPane').show();</script>
 							<span class="tableEntryAnnotation">(rhs)</span>
 						</td>
 						<td>Constructs a <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> which shares ownership of the object managed by <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.this.html#rhs"><span class="pln">rhs</span></a></code>.
-</td>
-					</tr>
-					<tr>
-						<td>
-							<a href="../../autoptr/shared_ptr/SharedPtr.this.html" class="public">
-								<code>this</code>
-							</a>
-							<span class="tableEntryAnnotation">(rhs)</span>
-						</td>
-						<td>ditto
 </td>
 					</tr>
 				</table>
@@ -397,7 +397,7 @@ $('#symbolSearchPane').show();</script>
 							<span class="tableEntryAnnotation">(nil)</span>
 						</td>
 						<td>Operator == and != .
-            Compare pointers.
+			Compare pointers.
 </td>
 					</tr>
 					<tr>
@@ -524,7 +524,7 @@ $('#symbolSearchPane').show();</script>
 								<code>ThreadLocal</code>
 							</a>
 						</td>
-						<td>Return thhread local <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> if specified:
+						<td>Return thread local <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> if specified:
 </td>
 					</tr>
 					<tr>
@@ -537,181 +537,192 @@ $('#symbolSearchPane').show();</script>
 </td>
 					</tr>
 				</table>
-			</section><h2>Alias SharedPtr</h2>
-			<section><h2>Example</h2>
+			</section>
+			<h2 id="1">Alias SharedPtr</h2><p>Alias to <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> with different order of template parameters
+</p>
+			<div class="prototype">
+				<code class="lang-d">
+					<div class="single-prototype">
+			<span class="kwd">alias</span> <span class="pln">SharedPtr</span>(_Type, _ControlType, _DestructorType)
+			 <span class="pun">=</span> <a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a>!(_Type,_DestructorType,_ControlType,false)<span class="pun">;</span>
+					</div>
+				</code>
+			</div>
+			
+			<section><h3>Example</h3>
 
 <pre class="code"><code class="lang-d"><span class="pln">
 </span><span class="kwd">static class </span><span class="typ">Foo</span><span class="pun">{
-    </span><span class="typ">int </span><span class="pln">i</span><span class="pun">;
+	</span><span class="typ">int </span><span class="pln">i</span><span class="pun">;
 
-    </span><span class="kwd">this</span><span class="pun">(</span><span class="typ">int </span><span class="pln">i</span><span class="pun">)</span><span class="kwd">pure nothrow @safe @nogc</span><span class="pun">{
-        </span><span class="kwd">this<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">= </span><span class="pln">i</span><span class="pun">;
-    }
+	</span><span class="kwd">this</span><span class="pun">(</span><span class="typ">int </span><span class="pln">i</span><span class="pun">)</span><span class="kwd">pure nothrow @safe @nogc</span><span class="pun">{
+		</span><span class="kwd">this<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">= </span><span class="pln">i</span><span class="pun">;
+	}
 }
 
 </span><span class="kwd">static class </span><span class="typ">Bar </span><span class="pun">: </span><span class="typ">Foo</span><span class="pun">{
-    </span><span class="typ">double </span><span class="pln">d</span><span class="pun">;
+	</span><span class="typ">double </span><span class="pln">d</span><span class="pun">;
 
-    </span><span class="kwd">this</span><span class="pun">(</span><span class="typ">int </span><span class="pln">i</span><span class="pun">, </span><span class="typ">double </span><span class="pln">d</span><span class="pun">)</span><span class="kwd">pure nothrow @safe @nogc</span><span class="pun">{
-        </span><span class="kwd">super</span><span class="pun">(</span><span class="pln">i</span><span class="pun">);
-        </span><span class="kwd">this<wbr/></span><span class="pun">.</span><span class="pln">d </span><span class="pun">= </span><span class="pln">d</span><span class="pun">;
-    }
+	</span><span class="kwd">this</span><span class="pun">(</span><span class="typ">int </span><span class="pln">i</span><span class="pun">, </span><span class="typ">double </span><span class="pln">d</span><span class="pun">)</span><span class="kwd">pure nothrow @safe @nogc</span><span class="pun">{
+		</span><span class="kwd">super</span><span class="pun">(</span><span class="pln">i</span><span class="pun">);
+		</span><span class="kwd">this<wbr/></span><span class="pun">.</span><span class="pln">d </span><span class="pun">= </span><span class="pln">d</span><span class="pun">;
+	}
 }
 
 </span><span class="com">//implicit qualifier cast
 </span><span class="pun">{
-    </span><span class="typ">SharedPtr</span><span class="pun">!(</span><span class="kwd">const </span><span class="typ">Foo</span><span class="pun">) </span><span class="pln">foo </span><span class="pun">=  </span><span class="typ">SharedPtr</span><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
+	<a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!(</span><span class="kwd">const </span><span class="typ">Foo</span><span class="pun">) </span><span class="pln">foo </span><span class="pun">=  <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
 
-    </span><span class="kwd">const </span><span class="typ">SharedPtr</span><span class="pun">!</span><span class="typ">Foo </span><span class="pln">foo2 </span><span class="pun">= </span><span class="pln">foo</span><span class="pun">;
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo2<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
+	</span><span class="kwd">const <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">Foo </span><span class="pln">foo2 </span><span class="pun">= </span><span class="pln">foo</span><span class="pun">;
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo2<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
 
 }
 
 </span><span class="com">//polymorphic classes:
 </span><span class="pun">{
-    </span><span class="typ">SharedPtr</span><span class="pun">!</span><span class="typ">Foo </span><span class="pln">foo </span><span class="pun">= </span><span class="typ">SharedPtr</span><span class="pun">!</span><span class="typ">Bar<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">, </span><span class="lit">3.14</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo </span><span class="pun">!= </span><span class="kwd">null</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
+	<a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">Foo </span><span class="pln">foo </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">Bar<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">, </span><span class="lit">3.14</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo </span><span class="pun">!= </span><span class="kwd">null</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
 
-    </span><span class="com">//dynamic cast:
-    </span><span class="pun">{
-        </span><span class="typ">SharedPtr</span><span class="pun">!</span><span class="typ">Bar </span><span class="pln">bar </span><span class="pun">= <a href="../../autoptr/shared_ptr/dynCast.html"></span><span class="pln">dynCast</span></a><span class="pun">!</span><span class="typ">Bar</span><span class="pun">(</span><span class="pln">foo</span><span class="pun">);
-        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
+	</span><span class="com">//dynamic cast:
+	</span><span class="pun">{
+		<a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">Bar </span><span class="pln">bar </span><span class="pun">= <a href="../../autoptr/shared_ptr/dynCast.html"></span><span class="pln">dynCast</span></a><span class="pun">!</span><span class="typ">Bar</span><span class="pun">(</span><span class="pln">foo</span><span class="pun">);
+		</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
 
-        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">bar<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
-        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">bar<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">d </span><span class="pun">== </span><span class="lit">3.14</span><span class="pun">);
-    }
+		</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">bar<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
+		</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">bar<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">d </span><span class="pun">== </span><span class="lit">3.14</span><span class="pun">);
+	}
 
 }
 
 </span><span class="com">//aliasing:
 </span><span class="pun">{
-    </span><span class="typ">SharedPtr</span><span class="pun">!</span><span class="typ">Foo </span><span class="pln">foo </span><span class="pun">= </span><span class="typ">SharedPtr</span><span class="pun">!</span><span class="typ">Bar<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">, </span><span class="lit">3.14</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
+	<a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">Foo </span><span class="pln">foo </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">Bar<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">, </span><span class="lit">3.14</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
 
-    </span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= </span><span class="typ">SharedPtr</span><span class="pun">!</span><span class="typ">int</span><span class="pun">(</span><span class="pln">foo</span><span class="pun">, &amp;</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
+	</span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">int</span><span class="pun">(</span><span class="pln">foo</span><span class="pun">, &amp;</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
 
-    </span><span class="kwd">assert</span><span class="pun">(*</span><span class="pln">x </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(*</span><span class="pln">x </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
 }
 
 </span><span class="com">//weak references:
 </span><span class="pun">{
-    </span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= </span><span class="typ">SharedPtr</span><span class="pun">!</span><span class="typ">double<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">3.14</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">weakCount </span><span class="pun">== </span><span class="lit">0</span><span class="pun">);
+	</span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">double<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">3.14</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">weakCount </span><span class="pun">== </span><span class="lit">0</span><span class="pun">);
 
-    </span><span class="kwd">auto </span><span class="pln">w </span><span class="pun">= </span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">weak</span><span class="pun">();  </span><span class="com">//weak pointer
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">weakCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(*</span><span class="pln">w<wbr/></span><span class="pun">.</span><span class="pln">lock </span><span class="pun">== </span><span class="lit">3.14</span><span class="pun">);
+	</span><span class="kwd">auto </span><span class="pln">w </span><span class="pun">= </span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">weak</span><span class="pun">();  </span><span class="com">//weak pointer
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">weakCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(*</span><span class="pln">w<wbr/></span><span class="pun">.</span><span class="pln">lock </span><span class="pun">== </span><span class="lit">3.14</span><span class="pun">);
 
-    </span><span class="typ">SharedPtr</span><span class="pun">!</span><span class="typ">double<wbr/></span><span class="pun">.</span><span class="typ">WeakType </span><span class="pln">w2 </span><span class="pun">= </span><span class="pln">x</span><span class="pun">;
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">weakCount </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
+	<a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">double<wbr/></span><span class="pun">.</span><span class="typ">WeakType </span><span class="pln">w2 </span><span class="pun">= </span><span class="pln">x</span><span class="pun">;
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">weakCount </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
 
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">w2<wbr/></span><span class="pun">.</span><span class="pln">expired </span><span class="pun">== </span><span class="kwd">false</span><span class="pun">);
-    </span><span class="pln">x </span><span class="pun">= </span><span class="kwd">null</span><span class="pun">;
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">w2<wbr/></span><span class="pun">.</span><span class="pln">expired </span><span class="pun">== </span><span class="kwd">true</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">w2<wbr/></span><span class="pun">.</span><span class="pln">expired </span><span class="pun">== </span><span class="kwd">false</span><span class="pun">);
+	</span><span class="pln">x </span><span class="pun">= </span><span class="kwd">null</span><span class="pun">;
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">w2<wbr/></span><span class="pun">.</span><span class="pln">expired </span><span class="pun">== </span><span class="kwd">true</span><span class="pun">);
 }
 
 </span><span class="com">//dynamic array
 </span><span class="pun">{
-    </span><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">algorithm </span><span class="pun">: </span><span class="pln">all</span><span class="pun">;
+	</span><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">algorithm </span><span class="pun">: </span><span class="pln">all</span><span class="pun">;
 
-    {
-        </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= </span><span class="typ">SharedPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">10</span><span class="pun">, -</span><span class="lit">1</span><span class="pun">);
+	{
+		</span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">10</span><span class="pun">, -</span><span class="lit">1</span><span class="pun">);
 
-        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">length </span><span class="pun">== </span><span class="lit">10</span><span class="pun">);
-        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">all</span><span class="pun">!(</span><span class="pln">x </span><span class="pun">=&gt; </span><span class="pln">x </span><span class="pun">== -</span><span class="lit">1</span><span class="pun">));
-    }
+		</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">length </span><span class="pun">== </span><span class="lit">10</span><span class="pun">);
+		</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">all</span><span class="pun">!(</span><span class="pln">x </span><span class="pun">=&gt; </span><span class="pln">x </span><span class="pun">== -</span><span class="lit">1</span><span class="pun">));
+	}
 
-    {
-        </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= </span><span class="typ">SharedPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">8</span><span class="pun">);
-        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">length </span><span class="pun">== </span><span class="lit">8</span><span class="pun">);
-        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">all</span><span class="pun">!(</span><span class="pln">x </span><span class="pun">=&gt; </span><span class="pln">x </span><span class="pun">== </span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">init</span><span class="pun">));
-    }
+	{
+		</span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">8</span><span class="pun">);
+		</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">length </span><span class="pun">== </span><span class="lit">8</span><span class="pun">);
+		</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">all</span><span class="pun">!(</span><span class="pln">x </span><span class="pun">=&gt; </span><span class="pln">x </span><span class="pun">== </span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">init</span><span class="pun">));
+	}
 }
 
 </span><span class="com">//static array
 </span><span class="pun">{
-    </span><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">algorithm </span><span class="pun">: </span><span class="pln">all</span><span class="pun">;
+	</span><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">algorithm </span><span class="pun">: </span><span class="pln">all</span><span class="pun">;
 
-    {
-        </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= </span><span class="typ">SharedPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[</span><span class="lit">4</span><span class="pun">])<wbr/>.</span><span class="pln">make</span><span class="pun">(-</span><span class="lit">1</span><span class="pun">);
-        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">get</span><span class="pun">[]<wbr/>.</span><span class="pln">all</span><span class="pun">!(</span><span class="pln">x </span><span class="pun">=&gt; </span><span class="pln">x </span><span class="pun">== -</span><span class="lit">1</span><span class="pun">));
+	{
+		</span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!(</span><span class="typ">long</span><span class="pun">[</span><span class="lit">4</span><span class="pun">])<wbr/>.</span><span class="pln">make</span><span class="pun">(-</span><span class="lit">1</span><span class="pun">);
+		</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">get</span><span class="pun">[]<wbr/>.</span><span class="pln">all</span><span class="pun">!(</span><span class="pln">x </span><span class="pun">=&gt; </span><span class="pln">x </span><span class="pun">== -</span><span class="lit">1</span><span class="pun">));
 
-    }
+	}
 
-    {
-        </span><span class="typ">long</span><span class="pun">[</span><span class="lit">4</span><span class="pun">] </span><span class="pln">tmp </span><span class="pun">= [</span><span class="lit">0</span><span class="pun">, </span><span class="lit">1</span><span class="pun">, </span><span class="lit">2</span><span class="pun">, </span><span class="lit">3</span><span class="pun">];
-        </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= </span><span class="typ">SharedPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[</span><span class="lit">4</span><span class="pun">])<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="pln">tmp</span><span class="pun">);
-        </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">get</span><span class="pun">[] == </span><span class="pln">tmp</span><span class="pun">[]);
-    }
+	{
+		</span><span class="typ">long</span><span class="pun">[</span><span class="lit">4</span><span class="pun">] </span><span class="pln">tmp </span><span class="pun">= [</span><span class="lit">0</span><span class="pun">, </span><span class="lit">1</span><span class="pun">, </span><span class="lit">2</span><span class="pun">, </span><span class="lit">3</span><span class="pun">];
+		</span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!(</span><span class="typ">long</span><span class="pun">[</span><span class="lit">4</span><span class="pun">])<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="pln">tmp</span><span class="pun">);
+		</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">get</span><span class="pun">[] == </span><span class="pln">tmp</span><span class="pun">[]);
+	}
 }
 
 </span></code></pre>
 </section>
-<section><h2>Example</h2>
+<section><h3>Example</h3>
 
 <pre class="code"><code class="lang-d"><span class="com">//make SharedPtr object
 </span><span class="kwd">static struct </span><span class="typ">Foo</span><span class="pun">{
-    </span><span class="typ">int </span><span class="pln">i</span><span class="pun">;
+	</span><span class="typ">int </span><span class="pln">i</span><span class="pun">;
 
-    </span><span class="kwd">this</span><span class="pun">(</span><span class="typ">int </span><span class="pln">i</span><span class="pun">)</span><span class="kwd">pure nothrow @safe @nogc</span><span class="pun">{
-        </span><span class="kwd">this<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">= </span><span class="pln">i</span><span class="pun">;
-    }
+	</span><span class="kwd">this</span><span class="pun">(</span><span class="typ">int </span><span class="pln">i</span><span class="pun">)</span><span class="kwd">pure nothrow @safe @nogc</span><span class="pun">{
+		</span><span class="kwd">this<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">= </span><span class="pln">i</span><span class="pun">;
+	}
 }
 
 {
-    </span><span class="kwd">auto </span><span class="pln">foo </span><span class="pun">= </span><span class="typ">SharedPtr</span><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
-    </span><span class="kwd">auto </span><span class="pln">foo2 </span><span class="pun">= </span><span class="typ">SharedPtr</span><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">!</span><span class="typ">Mallocator</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);  </span><span class="com">//explicit stateless allocator
+	</span><span class="kwd">auto </span><span class="pln">foo </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
+	</span><span class="kwd">auto </span><span class="pln">foo2 </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">!</span><span class="typ">Mallocator</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);  </span><span class="com">//explicit stateless allocator
 </span><span class="pun">}
 
 {
-    </span><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">experimental<wbr/></span><span class="pun">.</span><span class="pln">allocator </span><span class="pun">: <a href="../../autoptr/shared_ptr/SharedPtr.make.html"></span><span class="pln">make</span></a><span class="pun">, </span><span class="pln">dispose</span><span class="pun">;
+	</span><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">experimental<wbr/></span><span class="pun">.</span><span class="pln">allocator </span><span class="pun">: </span><span class="pln">make</span><span class="pun">, </span><span class="pln">dispose</span><span class="pun">;
 
-    </span><span class="kwd">static </span><span class="typ">void </span><span class="pln">deleter</span><span class="pun">(</span><span class="typ">long</span><span class="pun">* </span><span class="pln">x</span><span class="pun">)</span><span class="kwd">pure nothrow @trusted @nogc</span><span class="pun">{
-        </span><span class="typ">Mallocator<wbr/></span><span class="pun">.</span><span class="pln">instance<wbr/></span><span class="pun">.</span><span class="pln">dispose</span><span class="pun">(</span><span class="pln">x</span><span class="pun">);
-    }
-    </span><span class="typ">long</span><span class="pun">* <a href="../../autoptr/shared_ptr/SharedPtr.element.html"></span><span class="pln">element</span></a><span class="pln"> </span><span class="pun">= </span><span class="typ">Mallocator<wbr/></span><span class="pun">.</span><span class="pln">instance<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">!</span><span class="typ">long</span><span class="pun">;
+	</span><span class="kwd">static </span><span class="typ">void </span><span class="pln">deleter</span><span class="pun">(</span><span class="typ">long</span><span class="pun">* </span><span class="pln">x</span><span class="pun">)</span><span class="kwd">pure nothrow @trusted @nogc</span><span class="pun">{
+		</span><span class="typ">Mallocator<wbr/></span><span class="pun">.</span><span class="pln">instance<wbr/></span><span class="pun">.</span><span class="pln">dispose</span><span class="pun">(</span><span class="pln">x</span><span class="pun">);
+	}
+	</span><span class="typ">long</span><span class="pun">* </span><span class="pln">element </span><span class="pun">= </span><span class="typ">Mallocator<wbr/></span><span class="pun">.</span><span class="pln">instance<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">!</span><span class="typ">long</span><span class="pun">;
 
-    </span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= </span><span class="typ">SharedPtr</span><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(<a href="../../autoptr/shared_ptr/SharedPtr.element.html"></span><span class="pln">element</span></a><span class="pun">, &amp;</span><span class="pln">deleter</span><span class="pun">);
+	</span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="pln">element</span><span class="pun">, &amp;</span><span class="pln">deleter</span><span class="pun">);
 }
 
 {
-    </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= </span><span class="typ">SharedPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">10</span><span class="pun">); </span><span class="com">//dynamic array with length 10
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">length </span><span class="pun">== </span><span class="lit">10</span><span class="pun">);
+	</span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">10</span><span class="pun">); </span><span class="com">//dynamic array with length 10
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">length </span><span class="pun">== </span><span class="lit">10</span><span class="pun">);
 }
 </span></code></pre>
 </section>
-<section><h2>Example</h2>
+<section><h3>Example</h3>
 
 <pre class="code"><code class="lang-d"><span class="com">//alloc SharedPtr object
-</span><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">experimental<wbr/></span><span class="pun">.</span><span class="pln">allocator </span><span class="pun">: <a href="../../autoptr/shared_ptr/SharedPtr.make.html"></span><span class="pln">make</span></a><span class="pun">, </span><span class="pln">dispose</span><span class="pun">, </span><span class="pln">allocatorObject</span><span class="pun">;
+</span><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">experimental<wbr/></span><span class="pun">.</span><span class="pln">allocator </span><span class="pun">: </span><span class="pln">make</span><span class="pun">, </span><span class="pln">dispose</span><span class="pun">, </span><span class="pln">allocatorObject</span><span class="pun">;
 
 </span><span class="kwd">auto </span><span class="pln">allocator </span><span class="pun">= </span><span class="pln">allocatorObject</span><span class="pun">(</span><span class="typ">Mallocator<wbr/></span><span class="pun">.</span><span class="pln">instance</span><span class="pun">);
 
 {
-    </span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= </span><span class="typ">SharedPtr</span><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">alloc</span><span class="pun">(</span><span class="pln">allocator</span><span class="pun">, </span><span class="lit">42</span><span class="pun">);
+	</span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">alloc</span><span class="pun">(</span><span class="pln">allocator</span><span class="pun">, </span><span class="lit">42</span><span class="pun">);
 }
 
 {
-    </span><span class="kwd">static </span><span class="typ">void </span><span class="pln">deleter</span><span class="pun">(</span><span class="typ">long</span><span class="pun">* </span><span class="pln">x</span><span class="pun">)</span><span class="kwd">pure nothrow @trusted @nogc</span><span class="pun">{
-        </span><span class="typ">Mallocator<wbr/></span><span class="pun">.</span><span class="pln">instance<wbr/></span><span class="pun">.</span><span class="pln">dispose</span><span class="pun">(</span><span class="pln">x</span><span class="pun">);
-    }
-    </span><span class="typ">long</span><span class="pun">* <a href="../../autoptr/shared_ptr/SharedPtr.element.html"></span><span class="pln">element</span></a><span class="pln"> </span><span class="pun">= </span><span class="typ">Mallocator<wbr/></span><span class="pun">.</span><span class="pln">instance<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">!</span><span class="typ">long</span><span class="pun">;
-    </span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= </span><span class="typ">SharedPtr</span><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">alloc</span><span class="pun">(</span><span class="pln">allocator</span><span class="pun">, <a href="../../autoptr/shared_ptr/SharedPtr.element.html"></span><span class="pln">element</span></a><span class="pun">, &amp;</span><span class="pln">deleter</span><span class="pun">);
+	</span><span class="kwd">static </span><span class="typ">void </span><span class="pln">deleter</span><span class="pun">(</span><span class="typ">long</span><span class="pun">* </span><span class="pln">x</span><span class="pun">)</span><span class="kwd">pure nothrow @trusted @nogc</span><span class="pun">{
+		</span><span class="typ">Mallocator<wbr/></span><span class="pun">.</span><span class="pln">instance<wbr/></span><span class="pun">.</span><span class="pln">dispose</span><span class="pun">(</span><span class="pln">x</span><span class="pun">);
+	}
+	</span><span class="typ">long</span><span class="pun">* </span><span class="pln">element </span><span class="pun">= </span><span class="typ">Mallocator<wbr/></span><span class="pun">.</span><span class="pln">instance<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">!</span><span class="typ">long</span><span class="pun">;
+	</span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">alloc</span><span class="pun">(</span><span class="pln">allocator</span><span class="pun">, </span><span class="pln">element</span><span class="pun">, &amp;</span><span class="pln">deleter</span><span class="pun">);
 }
 
 {
-    </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= </span><span class="typ">SharedPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">alloc</span><span class="pun">(</span><span class="pln">allocator</span><span class="pun">, </span><span class="lit">10</span><span class="pun">); </span><span class="com">//dynamic array with length 10
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">length </span><span class="pun">== </span><span class="lit">10</span><span class="pun">);
+	</span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">alloc</span><span class="pun">(</span><span class="pln">allocator</span><span class="pun">, </span><span class="lit">10</span><span class="pun">); </span><span class="com">//dynamic array with length 10
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">length </span><span class="pun">== </span><span class="lit">10</span><span class="pun">);
 }
 
 </span></code></pre>
