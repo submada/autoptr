@@ -1390,29 +1390,71 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
 
-        /**
-            Equivalent to `useCount() == 0` (must be `RcPtr.WeakType`).
+        static if(weakPtr){
+            /**
+                Equivalent to `useCount() == 0` (must be `RcPtr.WeakType`).
 
-            Method exists only if `RcPtr` is `weakPtr`
+                Method exists only if `RcPtr` is `weakPtr`
 
-            Examples:
-                --------------------
-                {
-                    RcPtr!long x = RcPtr!long.make(123);
+                Examples:
+                    --------------------
+                    {
+                        RcPtr!long x = RcPtr!long.make(123);
 
-                    auto wx = x.weak;   //weak pointer
+                        auto wx = x.weak;   //weak pointer
 
-                    assert(wx.expired == false);
+                        assert(wx.expired == false);
 
-                    x = null;
+                        x = null;
 
-                    assert(wx.expired == true);
-                }
-                --------------------
-        */
-        static if(weakPtr)
-        public @property bool expired(this This)()scope const{
-            return (this.useCount == 0);
+                        assert(wx.expired == true);
+                    }
+                    --------------------
+            */
+            public @property bool expired(this This)()scope const{
+                return (this.useCount == 0);
+            }
+
+
+
+            /**
+                Get pointer to managed object of `ElementType` or reference if `ElementType` is reference type (class or interface) or dynamic array
+
+                If weak pointer is expired then return null
+
+                Doesn't increment useCount, is inherently unsafe.
+
+                Examples:
+                    --------------------
+                    {
+                        auto s = RcPtr!long.make(42);
+                        const w = s.weak;
+
+                        assert(*w.observe == 42);
+
+                        s = null;
+                        assert(w.observe is null);
+                    }
+                    {
+                        auto s = RcPtr!long.make(42);
+                        auto w = s.weak;
+
+                        scope const p = w.observe;
+
+                        s = null;
+                        assert(w.observe is null);
+
+                        assert(p !is null); //p is dangling pointer!
+                    }
+                    --------------------
+            */
+            public @property ElementReferenceTypeImpl!(inout ElementType) observe()
+            inout return pure nothrow @system @nogc{
+                return (cast(const)this).expired
+                    ? null
+                    : this._element;
+            }
+
         }
 
 
@@ -2950,6 +2992,30 @@ version(unittest){
             x = null;
 
             assert(wx.expired == true);
+        }
+    }
+
+    //observe
+    pure nothrow @nogc unittest{
+        {
+            auto s = RcPtr!long.make(42);
+            const w = s.weak;
+
+            assert(*w.observe == 42);
+
+            s = null;
+            assert(w.observe is null);
+        }
+        {
+            auto s = RcPtr!long.make(42);
+            auto w = s.weak;
+
+            scope const p = w.observe;
+
+            s = null;
+            assert(w.observe is null);
+
+            assert(p !is null); //p is dangling pointer!
         }
     }
 
