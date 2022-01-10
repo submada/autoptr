@@ -17,9 +17,9 @@ import autoptr.common;
     Check if type `T` is `IntrusivePtr`.
 */
 public template isIntrusivePtr(T){
-    import std.traits : Unqual;
+    import std.traits : isInstanceOf;
 
-    enum bool isIntrusivePtr = is(Unqual!T == IntrusivePtr!Args, Args...);
+    enum bool isIntrusivePtr = isInstanceOf!(IntrusivePtr, T);  // is(Unqual!T == IntrusivePtr!Args, Args...);
 }
 
 ///
@@ -229,7 +229,7 @@ public template IntrusivePtr(
         package this(Rhs, this This)(ref scope Rhs rhs, Evoid ctor)@trusted
         if(true
             && isIntrusivePtr!Rhs
-            && isCopyable!(Rhs, This)
+            && isCopyConstructable!(Rhs, This)
             && !weakLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
@@ -326,20 +326,25 @@ public template IntrusivePtr(
         if(true
             && isIntrusivePtr!Rhs
             //&& !is(Unqual!This == Unqual!Rhs)   ///copy ctors
-            && (false
-                || (isRef!rhs && isCopyable!(Rhs, This))
-                || (!isRef!rhs && isMovable!(Rhs, This))
-            )
-            && !weakLock!(Rhs, This)
+            && isConstructable!(rhs, This)
             && !is(Rhs == shared)
         ){
-            static if(isRef!rhs){
-                static assert(isCopyable!(Rhs, This));
+            //lock (copy):
+            static if(weakLock!(Rhs, This)){
+                if(rhs._element !is null && rhs._control.add_shared_if_exists())
+                    this._element = rhs._element;
+                else
+                    this._element = null;
+            }
+            //copy:
+            else static if(isRef!rhs){
+                static assert(isCopyConstructable!(Rhs, This));
 
                 this(rhs, Evoid.init);
             }
+            //move:
             else{
-                static assert(isMovable!(Rhs, This));
+                static assert(isMoveConstructable!(Rhs, This));
 
                 this._element = rhs._element;
 
@@ -353,56 +358,29 @@ public template IntrusivePtr(
             }
         }
 
-        // ditto
-        /*public this(Rhs, this This)(scope Rhs rhs)@trusted
-        if(true
-            && isIntrusivePtr!Rhs
-            //&& !is(Unqual!This == Unqual!Rhs) //TODO move ctors need this
-            && isMovable!(Rhs, This)
-            && !weakLock!(Rhs, This)
-            && !is(Rhs == shared)
-        ){
-            this._element = rhs._element;
-            rhs._const_reset();
-        }*/
-
-        /// ditto
-        public this(Rhs, this This)(auto ref scope Rhs rhs)@trusted
-        if(true
-            && isIntrusivePtr!Rhs
-            && isCopyable!(Rhs, This)   ///lock robi vzdy copiu
-            && weakLock!(Rhs, This)
-            && !is(Rhs == shared)
-        ){
-            if(rhs._element !is null && rhs._control.add_shared_if_exists())
-                this._element = rhs._element;
-            else
-                this._element = null;
-        }
-
 
         //copy ctors:
-        static if(isCopyable!(typeof(this), typeof(this)))
+        static if(isCopyConstructable!(typeof(this), typeof(this)))
             this(ref scope typeof(this) rhs)@safe{this(rhs, Evoid.init);}
         else
             @disable this(ref scope typeof(this) rhs)@safe;
 
-        static if(isCopyable!(typeof(this), const typeof(this)))
+        static if(isCopyConstructable!(typeof(this), const typeof(this)))
             this(ref scope typeof(this) rhs)const @safe{this(rhs, Evoid.init);}
         else
             @disable this(ref scope typeof(this) rhs)const @safe;
 
-        static if(isCopyable!(typeof(this), immutable typeof(this)))
+        static if(isCopyConstructable!(typeof(this), immutable typeof(this)))
             this(ref scope typeof(this) rhs)immutable @safe{this(rhs, Evoid.init);}
         else
             @disable this(ref scope typeof(this) rhs)immutable @safe;
 
-        static if(isCopyable!(typeof(this), shared typeof(this)))
+        static if(isCopyConstructable!(typeof(this), shared typeof(this)))
             this(ref scope typeof(this) rhs)shared @safe{this(rhs, Evoid.init);}
         else
             @disable this(ref scope typeof(this) rhs)shared @safe;
 
-        static if(isCopyable!(typeof(this), const shared typeof(this)))
+        static if(isCopyConstructable!(typeof(this), const shared typeof(this)))
             this(ref scope typeof(this) rhs)const shared @safe{this(rhs, Evoid.init);}
         else
             @disable this(ref scope typeof(this) rhs)const shared @safe;
@@ -556,81 +534,64 @@ public template IntrusivePtr(
                 }
                 --------------------
         */
-        public void opAssign(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(ref scope Rhs desired)scope
+        public void opAssign(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(auto ref scope Rhs desired)scope
         if(true
             && isIntrusivePtr!Rhs
-            && isCopyAssignable!(Rhs, This)
+            && isAssignable!(desired, This)
             && !is(Rhs == shared)
         ){
-            if((()@trusted => cast(const void*)&desired is cast(const void*)&this)())
-                return;
-
+            // shared assign:
             static if(is(This == shared)){
-
                 static if(isLockFree){
                     import core.atomic : atomicExchange;
 
+                    static if(isRef!desired && (This.weakPtr == Rhs.weakPtr)){
+                        if((()@trusted => cast(const void*)&desired is cast(const void*)&this)())
+                            return;
+                    }
+
                     ()@trusted{
-                        desired._control.add!(This.weakPtr);
+                        UnqualIntrusivePtr!This tmp_desired = forward!desired;
+                        //desired._control.add!(This.weakPtr);
 
                         UnqualIntrusivePtr!This tmp;
-                        GetElementReferenceType!This source = desired._element;    //interface/class cast
+                        GetElementReferenceType!This source = tmp_desired._element;    //interface/class cast
 
                         tmp._set_element(cast(typeof(this._element))atomicExchange!order(
                             cast(Unqual!(This.ElementReferenceType)*)&this._element,
                             cast(Unqual!(This.ElementReferenceType))source
                         ));
+
+                        tmp_desired._const_reset();
                     }();
                 }
                 else{
                     this.lockIntrusivePtr!(
-                        (ref scope self, ref scope Rhs x) => self.opAssign!order(x)
-                    )(desired);
+                        (ref scope self, auto ref scope Rhs x) => self.opAssign!order(forward!x)
+                    )(forward!desired);
                 }
             }
-            else{
+            // copy assign or non identity move assign:
+            else static if(isRef!desired || !is(This == Rhs)){
+
+                static if(isRef!desired && (This.weakPtr == Rhs.weakPtr)){
+                    if((()@trusted => cast(const void*)&desired is cast(const void*)&this)())
+                        return;
+                }
+
                 this._release();
+
+                auto tmp = This(forward!desired);
+
                 ()@trusted{
-                    auto control = desired._control;
-                    this._set_element(desired._element);
-
-                    if(control !is null)
-                        control.add!weakPtr;
-
+                    this._set_element(tmp._element);
+                    tmp._const_reset();
                 }();
             }
-        }
-
-        ///ditto
-        public void opAssign(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs desired)scope
-        if(true
-            && isIntrusivePtr!Rhs
-            && isMoveAssignable!(Rhs, This)
-            && !is(Rhs == shared)
-        ){
-            static if(is(This == shared)){
-                static if(isLockFree){
-                    import core.atomic : atomicExchange;
-
-                    ()@trusted{
-                        UnqualIntrusivePtr!This tmp;
-                        GetElementReferenceType!This source = desired._element;    //interface/class cast
-
-                        tmp._set_element(cast(typeof(this._element))atomicExchange!order(
-                            cast(Unqual!(This.ElementReferenceType)*)&this._element,
-                            cast(Unqual!(This.ElementReferenceType))source
-                        ));
-
-                        desired._const_reset();
-                    }();
-                }
-                else{
-                    return this.lockIntrusivePtr!(
-                        (ref scope self, Rhs x) => self.opAssign!order(x.move)
-                    )(desired.move);
-                }
-            }
+            //identity move assign:   //separate case for core.lifetime.move
             else{
+                static assert(isMoveAssignable!(Rhs, This));
+                static assert(!isRef!desired);
 
                 this._release();
 
@@ -755,8 +716,7 @@ public template IntrusivePtr(
         */
         static if(!weakPtr)
         public static IntrusivePtr!ElementType
-        alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, auto ref Args args)
-        if(stateSize!AllocatorType > 0){
+        alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, auto ref Args args){
             static assert(!weakPtr);
 
             static assert(is(DestructorAllocatorType!AllocatorType : DestructorType));
@@ -934,7 +894,7 @@ public template IntrusivePtr(
         */
         public UnqualIntrusivePtr!This
         load(MemoryOrder order = MemoryOrder.seq, this This)()scope return{  //TODO remove return
-            static assert(isCopyable!(Unshared!This, typeof(return)));
+            static assert(isCopyConstructable!(Unshared!This, typeof(return)));
 
             static if(is(This == shared))
                 return this.lockIntrusivePtr!(
@@ -1096,7 +1056,7 @@ public template IntrusivePtr(
         if(true
             && isIntrusivePtr!Rhs 
             && !is(Rhs == shared) 
-            && isMovable!(Rhs, This)
+            && isMoveConstructable!(Rhs, This)
             && isMutable!This
         ){
             static if(is(This == shared)){
@@ -1230,8 +1190,8 @@ public template IntrusivePtr(
         if(true
             && isIntrusivePtr!E && !is(E == shared)
             && isIntrusivePtr!D && !is(D == shared)
-            && (isMovable!(D, This) && isMutable!This)
-            && (isCopyable!(This, E) && isMutable!E)
+            && (isMoveConstructable!(D, This) && isMutable!This)
+            && (isCopyConstructable!(This, E) && isMutable!E)
             && (This.weakPtr == D.weakPtr)
             && (This.weakPtr == E.weakPtr)
         ){
@@ -1251,8 +1211,8 @@ public template IntrusivePtr(
         if(true
             && isIntrusivePtr!E && !is(E == shared)
             && isIntrusivePtr!D && !is(D == shared)
-            && (isMovable!(D, This) && isMutable!This)
-            && (isCopyable!(This, E) && isMutable!E)
+            && (isMoveConstructable!(D, This) && isMutable!This)
+            && (isCopyConstructable!(This, E) && isMutable!E)
             && (This.weakPtr == D.weakPtr)
             && (This.weakPtr == E.weakPtr)
         ){
@@ -1269,8 +1229,8 @@ public template IntrusivePtr(
         if(true
             && isIntrusivePtr!E && !is(E == shared)
             && isIntrusivePtr!D && !is(D == shared)
-            && (isMovable!(D, This) && isMutable!This)
-            && (isCopyable!(This, E) && isMutable!E)
+            && (isMoveConstructable!(D, This) && isMutable!This)
+            && (isCopyConstructable!(This, E) && isMutable!E)
             && (This.weakPtr == D.weakPtr)
             && (This.weakPtr == E.weakPtr)
         ){
@@ -1412,7 +1372,7 @@ public template IntrusivePtr(
         */
         static if(weakPtr)
         public SharedType lock()()scope @safe{
-            static assert(isCopyable!(typeof(this), typeof(return)));
+            static assert(isCopyConstructable!(typeof(this), typeof(return)));
 
             static assert(weakLock!(typeof(this), typeof(return)));
 
@@ -1585,7 +1545,7 @@ public template IntrusivePtr(
         */
         static if(hasWeakCounter && !weakPtr)
         public WeakType weak()()scope @safe{
-            static assert(isCopyable!(typeof(this), typeof(return)));
+            static assert(isCopyConstructable!(typeof(this), typeof(return)));
 
             return typeof(return)(this);
         }
@@ -2164,7 +2124,7 @@ if(true
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){
-    static assert(isCopyable!(Ptr, UnqualIntrusivePtr!Ptr));
+    static assert(isCopyConstructable!(Ptr, UnqualIntrusivePtr!Ptr));
 
     if(auto element = dynCastElement!T(ptr._element)){
         ptr._control.add!false;
@@ -2182,7 +2142,7 @@ if(true
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){
-    static assert(isMovable!(Ptr, UnqualIntrusivePtr!Ptr));
+    static assert(isMoveConstructable!(Ptr, UnqualIntrusivePtr!Ptr));
 
     return dynCastMove(ptr);
 }
@@ -2195,7 +2155,7 @@ if(true
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){
-    static assert(isMovable!(Ptr, UnqualIntrusivePtr!Ptr));
+    static assert(isMoveConstructable!(Ptr, UnqualIntrusivePtr!Ptr));
 
     if(auto element = dynCastElement!T(ptr._element)){
         ()@trusted{
@@ -2458,7 +2418,8 @@ private{
         );
     }
 
-    template isMovable(From, To){
+    //Constructable:
+    template isMoveConstructable(From, To){
         import std.traits : Unqual, CopyTypeQualifiers;
 
         alias FromElementType = GetElementType!From;
@@ -2478,38 +2439,48 @@ private{
             enum bool aliasable = false;
         }
 
-        enum bool isMovable = true
+        enum bool isMoveConstructable = true
             && aliasable
             && is(From.DestructorType : To.DestructorType)
             && is(GetControlType!From* : GetControlType!To*);
     }
-
-    template isCopyable(From, To){
+    template isCopyConstructable(From, To){
         import std.traits : isMutable, CopyTypeQualifiers;
 
-        enum bool isCopyable = true
-            && isMovable!(From, To)
+        enum bool isCopyConstructable = true
+            && isMoveConstructable!(From, To)
             && isMutable!(IntrusiveControlBlock!(
                 GetElementType!From
             ));
     }
+    template isConstructable(alias from, To){
+        enum bool isConstructable = isRef!from
+            ? isCopyConstructable!(typeof(from), To)
+            : isMoveConstructable!(typeof(from), To);
+    }
 
+    //Assignable:
     template isMoveAssignable(From, To){
         import std.traits : isMutable;
 
         enum bool isMoveAssignable = true
-            && isMovable!(From, To)
+            && isMoveConstructable!(From, To)
             && !weakLock!(From, To)
             && isMutable!To;
     }
-
     template isCopyAssignable(From, To){
         import std.traits : isMutable;
 
         enum bool isCopyAssignable = true
-            && isCopyable!(From, To)
+            && isCopyConstructable!(From, To)
             && !weakLock!(From, To)
             && isMutable!To;
+    }
+    template isAssignable(alias from, To){
+        enum bool isAssignable = isRef!from
+            ? isCopyAssignable!(typeof(from), To)
+            : isMoveAssignable!(typeof(from), To);
+
     }
 
 
@@ -3680,6 +3651,56 @@ unittest{
     }
 }
 
+//test strong ptr -> weak ptr assign
+unittest{
+    static struct Foo{
+        ControlBlock!(int, int) c;
+        int i;
+
+        this(int i)pure nothrow @safe @nogc{
+            this.i = i;
+        }
+    }
+
+    {
+        import core.lifetime : move;
+
+        auto a = IntrusivePtr!Foo.make(1);
+        auto b = IntrusivePtr!Foo.make(2);
+
+        {
+            IntrusivePtr!Foo.WeakType x = IntrusivePtr!Foo(a);
+            assert(a.useCount == 1);
+            assert(a.weakCount == 1);
+
+            x = IntrusivePtr!Foo(b);
+            assert(a.useCount == 1);
+            assert(a.weakCount == 0);
+
+            assert(b.useCount == 1);
+            assert(b.weakCount == 1);
+        }
+        {
+            IntrusivePtr!Foo.WeakType x = a;
+            assert(a.useCount == 1);
+            assert(a.weakCount == 1);
+
+            IntrusivePtr!Foo.WeakType y = b;
+            assert(b.useCount == 1);
+            assert(b.weakCount == 1);
+
+            x = y;
+            assert(a.useCount == 1);
+            assert(a.weakCount == 0);
+
+            assert(b.useCount == 1);
+            assert(b.weakCount == 2);
+
+
+        }
+    }
+}
+
 //compare strong and weak ptr
 unittest{
     static struct Foo{
@@ -3695,4 +3716,19 @@ unittest{
     auto b = a.weak;
     assert(a == b);
 
+}
+
+//self opAssign
+unittest{
+    static struct Foo{
+        ControlBlock!(int, int) c;
+        int i;
+
+        this(int i)pure nothrow @safe @nogc{
+            this.i = i;
+        }
+    }
+
+    auto a = IntrusivePtr!Foo.make(1);
+    a = a;
 }

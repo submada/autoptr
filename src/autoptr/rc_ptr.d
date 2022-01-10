@@ -16,9 +16,9 @@ import autoptr.common;
     Check if type `T` is `RcPtr`.
 */
 public template isRcPtr(T){
-    import std.traits : Unqual;
+    import std.traits : isInstanceOf;
 
-    enum bool isRcPtr = is(Unqual!T == RcPtr!Args, Args...);
+    enum bool isRcPtr = isInstanceOf!(RcPtr, T); //is(Unqual!T == RcPtr!Args, Args...);
 }
 
 ///
@@ -243,7 +243,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         package this(Rhs, this This)(ref scope Rhs rhs, Evoid ctor)@trusted
         if(true
             && isRcPtr!Rhs
-            && isCopyable!(Rhs, This)
+            && isCopyConstructable!(Rhs, This)
             && !weakLock!(Rhs, This)
             && !is(Rhs == shared)
         ){
@@ -334,20 +334,22 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         if(true
             && isRcPtr!Rhs
             //&& !is(Unqual!This == Unqual!Rhs) //TODO move ctors need this
-            && (false
-                || (isRef!rhs && isCopyable!(Rhs, This))
-                || (!isRef!rhs && isMovable!(Rhs, This))
-            )
-            && !weakLock!(Rhs, This)
+            && isConstructable!(rhs, This)
             && !is(Rhs == shared)
         ){
-            static if(isRef!rhs){
-                static assert(isCopyable!(Rhs, This));
+            static if(weakLock!(Rhs, This)){
+                if(rhs._element !is null && rhs._control.add_shared_if_exists())
+                    this._element = rhs._element;
+                else
+                    this._element = null;
+            }
+            else static if(isRef!rhs){
+                static assert(isCopyConstructable!(Rhs, This));
 
                 this(rhs, Evoid.init);
             }
             else{
-                static assert(isMovable!(Rhs, This));
+                static assert(isMoveConstructable!(Rhs, This));
 
                 this._element = rhs._element;
 
@@ -362,71 +364,30 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             }
         }
 
-        // ditto
-        /*public this(Rhs, this This)(ref scope Rhs rhs)@safe
-        if(true
-            && isRcPtr!Rhs
-            && !is(Unqual!This == Unqual!Rhs)   ///copy ctors
-            && isCopyable!(Rhs, This)
-            && !weakLock!(Rhs, This)
-            && !is(Rhs == shared)
-        ){
-            this(rhs, Evoid.init);
-        }*/
 
 
-        /// ditto
-        public this(Rhs, this This)(auto ref scope Rhs rhs)@safe
-        if(true
-            && isRcPtr!Rhs
-            && isCopyable!(Rhs, This)
-            && weakLock!(Rhs, This)
-            && !is(Rhs == shared)
-        ){
-            if(rhs._element !is null && rhs._control.add_shared_if_exists())
-                this._element = rhs._element;
-            else
-                this._element = null;
-        }
-
-        /// ditto
-        /+public this(Rhs, this This)(scope Rhs rhs)@trusted
-        if(true
-            && isUniquePtr!Rhs
-            && isMovable!(Rhs, This)
-            && !is(Rhs == shared)
-        ){
-            if(rhs == null){
-                this(null);
-            }
-            else{
-                this(rhs.element, Evoid.init);
-                rhs._const_reset();
-            }
-        }+/
-
-
-        static if(isCopyable!(typeof(this), typeof(this)))
+        //copy ctors:
+        static if(isCopyConstructable!(typeof(this), typeof(this)))
             this(ref scope typeof(this) rhs)@safe{this(rhs, Evoid.init);}
         else
             @disable this(ref scope typeof(this) rhs)@safe;
 
-        static if(isCopyable!(typeof(this), const typeof(this)))
+        static if(isCopyConstructable!(typeof(this), const typeof(this)))
             this(ref scope typeof(this) rhs)const @safe{this(rhs, Evoid.init);}
         else
             @disable this(ref scope typeof(this) rhs)const @safe;
 
-        static if(isCopyable!(typeof(this), immutable typeof(this)))
+        static if(isCopyConstructable!(typeof(this), immutable typeof(this)))
             this(ref scope typeof(this) rhs)immutable @safe{this(rhs, Evoid.init);}
         else
             @disable this(ref scope typeof(this) rhs)immutable @safe;
 
-        static if(isCopyable!(typeof(this), shared typeof(this)))
+        static if(isCopyConstructable!(typeof(this), shared typeof(this)))
             this(ref scope typeof(this) rhs)shared @safe{this(rhs, Evoid.init);}
         else
             @disable this(ref scope typeof(this) rhs)shared @safe;
 
-        static if(isCopyable!(typeof(this), const shared typeof(this)))
+        static if(isCopyConstructable!(typeof(this), const shared typeof(this)))
             this(ref scope typeof(this) rhs)const shared @safe{this(rhs, Evoid.init);}
         else
             @disable this(ref scope typeof(this) rhs)const shared @safe;
@@ -565,81 +526,64 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 }
                 --------------------
         */
-        public void opAssign(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(ref scope Rhs desired)scope
+        public void opAssign(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(auto ref scope Rhs desired)scope
         if(true
             && isRcPtr!Rhs
-            && isCopyAssignable!(Rhs, This)
+            && isAssignable!(desired, This)
             && !is(Rhs == shared)
         ){
-            if((()@trusted => cast(const void*)&desired is cast(const void*)&this)())
-                return;
-
+            // shared assign:
             static if(is(This == shared)){
-
                 static if(isLockFree){
                     import core.atomic : atomicExchange;
 
+                    static if(isRef!desired && (This.weakPtr == Rhs.weakPtr)){
+                        if((()@trusted => cast(const void*)&desired is cast(const void*)&this)())
+                            return;
+                    }
+
                     ()@trusted{
-                        desired._control.add!(This.weakPtr);
+                        UnqualRcPtr!This tmp_desired = forward!desired;
+                        //desired._control.add!(This.weakPtr);
 
                         UnqualRcPtr!This tmp;
-                        GetElementReferenceType!This source = desired._element;    //interface/class cast
+                        GetElementReferenceType!This source = tmp_desired._element;    //interface/class cast
 
                         tmp._set_element(cast(typeof(this._element))atomicExchange!order(
                             cast(Unqual!(This.ElementReferenceType)*)&this._element,
                             cast(Unqual!(This.ElementReferenceType))source
                         ));
+
+                        tmp_desired._const_reset();
                     }();
                 }
                 else{
                     this.lockRcPtr!(
-                        (ref scope self, ref scope Rhs x) => self.opAssign!order(x)
-                    )(desired);
+                        (ref scope self, auto ref scope Rhs x) => self.opAssign!order(forward!x)
+                    )(forward!desired);
                 }
             }
-            else{
+            // copy assign or non identity move assign:
+            else static if(isRef!desired || !is(This == Rhs)){
+
+                static if(isRef!desired && (This.weakPtr == Rhs.weakPtr)){
+                    if((()@trusted => cast(const void*)&desired is cast(const void*)&this)())
+                        return;
+                }
+
                 this._release();
+
+                auto tmp = This(forward!desired);
+
                 ()@trusted{
-                    auto control = desired._control;
-                    this._set_element(desired._element);
-
-                    if(control !is null)
-                        control.add!weakPtr;
-
+                    this._set_element(tmp._element);
+                    tmp._const_reset();
                 }();
             }
-        }
-
-        ///ditto
-        public void opAssign(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs desired)scope
-        if(true
-            && isRcPtr!Rhs
-            && isMoveAssignable!(Rhs, This)
-            && !is(Rhs == shared)
-        ){
-            static if(is(This == shared)){
-                static if(isLockFree){
-                    import core.atomic : atomicExchange;
-
-                    ()@trusted{
-                        UnqualRcPtr!This tmp;
-                        GetElementReferenceType!This source = desired._element;    //interface/class cast
-
-                        tmp._set_element(cast(typeof(this._element))atomicExchange!order(
-                            cast(Unqual!(This.ElementReferenceType)*)&this._element,
-                            cast(Unqual!(This.ElementReferenceType))source
-                        ));
-
-                        desired._const_reset();
-                    }();
-                }
-                else{
-                    return this.lockRcPtr!(
-                        (ref scope self, Rhs x) => self.opAssign!order(x.move)
-                    )(desired.move);
-                }
-            }
+            //identity move assign:   //separate case for core.lifetime.move
             else{
+                static assert(isMoveAssignable!(Rhs, This));
+                static assert(!isRef!desired);
 
                 this._release();
 
@@ -808,7 +752,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         static if(!weakPtr)
         public static RcPtr!(ElementType, .DestructorType!(.DestructorType!ElementType, DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
         alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, auto ref Args args)
-        if(stateSize!AllocatorType > 0 && !isDynamicArray!ElementType){
+        if(!isDynamicArray!ElementType){
             static assert(!weakPtr);
 
             auto m = typeof(return).MakeEmplace!(AllocatorType, supportGC).make(forward!(a, args));
@@ -850,7 +794,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         static if(!weakPtr)
         public static RcPtr!(ElementType, .DestructorType!(.DestructorType!ElementType, DestructorType, DestructorAllocatorType!AllocatorType), ControlType)
         alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, const size_t n, auto ref Args args)
-        if(stateSize!AllocatorType > 0 && isDynamicArray!ElementType){
+        if(isDynamicArray!ElementType){
             static assert(!weakPtr);
 
             auto m = typeof(return).MakeDynamicArray!(AllocatorType, supportGC).make(forward!(a, n, args));
@@ -2426,7 +2370,8 @@ private{
         );
     }
 
-    template isMovable(From, To){
+    //Constructable:
+    template isMoveConstructable(From, To){
         import std.traits : Unqual, CopyTypeQualifiers;
 
         static if(is(Unqual!(From.ElementType) == Unqual!(To.ElementType)))
@@ -2440,39 +2385,48 @@ private{
             enum bool overlapable = false;
 
 
-        enum bool isMovable = true
+        enum bool isMoveConstructable = true
             && overlapable    //isOverlapable!(From.ElementType, To.ElementType) //&& is(Unqual!(From.ElementType) == Unqual!(To.ElementType))
             && is(GetElementReferenceType!From : GetElementReferenceType!To)
             && is(From.DestructorType : To.DestructorType)
             && is(GetControlType!From* : GetControlType!To*);
     }
-
-    template isCopyable(From, To){
+    template isCopyConstructable(From, To){
         import std.traits : isMutable;
 
-        enum bool isCopyable = true
-            && isMovable!(From, To)
+        enum bool isCopyConstructable = true
+            && isMoveConstructable!(From, To)
             && isMutable!From
-            && isMutable!(From.ControlType)
-            ;
+            && isMutable!(From.ControlType);
+    }
+    template isConstructable(alias from, To){
+        enum bool isConstructable = isRef!from
+            ? isCopyConstructable!(typeof(from), To)
+            : isMoveConstructable!(typeof(from), To);
     }
 
+    //Assignable:
     template isMoveAssignable(From, To){
         import std.traits : isMutable;
 
         enum bool isMoveAssignable = true
-            && isMovable!(From, To)
+            && isMoveConstructable!(From, To)
             && !weakLock!(From, To)
             && isMutable!To;
     }
-
     template isCopyAssignable(From, To){
         import std.traits : isMutable;
 
         enum bool isCopyAssignable = true
-            && isCopyable!(From, To)
+            && isCopyConstructable!(From, To)
             && !weakLock!(From, To)
             && isMutable!To;
+    }
+    template isAssignable(alias from, To){
+        enum bool isAssignable = isRef!from
+            ? isCopyAssignable!(typeof(from), To)
+            : isMoveAssignable!(typeof(from), To);
+
     }
 
 
@@ -2811,6 +2765,7 @@ version(unittest){
 
             assert(x.load.get == 123);
             assert(y.load.get == 42);
+            assert(x.useCount == 1);
 
             x.store(y);
             assert(x.load.get == 42);
@@ -3575,9 +3530,56 @@ unittest{
     }
 }
 
+//test strong ptr -> weak ptr assign
+unittest{
+    {
+        import core.lifetime : move;
+
+        auto a = RcPtr!int.make(1);
+        auto b = RcPtr!int.make(2);
+
+        {
+            RcPtr!int.WeakType x = RcPtr!int(a);
+            assert(a.useCount == 1);
+            assert(a.weakCount == 1);
+
+            x = RcPtr!int(b);
+            assert(a.useCount == 1);
+            assert(a.weakCount == 0);
+
+            assert(b.useCount == 1);
+            assert(b.weakCount == 1);
+        }
+        {
+            RcPtr!int.WeakType x = a;
+            assert(a.useCount == 1);
+            assert(a.weakCount == 1);
+
+            RcPtr!int.WeakType y = b;
+            assert(b.useCount == 1);
+            assert(b.weakCount == 1);
+
+            x = y;
+            assert(a.useCount == 1);
+            assert(a.weakCount == 0);
+
+            assert(b.useCount == 1);
+            assert(b.weakCount == 2);
+
+
+        }
+    }
+}
+
 //compare strong and weak ptr
 unittest{
     auto a = RcPtr!int.make(1);
     auto b = a.weak;
     assert(a == b);
+}
+
+//self opAssign
+unittest{
+    auto a = RcPtr!long.make(1);
+    a = a;
 }
