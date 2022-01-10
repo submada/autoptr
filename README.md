@@ -1,4 +1,8 @@
 # Autoptr
+
+## Documentation
+https://submada.github.io/autoptr
+
 ## C++-style smart pointers for D.
 
 This library contains:
@@ -63,9 +67,6 @@ Constructors of smart pointers never allocate memory, only static methods `make`
 `scope` and -dip1000:
 * All smart pointers assume that managed object have global lifetime (scope can be ignored).
 * Functions for creating new managed object `make` and `alloc` have  non `scope` parameters (global lifetime).
-
-## Documentation
-https://submada.github.io/autoptr
 
 ## Examples
 ```d
