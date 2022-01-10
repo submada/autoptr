@@ -2380,6 +2380,27 @@ unittest{
 }
 
 
+/**
+    Create `SharedPtr` from parameter `ptr` of type `SharedPtr`.
+*/
+auto sharedPtr(Ptr)(auto ref scope Ptr ptr)@trusted
+if(isSharedPtr!Ptr && !is(Ptr == shared)){
+    import core.lifetime : forward;
+    return forward!ptr;
+}
+
+///
+pure nothrow @safe @nogc unittest{
+    auto a = SharedPtr!long.make(1);
+    assert(a.useCount == 1);
+
+    auto b = sharedPtr(a);
+    assert(a.useCount == 2);
+
+    auto c = sharedPtr(SharedPtr!long.make(2));
+    assert(c.useCount == 1);
+}
+
 
 /**
 	Return `shared SharedPtr` pointing to same managed object like parameter `ptr`.

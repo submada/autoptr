@@ -181,6 +181,7 @@
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.weakPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.WeakType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/shared_ptr/sharedPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/WeakPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/WeakPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/unique_ptr.html</loc></url>

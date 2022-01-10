@@ -141,6 +141,7 @@ var symbols = [
 {name: 'autoptr.shared_ptr.SharedPtr.weakCount', kind: "functiondeclaration", path: './autoptr/shared_ptr/SharedPtr.weakCount.html', attributes: ["const", "nothrow", "nogc", "property", "scope", "safe"]},
 {name: 'autoptr.shared_ptr.SharedPtr.weakPtr', kind: "enummemberdeclaration", path: './autoptr/shared_ptr/SharedPtr.weakPtr.html', attributes: []},
 {name: 'autoptr.shared_ptr.SharedPtr.WeakType', kind: "aliasdeclaration", path: './autoptr/shared_ptr/SharedPtr.WeakType.html', attributes: []},
+{name: 'autoptr.shared_ptr.sharedPtr', kind: "functiondeclaration", path: './autoptr/shared_ptr/sharedPtr.html', attributes: ["auto", "trusted"]},
 {name: 'autoptr.shared_ptr.WeakPtr', kind: "aliasdeclaration", path: './autoptr/shared_ptr/WeakPtr.html', attributes: []},
 {name: 'autoptr.unique_ptr', kind: "module", path: './autoptr/unique_ptr.html', attributes: []},
 {name: 'autoptr.unique_ptr.dynCast', kind: "aliasdeclaration", path: './autoptr/unique_ptr/dynCast.html', attributes: []},
