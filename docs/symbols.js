@@ -59,7 +59,6 @@ var symbols = [
 {name: 'autoptr.intrusive_ptr.intrusivePtr', kind: "functiondeclaration", path: './autoptr/intrusive_ptr/intrusivePtr.html', attributes: ["auto"]},
 {name: 'autoptr.intrusive_ptr.isIntrusivePtr', kind: "enummemberdeclaration", path: './autoptr/intrusive_ptr/isIntrusivePtr.html', attributes: []},
 {name: 'autoptr.intrusive_ptr.share', kind: "functiondeclaration", path: './autoptr/intrusive_ptr/share.html', attributes: []},
-{name: 'autoptr.intrusive_ptr.sharedPtr', kind: "functiondeclaration", path: './autoptr/intrusive_ptr/sharedPtr.html', attributes: ["auto", "trusted"]},
 {name: 'autoptr.rc_ptr', kind: "module", path: './autoptr/rc_ptr.html', attributes: []},
 {name: 'autoptr.rc_ptr.dynCast', kind: "functiondeclaration", path: './autoptr/rc_ptr/dynCast.html', attributes: []},
 {name: 'autoptr.rc_ptr.dynCastMove', kind: "functiondeclaration", path: './autoptr/rc_ptr/dynCastMove.html', attributes: []},
@@ -99,7 +98,6 @@ var symbols = [
 {name: 'autoptr.rc_ptr.RcPtr.weakPtr', kind: "enummemberdeclaration", path: './autoptr/rc_ptr/RcPtr.weakPtr.html', attributes: []},
 {name: 'autoptr.rc_ptr.RcPtr.WeakType', kind: "aliasdeclaration", path: './autoptr/rc_ptr/RcPtr.WeakType.html', attributes: []},
 {name: 'autoptr.rc_ptr.share', kind: "functiondeclaration", path: './autoptr/rc_ptr/share.html', attributes: []},
-{name: 'autoptr.rc_ptr.sharedPtr', kind: "functiondeclaration", path: './autoptr/rc_ptr/sharedPtr.html', attributes: ["auto", "trusted"]},
 {name: 'autoptr.shared_ptr', kind: "module", path: './autoptr/shared_ptr.html', attributes: []},
 {name: 'autoptr.shared_ptr.dynCast', kind: "functiondeclaration", path: './autoptr/shared_ptr/dynCast.html', attributes: []},
 {name: 'autoptr.shared_ptr.dynCastMove', kind: "functiondeclaration", path: './autoptr/shared_ptr/dynCastMove.html', attributes: []},
@@ -148,6 +146,5 @@ var symbols = [
 {name: 'autoptr.unique_ptr.dynCastMove', kind: "aliasdeclaration", path: './autoptr/unique_ptr/dynCastMove.html', attributes: []},
 {name: 'autoptr.unique_ptr.first', kind: "aliasdeclaration", path: './autoptr/unique_ptr/first.html', attributes: []},
 {name: 'autoptr.unique_ptr.share', kind: "aliasdeclaration", path: './autoptr/unique_ptr/share.html', attributes: []},
-{name: 'autoptr.unique_ptr.sharedPtr', kind: "aliasdeclaration", path: './autoptr/unique_ptr/sharedPtr.html', attributes: []},
 {name: 'autoptr.unique_ptr.UniquePtr', kind: "aliasdeclaration", path: './autoptr/unique_ptr/UniquePtr.html', attributes: []},
 ];

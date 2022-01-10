@@ -452,7 +452,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     import core.atomic : atomicExchange;
 
                     ()@trusted{
-                        UnqualRcPtr!This tmp;
+                        UnqualSmartPtr!This tmp;
                         tmp._set_element(cast(typeof(this._element))atomicExchange!order(
                             cast(Unqual!(This.ElementReferenceType)*)&this._element,
                             null
@@ -460,7 +460,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     }();
                 }
                 else{
-                    return this.lockRcPtr!(
+                    return this.lockSmartPtr!(
                         (ref scope self) => self.opAssign!order(null)
                     )();
                 }
@@ -543,10 +543,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     }
 
                     ()@trusted{
-                        UnqualRcPtr!This tmp_desired = forward!desired;
+                        UnqualSmartPtr!This tmp_desired = forward!desired;
                         //desired._control.add!(This.weakPtr);
 
-                        UnqualRcPtr!This tmp;
+                        UnqualSmartPtr!This tmp;
                         GetElementReferenceType!This source = tmp_desired._element;    //interface/class cast
 
                         tmp._set_element(cast(typeof(this._element))atomicExchange!order(
@@ -558,7 +558,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     }();
                 }
                 else{
-                    this.lockRcPtr!(
+                    this.lockSmartPtr!(
                         (ref scope self, auto ref scope Rhs x) => self.opAssign!order(forward!x)
                     )(forward!desired);
                 }
@@ -878,7 +878,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 return;
 
             else static if(is(This == shared))
-                return this.lockRcPtr!(
+                return this.lockSmartPtr!(
                     (ref scope return self) => self.useCount()
                 )();
 
@@ -974,10 +974,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 }
                 --------------------
         */
-        public UnqualRcPtr!This load(MemoryOrder order = MemoryOrder.seq, this This)()scope return{
+        public UnqualSmartPtr!This load(MemoryOrder order = MemoryOrder.seq, this This)()scope return{
 
             static if(is(This == shared))
-                return this.lockRcPtr!(
+                return this.lockSmartPtr!(
                     (ref scope return self) => self.load!order()
                 )();
             
@@ -1094,7 +1094,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     import core.atomic : atomicExchange;
 
                     return()@trusted{
-                        UnqualRcPtr!This result;
+                        UnqualSmartPtr!This result;
                         result._set_element(cast(typeof(this._element))atomicExchange!order(
                             cast(Unqual!(This.ElementReferenceType)*)&this._element,
                             null
@@ -1104,7 +1104,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     }();
                 }
                 else{
-                    return this.lockRcPtr!(
+                    return this.lockSmartPtr!(
                         (ref scope self) => self.exchange!order(null)
                     )();
                 }
@@ -1126,7 +1126,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     import core.atomic : atomicExchange;
 
                     return()@trusted{
-                        UnqualRcPtr!This result;
+                        UnqualSmartPtr!This result;
                         GetElementReferenceType!This source = rhs._element;    //interface/class cast
 
                         result._set_element(cast(typeof(this._element))atomicExchange!order(
@@ -1139,7 +1139,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     }();
                 }
                 else{
-                    return this.lockRcPtr!(
+                    return this.lockSmartPtr!(
                         (ref scope self, Rhs x) => self.exchange!order(x.move)
                     )(rhs.move);
                 }
@@ -1310,7 +1310,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
                     mutex.lock();
 
-                    alias Self = UnqualRcPtr!This;
+                    alias Self = UnqualSmartPtr!This;
 
                     static assert(!is(Self == shared));
 
@@ -2109,7 +2109,7 @@ nothrow unittest{
     If `ptr` is null or dynamic cast fail then result `RcPtr` is null.
     Otherwise, the new `RcPtr` will share ownership with the initial value of `ptr`.
 */
-public UnqualRcPtr!Ptr.ChangeElementType!T dynCast(T, Ptr)(ref scope Ptr ptr)
+public UnqualSmartPtr!Ptr.ChangeElementType!T dynCast(T, Ptr)(ref scope Ptr ptr)
 if(    isRcPtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
@@ -2122,7 +2122,7 @@ if(    isRcPtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
 }
 
 /// ditto
-public UnqualRcPtr!Ptr.ChangeElementType!T dynCast(T, Ptr)(scope Ptr ptr)
+public UnqualSmartPtr!Ptr.ChangeElementType!T dynCast(T, Ptr)(scope Ptr ptr)
 if(    isRcPtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
@@ -2131,7 +2131,7 @@ if(    isRcPtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
 }
 
 /// ditto
-public UnqualRcPtr!Ptr.ChangeElementType!T dynCastMove(T, Ptr)(auto ref scope Ptr ptr)
+public UnqualSmartPtr!Ptr.ChangeElementType!T dynCastMove(T, Ptr)(auto ref scope Ptr ptr)
 if(    isRcPtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
@@ -2207,42 +2207,6 @@ unittest{
 
 
 
-/**
-    Create `SharedPtr` from parameter `ptr` of type `RcPtr`.
-*/
-auto sharedPtr(Ptr)(auto ref scope Ptr ptr)@trusted
-if(isRcPtr!Ptr && !is(Ptr == shared)){
-    import std.traits : CopyTypeQualifiers;
-    import core.lifetime : forward;
-    import autoptr.shared_ptr : SharedPtr;
-
-    return SharedPtr!(
-        CopyTypeQualifiers!(Ptr, Ptr.ElementType),
-        Ptr.DestructorType,
-        GetControlType!Ptr,
-        Ptr.weakPtr
-    )(forward!ptr);
-}
-
-
-///
-unittest{
-    auto x = RcPtr!long.make(42);
-    assert(*x == 42);
-    assert(x.useCount == 1);
-
-    auto s = sharedPtr(x);
-    assert(x.useCount == 2);
-
-    import autoptr.shared_ptr : isSharedPtr;
-    static assert(isSharedPtr!(typeof(s)));
-
-    auto s2 = sharedPtr(x.move);
-    assert(s.useCount == 2);
-
-    auto y = sharedPtr(RcPtr!long.init);
-    assert(y == null);
-}
 
 
 
@@ -2308,7 +2272,7 @@ if(isRcPtr!Ptr && is(Ptr.ElementType : T[], T)){
     import std.traits : isDynamicArray, isStaticArray;
     import std.range : ElementEncodingType;
 
-    alias Result = UnqualRcPtr!Ptr.ChangeElementType!(
+    alias Result = UnqualSmartPtr!Ptr.ChangeElementType!(
         ElementEncodingType!(Ptr.ElementType)
     );
 
@@ -2327,7 +2291,7 @@ if(isRcPtr!Ptr && is(Ptr.ElementType : T[], T)){
     import std.traits : isDynamicArray, isStaticArray;
     import std.range : ElementEncodingType;
 
-    alias Result = UnqualRcPtr!Ptr.ChangeElementType!(
+    alias Result = UnqualSmartPtr!Ptr.ChangeElementType!(
         ElementEncodingType!(Ptr.ElementType)
     );
 
@@ -2389,16 +2353,15 @@ pure nothrow @nogc unittest{
 
 //local traits:
 private{
-    template UnqualRcPtr(Ptr){
-        import std.traits : CopyTypeQualifiers;
 
-        alias UnqualRcPtr = RcPtr!(
-            CopyTypeQualifiers!(Ptr, Ptr.ElementType),
+    /+template UnqualSmartPtr(Ptr){
+        alias UnqualSmartPtr = RcPtr!(
+            GetElementType!Ptr, //CopyTypeQualifiers!(Ptr, Ptr.ElementType),
             Ptr.DestructorType,
-            CopyTypeQualifiers!(Ptr, Ptr.ControlType),
+            GetControlType!Ptr, // CopyTypeQualifiers!(Ptr, Ptr.ControlType),
             Ptr.weakPtr
         );
-    }
+    }+/
 
     //Constructable:
     template isMoveConstructable(From, To){
@@ -2457,27 +2420,6 @@ private{
             ? isCopyAssignable!(typeof(from), To)
             : isMoveAssignable!(typeof(from), To);
 
-    }
-
-
-    //mutex:
-    static auto lockRcPtr(alias fn, Ptr, Args...)
-    (auto ref scope shared Ptr ptr, auto ref scope return Args args){
-        import std.traits : CopyConstness, CopyTypeQualifiers, Unqual;
-        import core.lifetime : forward;
-        import autoptr.internal.mutex : getMutex;
-
-        shared mutex = getMutex(ptr);
-
-        mutex.lock();
-        scope(exit)mutex.unlock();
-
-        alias Result = UnqualRcPtr!(shared Ptr);
-
-        return fn(
-            *(()@trusted => cast(Result*)&ptr )(),
-            forward!args
-        );
     }
 }
 

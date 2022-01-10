@@ -70,47 +70,51 @@ $('#symbolSearchPane').show();</script>
 
 			<section><h2>Example</h2>
 
-<pre class="code"><code class="lang-d"><span class="kwd">static class </span><span class="typ">Foo</span><span class="pun">{
-	<a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int </span><span class="pln">c</span><span class="pun">;
-}
-
-</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
-	</span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="typ">Foo</span><span class="pun">) == <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int
-</span><span class="pun">));
-</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
-	</span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="kwd">const </span><span class="typ">Foo</span><span class="pun">) == </span><span class="kwd">const <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int
-</span><span class="pun">));
-</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
-	</span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="kwd">shared </span><span class="typ">Foo</span><span class="pun">) == </span><span class="kwd">shared <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int
-</span><span class="pun">));
-</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
-	</span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="kwd">const shared </span><span class="typ">Foo</span><span class="pun">) == </span><span class="kwd">const shared <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int
-</span><span class="pun">));
-</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
-	</span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="kwd">immutable </span><span class="typ">Foo</span><span class="pun">) == </span><span class="kwd">immutable <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int
+<pre class="code"><code class="lang-d"><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
+    </span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">) == </span><span class="typ">void
 </span><span class="pun">));
 
+	</span><span class="kwd">static class </span><span class="typ">Foo</span><span class="pun">{
+		<a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int </span><span class="pln">c</span><span class="pun">;
+	}
+
+	</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
+		</span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="typ">Foo</span><span class="pun">) == <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int
+	</span><span class="pun">));
+	</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
+		</span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="kwd">const </span><span class="typ">Foo</span><span class="pun">) == </span><span class="kwd">const <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int
+	</span><span class="pun">));
+	</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
+		</span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="kwd">shared </span><span class="typ">Foo</span><span class="pun">) == </span><span class="kwd">shared <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int
+	</span><span class="pun">));
+	</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
+		</span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="kwd">const shared </span><span class="typ">Foo</span><span class="pun">) == </span><span class="kwd">const shared <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int
+	</span><span class="pun">));
+	</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
+		</span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="kwd">immutable </span><span class="typ">Foo</span><span class="pun">) == </span><span class="kwd">immutable <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int
+	</span><span class="pun">));
 
 
-</span><span class="kwd">static class </span><span class="typ">Bar</span><span class="pun">{
-	</span><span class="kwd">shared <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int </span><span class="pln">c</span><span class="pun">;
-}
 
-</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
-	</span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="typ">Bar</span><span class="pun">) == </span><span class="kwd">shared <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int
-</span><span class="pun">));
-</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
-	</span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="kwd">const </span><span class="typ">Bar</span><span class="pun">) == </span><span class="kwd">const shared <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int
-</span><span class="pun">));
-</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
-	</span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="kwd">shared </span><span class="typ">Bar</span><span class="pun">) == </span><span class="kwd">shared <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int
-</span><span class="pun">));
-</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
-	</span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="kwd">const shared </span><span class="typ">Bar</span><span class="pun">) == </span><span class="kwd">const shared <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int
-</span><span class="pun">));
-</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
-	</span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="kwd">immutable </span><span class="typ">Bar</span><span class="pun">) == </span><span class="kwd">immutable <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int
-</span><span class="pun">));
+	</span><span class="kwd">static class </span><span class="typ">Bar</span><span class="pun">{
+		</span><span class="kwd">shared <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int </span><span class="pln">c</span><span class="pun">;
+	}
+
+	</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
+		</span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="typ">Bar</span><span class="pun">) == </span><span class="kwd">shared <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int
+	</span><span class="pun">));
+	</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
+		</span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="kwd">const </span><span class="typ">Bar</span><span class="pun">) == </span><span class="kwd">const shared <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int
+	</span><span class="pun">));
+	</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
+		</span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="kwd">shared </span><span class="typ">Bar</span><span class="pun">) == </span><span class="kwd">shared <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int
+	</span><span class="pun">));
+	</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
+		</span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="kwd">const shared </span><span class="typ">Bar</span><span class="pun">) == </span><span class="kwd">const shared <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int
+	</span><span class="pun">));
+	</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(
+		</span><span class="typ">IntrusiveControlBlock</span><span class="pun">!(</span><span class="kwd">immutable </span><span class="typ">Bar</span><span class="pun">) == </span><span class="kwd">immutable <a href="../../autoptr/common/ControlBlock.html"></span><span class="typ">ControlBlock</span></a><span class="pun">!</span><span class="typ">int
+	</span><span class="pun">));
 
 
 </span></code></pre>

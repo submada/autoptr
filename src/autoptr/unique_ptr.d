@@ -32,11 +32,6 @@ public alias first = autoptr.rc_ptr.first;
 */
 public alias share = autoptr.rc_ptr.share;
 
-/**
-    Alias to `autoptr.rc_ptr.sharedPtr`.
-*/
-public alias sharedPtr = autoptr.rc_ptr.sharedPtr;
-
 
 /**
     `UniquePtr` is a smart pointer that owns and manages object through a pointer and disposes of that object when the `UniquePtr` goes out of scope.
@@ -304,25 +299,6 @@ nothrow unittest{
 
 }+/
 
-//
-unittest{
-    alias ControlType = immutable ControlBlock!(int, void);
-
-
-    auto x = UniquePtr!(long, ControlType).make(42);
-    assert(*x == 42);
-
-    auto s = sharedPtr(x.move);
-    import autoptr.shared_ptr : isSharedPtr;
-
-    static assert(isSharedPtr!(typeof(s)));
-    static assert(is(typeof(s).ControlType == ControlType));
-
-
-    auto y = sharedPtr(UniquePtr!(long, ControlType).init);
-    assert(y == null);
-
-}
 
 ///
 nothrow @nogc unittest{

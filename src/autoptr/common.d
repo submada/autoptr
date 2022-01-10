@@ -717,15 +717,14 @@ if(is(Type == struct)){
 
 	If `mutable` is `true`, then result type alias is mutable (can be shared).
 */
-public template IntrusiveControlBlock(Type, bool mutable = false)
-if(isIntrusive!Type && is(Type == class) || is(Type == struct)){
+public template IntrusiveControlBlock(Type, bool mutable = false){
 
 	static if(is(Type == class))
 		alias PtrControlBlock = typeof(intrusivControlBlock(Type.init));
 	else static if(is(Type == struct))
 		alias PtrControlBlock = typeof(intrusivControlBlock(*cast(Type*)null));
 	else 
-		static assert(0, "no impl");
+		alias PtrControlBlock = void*;
 
 
 	import std.traits : CopyTypeQualifiers, PointerTarget, Unconst;
@@ -741,6 +740,10 @@ if(isIntrusive!Type && is(Type == class) || is(Type == struct)){
 
 ///
 unittest{
+    static assert(is(
+        IntrusiveControlBlock!(long) == void
+    ));
+
 	static class Foo{
 		ControlBlock!int c;
 	}
@@ -803,6 +806,20 @@ package template GetElementType(Ptr){
 	alias GetElementType = CopyTypeQualifiers!(Ptr, Ptr.ElementType);
 }
 
+
+package template UnqualSmartPtr(Ptr){
+    import std.traits : TemplateOf;
+
+    alias SmartPtr = TemplateOf!Ptr;
+
+    alias UnqualSmartPtr = SmartPtr!(
+        GetElementType!Ptr,
+        Ptr.DestructorType,
+        GetControlType!Ptr,
+        Ptr.weakPtr
+    );
+}
+
 package template GetElementReferenceType(Ptr){
 	import std.traits : CopyTypeQualifiers;
 
@@ -818,6 +835,26 @@ package template ElementReferenceTypeImpl(Type){
 	else
 		alias ElementReferenceTypeImpl = PtrOrRef!Type;
 
+}
+
+package static auto lockSmartPtr(alias fn, Ptr, Args...)
+(auto ref scope shared Ptr ptr, auto ref scope return Args args){
+    import std.traits : CopyConstness, CopyTypeQualifiers, Unqual;
+    import core.lifetime : forward;
+    import autoptr.internal.mutex : getMutex;
+
+    shared mutex = getMutex(ptr);
+
+    mutex.lock();
+    scope(exit)mutex.unlock();
+
+    alias Result = UnqualSmartPtr!(shared Ptr);
+
+
+    return fn(
+        *(()@trusted => cast(Result*)&ptr )(),
+        forward!args
+    );
 }
 
 
@@ -887,7 +924,10 @@ package auto intrusivControlBlock(Type)(return auto ref Type elm)pure nothrow @t
 			}
 		}
 	}
-	else static assert(0, "no impl");
+	else{
+        return cast(void*)null;
+    }
+
 }
 
 //control block
@@ -909,9 +949,12 @@ unittest{
 	static assert(is(
 		typeof(intrusivControlBlock(lvalueOf!(shared const Foo))) == shared const(ControlBlock!int)*
 	));
-	static assert(is(
-		typeof(intrusivControlBlock(lvalueOf!(immutable Foo))) == immutable(ControlBlock!int)*
-	));
+    static assert(is(
+        typeof(intrusivControlBlock(lvalueOf!(immutable Foo))) == immutable(ControlBlock!int)*
+    ));
+    static assert(is(
+        typeof(intrusivControlBlock(lvalueOf!(long))) == void*
+    ));
 }
 
 //shared control block

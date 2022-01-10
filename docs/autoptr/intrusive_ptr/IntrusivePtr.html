@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="UTF-8"/>
-		<title>Struct IntrusivePtr</title>
+		<title>IntrusivePtr - multiple declarations</title>
 		<link rel="stylesheet" type="text/css" href="../../styles/ddox.css"/>
 		<link rel="stylesheet" href="../../prettify/prettify.css" type="text/css"/>
 		<script type="text/javascript" src="../../scripts/jquery.js">/**/</script><script type="text/javascript" src="../../scripts/ddox.js">/**/</script>
@@ -54,7 +54,21 @@ $('#symbolSearchPane').show();</script>
 			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>Struct IntrusivePtr</h1><p><code class="lang-d"><span class="typ">IntrusivePtr</span></code> is a smart pointer that retains shared ownership of an object through a pointer.
+			<h1>IntrusivePtr - multiple declarations</h1>
+			<nav class="page-nav">
+				<ul>
+					<li>
+						<a href="#0">
+							Struct <code>IntrusivePtr</code>
+						</a>
+					</li>
+					<li>
+						<a href="#1">
+							Alias <code>IntrusivePtr</code>
+						</a>
+					</li>
+				</ul>
+			</nav><h2 id="0">Struct IntrusivePtr</h2><p><code class="lang-d"><span class="typ">IntrusivePtr</span></code> is a smart pointer that retains shared ownership of an object through a pointer.
 </p>
 			<div class="prototype">
 				<code class="lang-d">
@@ -104,7 +118,7 @@ $('#symbolSearchPane').show();</script>
 </p>
 </section>
 
-			<section><h2>Constructors</h2>
+			<section><h3>Constructors</h3>
 				<table>
 					<col class="caption"/>
 					<tr>
@@ -132,7 +146,7 @@ $('#symbolSearchPane').show();</script>
 					</tr>
 				</table>
 			</section>
-			<section><h2>Properties</h2>
+			<section><h3>Properties</h3>
 				<table>
 					<col class="caption"/>
 					<tr>
@@ -182,7 +196,7 @@ $('#symbolSearchPane').show();</script>
 					</tr>
 				</table>
 			</section>
-			<section><h2>Methods</h2>
+			<section><h3>Methods</h3>
 				<table>
 					<col class="caption"/>
 					<tr>
@@ -351,7 +365,7 @@ $('#symbolSearchPane').show();</script>
 					</tr>
 				</table>
 			</section>
-			<section><h2>Aliases</h2>
+			<section><h3>Aliases</h3>
 				<table>
 					<col class="caption"/>
 					<tr>
@@ -440,7 +454,7 @@ $('#symbolSearchPane').show();</script>
 					</tr>
 				</table>
 			</section>
-			<section><h2>Example</h2>
+			<section><h3>Example</h3>
 
 <pre class="code"><code class="lang-d"><span class="pln">
 </span><span class="kwd">static class </span><span class="typ">Foo</span><span class="pun">{
@@ -510,39 +524,9 @@ $('#symbolSearchPane').show();</script>
     </span><span class="pln">x </span><span class="pun">= </span><span class="kwd">null</span><span class="pun">;
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">w2<wbr/></span><span class="pun">.</span><span class="pln">expired </span><span class="pun">== </span><span class="kwd">true</span><span class="pun">);
 }
-
-
-</span><span class="com">//weak references:
-/+{
-    import std.stdio;
-    debug writeln("intrusive: start");
-    debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
-    {
-        auto x = IntrusivePtr!Foo.make(314);
-        assert(x.useCount == 1);
-        assert(x.weakCount == 0);
-
-        debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
-        {
-            auto w = x.weak();  //weak pointer
-            //assert(x.weakCount == 1);
-            debug writeln("x.weakCount: ", x.weakCount);
-
-            debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
-
-        }
-            debug writeln("x.weakCount: ", x.weakCount);
-        assert(x.weakCount == 0);
-
-        debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
-
-    }
-    debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
-    debug writeln("intrusive: end");
-}+/
 </span></code></pre>
 </section>
-<section><h2>Example</h2>
+<section><h3>Example</h3>
 
 <pre class="code"><code class="lang-d"><span class="com">//make IntrusivePtr object
 </span><span class="kwd">static struct </span><span class="typ">Foo</span><span class="pun">{
@@ -560,7 +544,7 @@ $('#symbolSearchPane').show();</script>
 </span><span class="pun">}
 </span></code></pre>
 </section>
-<section><h2>Example</h2>
+<section><h3>Example</h3>
 
 <pre class="code"><code class="lang-d"><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">experimental<wbr/></span><span class="pun">.</span><span class="pln">allocator </span><span class="pun">: <a href="../../autoptr/intrusive_ptr/IntrusivePtr.make.html"></span><span class="pln">make</span></a><span class="pun">, </span><span class="pln">dispose</span><span class="pun">, </span><span class="pln">allocatorObject</span><span class="pun">;
 
@@ -588,7 +572,22 @@ $('#symbolSearchPane').show();</script>
 
 </span></code></pre>
 </section>
-
+<h2 id="1">Alias IntrusivePtr</h2><p>Alias to <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"><span class="typ">IntrusivePtr</span></a></code> with additional template parameters for same interface as <code class="lang-d"><span class="typ">SharedPtr</span></code> and <code class="lang-d"><span class="typ">RcPtr</span></code>
+</p>
+			<div class="prototype">
+				<code class="lang-d">
+					<div class="single-prototype">
+			<span class="kwd">alias</span> <span class="pln">IntrusivePtr</span>(_Type, _DestructorType, _ControlType, <span class="typ">bool</span> _weakPtr<span class="pln"> </span><span class="pun">= </span><span class="kwd">false</span>)
+			 <span class="pun">=</span> <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"><span class="typ">IntrusivePtr</span></a>!(_Type,_weakPtr)<span class="pun">;</span>
+					</div>
+					<div class="single-prototype">
+			<span class="kwd">alias</span> <span class="pln">IntrusivePtr</span>(_Type, _ControlType, _DestructorType, <span class="typ">bool</span> _weakPtr<span class="pln"> </span><span class="pun">= </span><span class="kwd">false</span>)
+			 <span class="pun">=</span> <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"><span class="typ">IntrusivePtr</span></a>!(_Type,_weakPtr)<span class="pun">;</span>
+					</div>
+				</code>
+			</div>
+			
+			
 			<footer>
 				<table class="license-info">
 					<tr>
