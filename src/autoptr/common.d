@@ -744,6 +744,8 @@ unittest{
         IntrusiveControlBlock!(long) == void
     ));
 
+
+
 	static class Foo{
 		ControlBlock!int c;
 	}
