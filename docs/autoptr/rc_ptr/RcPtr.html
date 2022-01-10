@@ -21,7 +21,8 @@ $('#symbolSearchPane').show();</script>
 			</div>
 			<ul class="tree-view">
 				<li class="tree-view ">
-					<div class="package ">autoptr
+					<div class="package ">
+						<a href="../../autoptr.html">autoptr</a>
 					</div>
 			<ul class="tree-view">
 				<li>
@@ -186,6 +187,13 @@ $('#symbolSearchPane').show();</script>
 							<a href="../../autoptr/rc_ptr/RcPtr.length.html" class="public property"><code>length</code></a><span class="tableEntryAnnotation">[get]</span>
 						</td>
 						<td class="typecol"><code class="prettyprint lang-d"><span class="pln">size_t</span></code></td><td>Returns length of dynamic array (isDynamicArray!ElementType == true).
+</td>
+					</tr>
+					<tr>
+						<td>
+							<a href="../../autoptr/rc_ptr/RcPtr.observe.html" class="public property"><code>observe</code></a><span class="tableEntryAnnotation">[get]</span>
+						</td>
+						<td class="typecol"><code class="prettyprint lang-d"><span class="typ">ElementReferenceTypeImpl</span>!(inout(ElementType))</code></td><td>Get pointer to managed object of <code class="lang-d"><a href="../../autoptr/rc_ptr/RcPtr.ElementType.html"><span class="typ">ElementType</span></a></code> or reference if <code class="lang-d"><a href="../../autoptr/rc_ptr/RcPtr.ElementType.html"><span class="typ">ElementType</span></a></code> is reference type (class or interface) or dynamic array
 </td>
 					</tr>
 					<tr>

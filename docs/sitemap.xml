@@ -43,6 +43,7 @@
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.lock.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.make.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.move.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.observe.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.opAssign.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.opAssign.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.opCastImpl.html</loc></url>
@@ -100,6 +101,7 @@
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.make.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.make.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.move.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.observe.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.opAssign.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.opAssign.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.opCastImpl.html</loc></url>
@@ -154,6 +156,7 @@
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.make.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.make.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.move.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.observe.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opAssign.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opAssign.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opAssign.html</loc></url>
@@ -191,4 +194,5 @@
 <url><loc>http://127.0.0.1/autoptr/unique_ptr/share.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/unique_ptr/UniquePtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/unique_ptr/UniquePtr.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr.html</loc></url>
 </urlset>
