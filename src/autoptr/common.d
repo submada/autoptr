@@ -176,10 +176,10 @@ public template DestructorAllocatorType(Allocator){
 	alias Get(T) = T;
 
 	static void impl()(Evoid*){
-        static if(stateSize!Allocator > 0){
-            {
-			    Allocator allocator;
-            }
+		static if(stateSize!Allocator > 0){
+			{
+				Allocator allocator;
+			}
 		}
 		void[] data;
 		const size_t size;
@@ -242,7 +242,7 @@ public template DestructorType(Types...){
 				// generate a body that calls all the destructors in the chain,
 				// compiler should infer the intersection of attributes
 				foreach (B; AliasSeq!(Type, BaseClassesTuple!Type)) {
-                    alias UB = Unqual!B;
+					alias UB = Unqual!B;
 
 					// __dtor, i.e. B.~this
 					static if (__traits(hasMember, B, "__dtor"))
@@ -740,11 +740,6 @@ public template IntrusiveControlBlock(Type, bool mutable = false){
 
 ///
 unittest{
-    static assert(is(
-        IntrusiveControlBlock!(long) == void
-    ));
-
-
 
 	static class Foo{
 		ControlBlock!int c;
@@ -789,6 +784,11 @@ unittest{
 	));
 
 
+
+	static assert(is(
+		IntrusiveControlBlock!(long) == void
+	));
+
 }
 
 
@@ -810,16 +810,16 @@ package template GetElementType(Ptr){
 
 
 package template UnqualSmartPtr(Ptr){
-    import std.traits : TemplateOf;
+	import std.traits : TemplateOf;
 
-    alias SmartPtr = TemplateOf!Ptr;
+	alias SmartPtr = TemplateOf!Ptr;
 
-    alias UnqualSmartPtr = SmartPtr!(
-        GetElementType!Ptr,
-        Ptr.DestructorType,
-        GetControlType!Ptr,
-        Ptr.weakPtr
-    );
+	alias UnqualSmartPtr = SmartPtr!(
+		GetElementType!Ptr,
+		Ptr.DestructorType,
+		GetControlType!Ptr,
+		Ptr.weakPtr
+	);
 }
 
 package template GetElementReferenceType(Ptr){
@@ -841,22 +841,22 @@ package template ElementReferenceTypeImpl(Type){
 
 package static auto lockSmartPtr(alias fn, Ptr, Args...)
 (auto ref scope shared Ptr ptr, auto ref scope return Args args){
-    import std.traits : CopyConstness, CopyTypeQualifiers, Unqual;
-    import core.lifetime : forward;
-    import autoptr.internal.mutex : getMutex;
+	import std.traits : CopyConstness, CopyTypeQualifiers, Unqual;
+	import core.lifetime : forward;
+	import autoptr.internal.mutex : getMutex;
 
-    shared mutex = getMutex(ptr);
+	shared mutex = getMutex(ptr);
 
-    mutex.lock();
-    scope(exit)mutex.unlock();
+	mutex.lock();
+	scope(exit)mutex.unlock();
 
-    alias Result = UnqualSmartPtr!(shared Ptr);
+	alias Result = UnqualSmartPtr!(shared Ptr);
 
 
-    return fn(
-        *(()@trusted => cast(Result*)&ptr )(),
-        forward!args
-    );
+	return fn(
+		*(()@trusted => cast(Result*)&ptr )(),
+		forward!args
+	);
 }
 
 
@@ -927,8 +927,8 @@ package auto intrusivControlBlock(Type)(return auto ref Type elm)pure nothrow @t
 		}
 	}
 	else{
-        return cast(void*)null;
-    }
+		return cast(void*)null;
+	}
 
 }
 
@@ -951,12 +951,12 @@ unittest{
 	static assert(is(
 		typeof(intrusivControlBlock(lvalueOf!(shared const Foo))) == shared const(ControlBlock!int)*
 	));
-    static assert(is(
-        typeof(intrusivControlBlock(lvalueOf!(immutable Foo))) == immutable(ControlBlock!int)*
-    ));
-    static assert(is(
-        typeof(intrusivControlBlock(lvalueOf!(long))) == void*
-    ));
+	static assert(is(
+		typeof(intrusivControlBlock(lvalueOf!(immutable Foo))) == immutable(ControlBlock!int)*
+	));
+	static assert(is(
+		typeof(intrusivControlBlock(lvalueOf!(long))) == void*
+	));
 }
 
 //shared control block
