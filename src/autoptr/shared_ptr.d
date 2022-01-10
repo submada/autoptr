@@ -2381,10 +2381,10 @@ unittest{
 
 
 /**
-	Create `SharedPtr` from parameter `ptr` of type `SharedPtr`.
+	Create `SharedPtr` from parameter `ptr` of type `SharedPtr`, `RcPtr` or `IntrusivePtr`.
 */
 auto sharedPtr(Ptr)(auto ref scope Ptr ptr)@trusted
-if(!is(Ptr == shared) && (isSharedPtr!Ptr || isRcPtr!Ptr || isIntrusivePtr!Ptr )){
+if(!is(Ptr == shared) && (isSharedPtr!Ptr || isRcPtr!Ptr || isIntrusivePtr!Ptr)){
 	import core.lifetime : forward;
 	import std.traits : CopyTypeQualifiers;
 
