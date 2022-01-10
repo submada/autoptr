@@ -323,9 +323,7 @@ public template IntrusivePtr(
                 --------------------
         */
         public this(Rhs, this This)(auto ref scope Rhs rhs)@trusted
-        if(true
-            && isIntrusivePtr!Rhs
-            //&& !is(Unqual!This == Unqual!Rhs)   ///copy ctors
+        if(    isIntrusivePtr!Rhs
             && isConstructable!(rhs, This)
             && !is(Rhs == shared)
         ){
@@ -535,8 +533,7 @@ public template IntrusivePtr(
                 --------------------
         */
         public void opAssign(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(auto ref scope Rhs desired)scope
-        if(true
-            && isIntrusivePtr!Rhs
+        if(    isIntrusivePtr!Rhs
             && isAssignable!(desired, This)
             && !is(Rhs == shared)
         ){
@@ -1051,8 +1048,7 @@ public template IntrusivePtr(
 
         /// ditto
         public IntrusivePtr exchange(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs ptr)scope
-        if(true
-            && isIntrusivePtr!Rhs 
+        if(    isIntrusivePtr!Rhs
             && !is(Rhs == shared) 
             && isMoveConstructable!(Rhs, This)
             && isMutable!This
@@ -1185,8 +1181,7 @@ public template IntrusivePtr(
         public bool compareExchangeStrong
             (MemoryOrder success = MemoryOrder.seq, MemoryOrder failure = success, E, D, this This)
             (ref scope E expected, scope D desired)scope
-        if(true
-            && isIntrusivePtr!E && !is(E == shared)
+        if(    isIntrusivePtr!E && !is(E == shared)
             && isIntrusivePtr!D && !is(D == shared)
             && (isMoveConstructable!(D, This) && isMutable!This)
             && (isCopyConstructable!(This, E) && isMutable!E)
@@ -1206,8 +1201,7 @@ public template IntrusivePtr(
         public bool compareExchangeWeak
             (MemoryOrder success = MemoryOrder.seq, MemoryOrder failure = success, E, D, this This)
             (ref scope E expected, scope D desired)scope
-        if(true
-            && isIntrusivePtr!E && !is(E == shared)
+        if(    isIntrusivePtr!E && !is(E == shared)
             && isIntrusivePtr!D && !is(D == shared)
             && (isMoveConstructable!(D, This) && isMutable!This)
             && (isCopyConstructable!(This, E) && isMutable!E)
@@ -1224,8 +1218,7 @@ public template IntrusivePtr(
         private bool compareExchangeImpl
             (bool weak, MemoryOrder success, MemoryOrder failure, E, D, this This)
             (ref scope E expected, scope D desired)scope //@trusted pure @nogc
-        if(true
-            && isIntrusivePtr!E && !is(E == shared)
+        if(    isIntrusivePtr!E && !is(E == shared)
             && isIntrusivePtr!D && !is(D == shared)
             && (isMoveConstructable!(D, This) && isMutable!This)
             && (isCopyConstructable!(This, E) && isMutable!E)
@@ -2116,8 +2109,7 @@ nothrow unittest{
     Otherwise, the new `IntrusivePtr` will share ownership with the initial value of `ptr`.
 */
 public UnqualIntrusivePtr!Ptr.ChangeElementType!T dynCast(T, Ptr)(ref scope Ptr ptr)
-if(true
-    && isIntrusive!T
+if(    isIntrusive!T
     && isIntrusivePtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
@@ -2134,8 +2126,7 @@ if(true
 
 /// ditto
 public UnqualIntrusivePtr!Ptr.ChangeElementType!T dynCast(T, Ptr)(scope Ptr ptr)
-if(true
-    && isIntrusive!T
+if(    isIntrusive!T
     && isIntrusivePtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
@@ -2147,8 +2138,7 @@ if(true
 
 /// ditto
 public UnqualIntrusivePtr!Ptr.ChangeElementType!T dynCastMove(T, Ptr)(auto ref scope Ptr ptr)
-if(true
-    && isIntrusive!T
+if(    isIntrusive!T
     && isIntrusivePtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"

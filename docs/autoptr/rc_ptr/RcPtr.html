@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="UTF-8"/>
-		<title>Struct RcPtr</title>
+		<title>RcPtr - multiple declarations</title>
 		<link rel="stylesheet" type="text/css" href="../../styles/ddox.css"/>
 		<link rel="stylesheet" href="../../prettify/prettify.css" type="text/css"/>
 		<script type="text/javascript" src="../../scripts/jquery.js">/**/</script><script type="text/javascript" src="../../scripts/ddox.js">/**/</script>
@@ -54,7 +54,21 @@ $('#symbolSearchPane').show();</script>
 			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>Struct RcPtr</h1><p><code class="lang-d"><span class="typ">RcPtr</span></code> is a smart pointer that retains shared ownership of an object through a pointer.
+			<h1>RcPtr - multiple declarations</h1>
+			<nav class="page-nav">
+				<ul>
+					<li>
+						<a href="#0">
+							Struct <code>RcPtr</code>
+						</a>
+					</li>
+					<li>
+						<a href="#1">
+							Alias <code>RcPtr</code>
+						</a>
+					</li>
+				</ul>
+			</nav><h2 id="0">Struct RcPtr</h2><p><code class="lang-d"><span class="typ">RcPtr</span></code> is a smart pointer that retains shared ownership of an object through a pointer.
 </p>
 			<div class="prototype">
 				<code class="lang-d">
@@ -64,10 +78,6 @@ $('#symbolSearchPane').show();</script>
 			&nbsp;&nbsp;
 			<br/>
 			<span class="kwd">if</span> <span class="pun">(</span><span class="pln">isControlBlock</span><span class="pun">!</span><span class="pln">_ControlType </span><span class="pun">&amp;&amp; </span><span class="pln">isDestructorType</span><span class="pun">!</span><span class="pln">_DestructorType</span><span class="pun">);</span>
-					</div>
-					<div class="single-prototype">
-			<span class="kwd">alias</span> <span class="pln">RcPtr</span>(_Type, _ControlType, _DestructorType)
-			 <span class="pun">=</span> <a href="../../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a>!(_Type,_DestructorType,_ControlType,false)<span class="pun">;</span>
 					</div>
 				</code>
 			</div>
@@ -115,7 +125,7 @@ $('#symbolSearchPane').show();</script>
 <p>        <code class="lang-d"><span class="pln">_weakPtr</span></code> if <code class="lang-d"><span class="kwd">true</span></code> then <code class="lang-d"><span class="typ">RcPtr</span></code> represent weak ptr
 </p>
 </section>
-<h2>Struct RcPtr</h2>
+
 			<section><h3>Constructors</h3>
 				<table>
 					<col class="caption"/>
@@ -478,8 +488,19 @@ $('#symbolSearchPane').show();</script>
 </td>
 					</tr>
 				</table>
-			</section><h2>Alias RcPtr</h2>
-			<section><h2>Example</h2>
+			</section>
+			<h2 id="1">Alias RcPtr</h2><p>Alias to <code class="lang-d"><a href="../../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a></code> with different order of template parameters
+</p>
+			<div class="prototype">
+				<code class="lang-d">
+					<div class="single-prototype">
+			<span class="kwd">alias</span> <span class="pln">RcPtr</span>(_Type, _ControlType, _DestructorType)
+			 <span class="pun">=</span> <a href="../../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a>!(_Type,_DestructorType,_ControlType,false)<span class="pun">;</span>
+					</div>
+				</code>
+			</div>
+			
+			<section><h3>Example</h3>
 
 <pre class="code"><code class="lang-d"><span class="pln">
 </span><span class="kwd">static class </span><span class="typ">Foo</span><span class="pun">{
@@ -501,11 +522,11 @@ $('#symbolSearchPane').show();</script>
 
 </span><span class="com">//implicit qualifier cast
 </span><span class="pun">{
-    </span><span class="typ">RcPtr</span><span class="pun">!(</span><span class="kwd">const </span><span class="typ">Foo</span><span class="pun">) </span><span class="pln">foo </span><span class="pun">=  </span><span class="typ">RcPtr</span><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
+    <a href="../../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a><span class="pun">!(</span><span class="kwd">const </span><span class="typ">Foo</span><span class="pun">) </span><span class="pln">foo </span><span class="pun">=  <a href="../../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
 
-    </span><span class="kwd">const </span><span class="typ">RcPtr</span><span class="pun">!</span><span class="typ">Foo </span><span class="pln">foo2 </span><span class="pun">= </span><span class="pln">foo</span><span class="pun">;
+    </span><span class="kwd">const <a href="../../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a><span class="pun">!</span><span class="typ">Foo </span><span class="pln">foo2 </span><span class="pun">= </span><span class="pln">foo</span><span class="pun">;
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo2<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
 
@@ -513,14 +534,14 @@ $('#symbolSearchPane').show();</script>
 
 </span><span class="com">//polymorphic classes:
 </span><span class="pun">{
-    </span><span class="typ">RcPtr</span><span class="pun">!</span><span class="typ">Foo </span><span class="pln">foo </span><span class="pun">= </span><span class="typ">RcPtr</span><span class="pun">!</span><span class="typ">Bar<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">, </span><span class="lit">3.14</span><span class="pun">);
+    <a href="../../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a><span class="pun">!</span><span class="typ">Foo </span><span class="pln">foo </span><span class="pun">= <a href="../../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a><span class="pun">!</span><span class="typ">Bar<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">, </span><span class="lit">3.14</span><span class="pun">);
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo </span><span class="pun">!= </span><span class="kwd">null</span><span class="pun">);
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
 
     </span><span class="com">//dynamic cast:
     </span><span class="pun">{
-        </span><span class="typ">RcPtr</span><span class="pun">!</span><span class="typ">Bar </span><span class="pln">bar </span><span class="pun">= <a href="../../autoptr/rc_ptr/dynCast.html"></span><span class="pln">dynCast</span></a><span class="pun">!</span><span class="typ">Bar</span><span class="pun">(</span><span class="pln">foo</span><span class="pun">);
+        <a href="../../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a><span class="pun">!</span><span class="typ">Bar </span><span class="pln">bar </span><span class="pun">= <a href="../../autoptr/rc_ptr/dynCast.html"></span><span class="pln">dynCast</span></a><span class="pun">!</span><span class="typ">Bar</span><span class="pun">(</span><span class="pln">foo</span><span class="pun">);
         </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
 
         </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">bar<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
@@ -532,7 +553,7 @@ $('#symbolSearchPane').show();</script>
 </span><span class="com">//weak references:
 </span><span class="pun">{
 
-    </span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= </span><span class="typ">RcPtr</span><span class="pun">!</span><span class="typ">double<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">3.14</span><span class="pun">);
+    </span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a><span class="pun">!</span><span class="typ">double<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">3.14</span><span class="pun">);
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">weakCount </span><span class="pun">== </span><span class="lit">0</span><span class="pun">);
 
@@ -541,7 +562,7 @@ $('#symbolSearchPane').show();</script>
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">weakCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
     </span><span class="kwd">assert</span><span class="pun">(*</span><span class="pln">w<wbr/></span><span class="pun">.</span><span class="pln">lock </span><span class="pun">== </span><span class="lit">3.14</span><span class="pun">);
 
-    </span><span class="typ">RcPtr</span><span class="pun">!</span><span class="typ">double<wbr/></span><span class="pun">.</span><span class="typ">WeakType </span><span class="pln">w2 </span><span class="pun">= </span><span class="pln">x</span><span class="pun">;
+    <a href="../../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a><span class="pun">!</span><span class="typ">double<wbr/></span><span class="pun">.</span><span class="typ">WeakType </span><span class="pln">w2 </span><span class="pun">= </span><span class="pln">x</span><span class="pun">;
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">weakCount </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
 
@@ -587,14 +608,14 @@ import std.stdio;
     </span><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">algorithm </span><span class="pun">: </span><span class="pln">all</span><span class="pun">;
 
     {
-        </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= </span><span class="typ">RcPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">10</span><span class="pun">, -</span><span class="lit">1</span><span class="pun">);
+        </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= <a href="../../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">10</span><span class="pun">, -</span><span class="lit">1</span><span class="pun">);
 
         </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">length </span><span class="pun">== </span><span class="lit">10</span><span class="pun">);
         </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">all</span><span class="pun">!(</span><span class="pln">x </span><span class="pun">=&gt; </span><span class="pln">x </span><span class="pun">== -</span><span class="lit">1</span><span class="pun">));
     }
 
     {
-        </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= </span><span class="typ">RcPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">8</span><span class="pun">);
+        </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= <a href="../../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">8</span><span class="pun">);
         </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">length </span><span class="pun">== </span><span class="lit">8</span><span class="pun">);
         </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">all</span><span class="pun">!(</span><span class="pln">x </span><span class="pun">=&gt; </span><span class="pln">x </span><span class="pun">== </span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">init</span><span class="pun">));
     }
@@ -605,21 +626,21 @@ import std.stdio;
     </span><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">algorithm </span><span class="pun">: </span><span class="pln">all</span><span class="pun">;
 
     {
-        </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= </span><span class="typ">RcPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[</span><span class="lit">4</span><span class="pun">])<wbr/>.</span><span class="pln">make</span><span class="pun">(-</span><span class="lit">1</span><span class="pun">);
+        </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= <a href="../../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a><span class="pun">!(</span><span class="typ">long</span><span class="pun">[</span><span class="lit">4</span><span class="pun">])<wbr/>.</span><span class="pln">make</span><span class="pun">(-</span><span class="lit">1</span><span class="pun">);
         </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">get</span><span class="pun">[]<wbr/>.</span><span class="pln">all</span><span class="pun">!(</span><span class="pln">x </span><span class="pun">=&gt; </span><span class="pln">x </span><span class="pun">== -</span><span class="lit">1</span><span class="pun">));
 
     }
 
     {
         </span><span class="typ">long</span><span class="pun">[</span><span class="lit">4</span><span class="pun">] </span><span class="pln">tmp </span><span class="pun">= [</span><span class="lit">0</span><span class="pun">, </span><span class="lit">1</span><span class="pun">, </span><span class="lit">2</span><span class="pun">, </span><span class="lit">3</span><span class="pun">];
-        </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= </span><span class="typ">RcPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[</span><span class="lit">4</span><span class="pun">])<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="pln">tmp</span><span class="pun">);
+        </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= <a href="../../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a><span class="pun">!(</span><span class="typ">long</span><span class="pun">[</span><span class="lit">4</span><span class="pun">])<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="pln">tmp</span><span class="pun">);
         </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">get</span><span class="pun">[] == </span><span class="pln">tmp</span><span class="pun">[]);
     }
 }
 
 </span></code></pre>
 </section>
-<section><h2>Example</h2>
+<section><h3>Example</h3>
 
 <pre class="code"><code class="lang-d"><span class="com">//make RcPtr object
 </span><span class="kwd">static struct </span><span class="typ">Foo</span><span class="pun">{
@@ -631,29 +652,29 @@ import std.stdio;
 }
 
 {
-    </span><span class="kwd">auto </span><span class="pln">foo </span><span class="pun">= </span><span class="typ">RcPtr</span><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
-    </span><span class="kwd">auto </span><span class="pln">foo2 </span><span class="pun">= </span><span class="typ">RcPtr</span><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">!</span><span class="typ">Mallocator</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);  </span><span class="com">//explicit stateless allocator
+    </span><span class="kwd">auto </span><span class="pln">foo </span><span class="pun">= <a href="../../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
+    </span><span class="kwd">auto </span><span class="pln">foo2 </span><span class="pun">= <a href="../../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">!</span><span class="typ">Mallocator</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);  </span><span class="com">//explicit stateless allocator
 </span><span class="pun">}
 
 {
-    </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= </span><span class="typ">RcPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">10</span><span class="pun">); </span><span class="com">//dynamic array with length 10
+    </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= <a href="../../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">10</span><span class="pun">); </span><span class="com">//dynamic array with length 10
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">length </span><span class="pun">== </span><span class="lit">10</span><span class="pun">);
 }
 </span></code></pre>
 </section>
-<section><h2>Example</h2>
+<section><h3>Example</h3>
 
 <pre class="code"><code class="lang-d"><span class="com">//alloc RcPtr object
-</span><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">experimental<wbr/></span><span class="pun">.</span><span class="pln">allocator </span><span class="pun">: <a href="../../autoptr/rc_ptr/RcPtr.make.html"></span><span class="pln">make</span></a><span class="pun">, </span><span class="pln">dispose</span><span class="pun">, </span><span class="pln">allocatorObject</span><span class="pun">;
+</span><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">experimental<wbr/></span><span class="pun">.</span><span class="pln">allocator </span><span class="pun">: </span><span class="pln">make</span><span class="pun">, </span><span class="pln">dispose</span><span class="pun">, </span><span class="pln">allocatorObject</span><span class="pun">;
 
 </span><span class="kwd">auto </span><span class="pln">allocator </span><span class="pun">= </span><span class="pln">allocatorObject</span><span class="pun">(</span><span class="typ">Mallocator<wbr/></span><span class="pun">.</span><span class="pln">instance</span><span class="pun">);
 
 {
-    </span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= </span><span class="typ">RcPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">)<wbr/>.</span><span class="pln">alloc</span><span class="pun">(</span><span class="pln">allocator</span><span class="pun">, </span><span class="lit">42</span><span class="pun">);
+    </span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a><span class="pun">!(</span><span class="typ">long</span><span class="pun">)<wbr/>.</span><span class="pln">alloc</span><span class="pun">(</span><span class="pln">allocator</span><span class="pun">, </span><span class="lit">42</span><span class="pun">);
 }
 
 {
-    </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= </span><span class="typ">RcPtr</span><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">alloc</span><span class="pun">(</span><span class="pln">allocator</span><span class="pun">, </span><span class="lit">10</span><span class="pun">); </span><span class="com">//dynamic array with length 10
+    </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= <a href="../../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">alloc</span><span class="pun">(</span><span class="pln">allocator</span><span class="pun">, </span><span class="lit">10</span><span class="pun">); </span><span class="com">//dynamic array with length 10
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">length </span><span class="pun">== </span><span class="lit">10</span><span class="pun">);
 }
 

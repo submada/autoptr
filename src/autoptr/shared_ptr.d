@@ -314,8 +314,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				--------------------
 		*/
 		public this(Rhs, Elm, this This)(auto ref scope Rhs rhs, Elm element)@trusted   //if rhs is rvalue then dtor is called on empty rhs
-		if(true
-			&& isSharedPtr!Rhs
+		if(    isSharedPtr!Rhs
 			&& is(Elm : GetElementReferenceType!This)
 			&& isAliasable!(Rhs, This)
 			&& !weakLock!(Rhs, This)
@@ -414,8 +413,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				--------------------
 		*/
 		public this(Rhs, this This)(auto ref scope Rhs rhs)@trusted //if rhs is rvalue then dtor is called on empty rhs
-		if(true
-			&& isSharedPtr!Rhs
+		if(    isSharedPtr!Rhs
 			&& isConstructable!(rhs, This)
 			&& !is(Rhs == shared)
 		){
@@ -443,8 +441,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
         /// ditto
         public this(Rhs, this This)(auto ref scope Rhs rhs)@trusted //if rhs is rvalue then dtor is called on empty rhs
-        if(true
-            && (isRcPtr!Rhs || isIntrusivePtr!Rhs)
+        if(    (isRcPtr!Rhs || isIntrusivePtr!Rhs)
             && isConstructable!(rhs, This)
             && !is(Rhs == shared)
         ){
@@ -626,8 +623,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				--------------------
 		*/
         public void opAssign(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(auto ref scope Rhs desired)scope
-        if(true
-            && isSharedPtr!Rhs
+        if(    isSharedPtr!Rhs
             && isAssignable!(desired, This)
             && !is(Rhs == shared)
         ){
@@ -674,8 +670,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 		///ditto
 		public void opAssign(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(auto ref scope Rhs desired)scope
-		if(true
-			&& (isRcPtr!Rhs || isIntrusivePtr!Rhs)
+		if(    (isRcPtr!Rhs || isIntrusivePtr!Rhs)
             && isAssignable!(desired, This)
 			&& !is(Rhs == shared)
 		){
@@ -1273,8 +1268,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 		/// ditto
 		public SharedPtr exchange(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs ptr)scope
-		if(true
-			&& isSharedPtr!Rhs
+		if(    isSharedPtr!Rhs
 			&& isMoveAssignable!(Rhs, This)
 			&& !is(Rhs == shared)
 		){
@@ -1382,8 +1376,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 		public bool compareExchange
 			(MemoryOrder success = MemoryOrder.seq, MemoryOrder failure = success, E, D, this This)
 			(ref scope E expected, scope D desired)scope //@trusted
-		if(true
-			&& isSharedPtr!E && !is(E == shared)
+		if(    isSharedPtr!E && !is(E == shared)
 			&& isSharedPtr!D && !is(D == shared)
 			&& isMoveAssignable!(D, This)
 			&& isCopyAssignable!(This, E)
@@ -1573,7 +1566,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 					--------------------
 			*/
 			public @property ElementReferenceTypeImpl!(inout ElementType) element()
-			inout scope return pure nothrow @system @nogc{
+			inout return pure nothrow @system @nogc{
 				return this._element;
 			}
 
@@ -2263,8 +2256,7 @@ nothrow unittest{
 	Otherwise, the new `SharedPtr` will share ownership with the initial value of `ptr`.
 */
 public UnqualSharedPtr!Ptr.ChangeElementType!T dynCastMove(T, Ptr)(auto ref scope Ptr ptr)
-if(true
-	&& isSharedPtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
+if(    isSharedPtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
 	&& isReferenceType!T && __traits(getLinkage, T) == "D"
 	&& isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){
@@ -2331,8 +2323,7 @@ unittest{
 	Otherwise, the new `SharedPtr` will share ownership with the initial value of `ptr`.
 */
 public UnqualSharedPtr!Ptr.ChangeElementType!T dynCast(T, Ptr)(auto ref scope Ptr ptr)
-if(true
-	&& isSharedPtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
+if(    isSharedPtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
 	&& isReferenceType!T && __traits(getLinkage, T) == "D"
 	&& isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){
@@ -2451,8 +2442,7 @@ nothrow @nogc unittest{
 	Return `SharedPtr` pointing to first element of array managed by shared pointer `ptr`.
 */
 public auto first(Ptr)(scope auto ref Ptr ptr)@trusted
-if(true
-	&& isSharedPtr!Ptr
+if(    isSharedPtr!Ptr
 	&& !is(Ptr == shared)
 	&& is(Ptr.ElementType : T[], T)
 ){

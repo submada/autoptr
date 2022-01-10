@@ -113,7 +113,7 @@ var symbols = [
 {name: 'autoptr.shared_ptr.SharedPtr.compareExchangeWeak', kind: "aliasdeclaration", path: './autoptr/shared_ptr/SharedPtr.compareExchangeWeak.html', attributes: []},
 {name: 'autoptr.shared_ptr.SharedPtr.ControlType', kind: "aliasdeclaration", path: './autoptr/shared_ptr/SharedPtr.ControlType.html', attributes: []},
 {name: 'autoptr.shared_ptr.SharedPtr.DestructorType', kind: "aliasdeclaration", path: './autoptr/shared_ptr/SharedPtr.DestructorType.html', attributes: []},
-{name: 'autoptr.shared_ptr.SharedPtr.element', kind: "functiondeclaration", path: './autoptr/shared_ptr/SharedPtr.element.html', attributes: ["inout", "pure", "nothrow", "nogc", "property", "scope", "system"]},
+{name: 'autoptr.shared_ptr.SharedPtr.element', kind: "functiondeclaration", path: './autoptr/shared_ptr/SharedPtr.element.html', attributes: ["inout", "pure", "nothrow", "nogc", "property", "system"]},
 {name: 'autoptr.shared_ptr.SharedPtr.ElementReferenceType', kind: "aliasdeclaration", path: './autoptr/shared_ptr/SharedPtr.ElementReferenceType.html', attributes: []},
 {name: 'autoptr.shared_ptr.SharedPtr.ElementType', kind: "aliasdeclaration", path: './autoptr/shared_ptr/SharedPtr.ElementType.html', attributes: []},
 {name: 'autoptr.shared_ptr.SharedPtr.exchange', kind: "functiondeclaration", path: './autoptr/shared_ptr/SharedPtr.exchange.html', attributes: ["scope"]},

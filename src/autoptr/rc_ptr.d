@@ -331,9 +331,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         public this(Rhs, this This)(auto ref scope Rhs rhs)@trusted
-        if(true
-            && isRcPtr!Rhs
-            //&& !is(Unqual!This == Unqual!Rhs) //TODO move ctors need this
+        if(    isRcPtr!Rhs
             && isConstructable!(rhs, This)
             && !is(Rhs == shared)
         ){
@@ -530,8 +528,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
         */
         public void opAssign(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(auto ref scope Rhs desired)scope
-        if(true
-            && isRcPtr!Rhs
+        if(    isRcPtr!Rhs
             && isAssignable!(desired, This)
             && !is(Rhs == shared)
         ){
@@ -1119,8 +1116,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
         /// ditto
         public RcPtr exchange(MemoryOrder order = MemoryOrder.seq, Rhs, this This)(scope Rhs rhs)scope
-        if(true
-            && isRcPtr!Rhs
+        if(    isRcPtr!Rhs
             && isMoveAssignable!(Rhs, This)
             && !is(Rhs == shared)
         ){
@@ -1235,8 +1231,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         public bool compareExchangeStrong
             (MemoryOrder success = MemoryOrder.seq, MemoryOrder failure = success, E, D, this This)
             (ref scope E expected, scope D desired)scope
-        if(true
-            && isRcPtr!E && !is(E == shared)
+        if(    isRcPtr!E && !is(E == shared)
             && isRcPtr!D && !is(D == shared)
             && isMoveAssignable!(D, This)
             && isCopyAssignable!(This, E)
@@ -1256,8 +1251,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         public bool compareExchangeWeak
             (MemoryOrder success = MemoryOrder.seq, MemoryOrder failure = success, E, D, this This)
             (ref scope E expected, scope D desired)scope
-        if(true
-            && isRcPtr!E && !is(E == shared)
+        if(    isRcPtr!E && !is(E == shared)
             && isRcPtr!D && !is(D == shared)
             && isMoveAssignable!(D, This)
             && isCopyAssignable!(This, E)
@@ -1271,8 +1265,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         private bool compareExchangeImpl
             (bool weak, MemoryOrder success, MemoryOrder failure, E, D, this This)
             (ref scope E expected, scope D desired)scope @trusted
-        if(true
-            && isRcPtr!E && !is(E == shared)
+        if(    isRcPtr!E && !is(E == shared)
             && isRcPtr!D && !is(D == shared)
             && isMoveAssignable!(D, This)
             && isCopyAssignable!(This, E)
@@ -2117,8 +2110,7 @@ nothrow unittest{
     Otherwise, the new `RcPtr` will share ownership with the initial value of `ptr`.
 */
 public UnqualRcPtr!Ptr.ChangeElementType!T dynCast(T, Ptr)(ref scope Ptr ptr)
-if(true
-    && isRcPtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
+if(    isRcPtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){
@@ -2131,8 +2123,7 @@ if(true
 
 /// ditto
 public UnqualRcPtr!Ptr.ChangeElementType!T dynCast(T, Ptr)(scope Ptr ptr)
-if(true
-    && isRcPtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
+if(    isRcPtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){
@@ -2141,8 +2132,7 @@ if(true
 
 /// ditto
 public UnqualRcPtr!Ptr.ChangeElementType!T dynCastMove(T, Ptr)(auto ref scope Ptr ptr)
-if(true
-    && isRcPtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
+if(    isRcPtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){
