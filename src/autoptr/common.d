@@ -323,7 +323,7 @@ public template ControlTypeDeduction(Type, ControlType){
 		ControlType
 	);
 
-    alias ControlTypeDeduction = impl;
+	alias ControlTypeDeduction = impl;
 }
 
 ///
@@ -1338,11 +1338,11 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
 			import core.lifetime : forward, emplace;
 
 			static if(!hasStatelessAllocator){
-                static if(isConstructableFromRvalue!_AllocatorType)
-                    this.allocator = forward!a;
-                else
-                    this.allocator = a;
-            }
+				static if(isConstructableFromRvalue!_AllocatorType)
+					this.allocator = forward!a;
+				else
+					this.allocator = a;
+			}
 
 			import std.traits : isStaticArray;
 			import std.range : ElementEncodingType;
@@ -1634,11 +1634,11 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _Allocat
 			assert(vtable.valid, "vtables are not initialized");
 
 			static if(!hasStatelessAllocator){
-                static if(isConstructableFromRvalue!_AllocatorType)
-				    this.allocator = forward!a;
-                else
-                    this.allocator = a;
-            }
+				static if(isConstructableFromRvalue!_AllocatorType)
+					this.allocator = forward!a;
+				else
+					this.allocator = a;
+			}
 
 			this.length = n;
 
@@ -1898,11 +1898,11 @@ if(isIntrusive!_Type == 1){
 			import core.lifetime : forward, emplace;
 
 			static if(!hasStatelessAllocator){
-                static if(isConstructableFromRvalue!_AllocatorType)
-                    this.allocator = forward!a;
-                else
-                    this.allocator = a;
-            }
+				static if(isConstructableFromRvalue!_AllocatorType)
+					this.allocator = forward!a;
+				else
+					this.allocator = a;
+			}
 
 			import std.traits : isStaticArray;
 			import std.range : ElementEncodingType;
@@ -2199,11 +2199,11 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
 			assert(vtable.valid, "vtables are not initialized");
 
 			static if(!hasStatelessAllocator){
-                static if(isConstructableFromRvalue!_AllocatorType)
-                    this.allocator = forward!a;
-                else
-                    this.allocator = a;
-            }
+				static if(isConstructableFromRvalue!_AllocatorType)
+					this.allocator = forward!a;
+				else
+					this.allocator = a;
+			}
 
 			this.deleter = forward!deleter;
 			this.data = data;
