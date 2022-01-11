@@ -502,6 +502,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 			@disable this(ref scope typeof(this) rhs)const shared @safe;
 
 
+		/+
+		//Not neccesary:
 		static foreach(alias From; AliasSeq!(
 			const typeof(this),
 			immutable typeof(this),
@@ -515,6 +517,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 			@disable this(ref scope From rhs)const shared @safe;
 			//@disable this(ref scope From rhs)pure nothrow @safe @nogc;
 		}
+		+/
 
 
 		/**
@@ -1040,7 +1043,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 		public @property ControlType.Shared useCount(this This)()const scope nothrow @safe @nogc{
 			static if(is(This == shared)){
 				return this.lockSmartPtr!(
-					(ref scope return self) => self.useCount()
+					(ref scope self) => self.useCount()
 				)();
 			}
 			else{
@@ -1078,7 +1081,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 			static if(is(This == shared)){
 				return this.lockSmartPtr!(
-					(ref scope return self) => self.weakCount()
+					(ref scope self) => self.weakCount()
 				)();
 			}
 			else{
@@ -1141,11 +1144,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				}
 				--------------------
 		*/
-		public UnqualSmartPtr!This load(MemoryOrder order = MemoryOrder.seq, this This)()scope return{
+		public UnqualSmartPtr!This load(MemoryOrder order = MemoryOrder.seq, this This)()scope{
 
 			static if(is(This == shared)){
 				return this.lockSmartPtr!(
-					(ref scope return self) => self.load!order()
+					(ref scope self) => self.load!order()
 				)();
 			}
 			else{
@@ -1469,70 +1472,70 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
 		static if(weakPtr){
-            /**
-                Equivalent to `useCount() == 0` (must be `SharedPtr.WeakType`).
+			/**
+				Equivalent to `useCount() == 0` (must be `SharedPtr.WeakType`).
 
-                Method exists only if `SharedPtr` is `weakPtr`
+				Method exists only if `SharedPtr` is `weakPtr`
 
-                Examples:
-                    --------------------
-                    {
-                        SharedPtr!long x = SharedPtr!long.make(123);
+				Examples:
+					--------------------
+					{
+						SharedPtr!long x = SharedPtr!long.make(123);
 
-                        auto wx = x.weak;   //weak pointer
+						auto wx = x.weak;   //weak pointer
 
-                        assert(wx.expired == false);
+						assert(wx.expired == false);
 
-                        x = null;
+						x = null;
 
-                        assert(wx.expired == true);
-                    }
-                    --------------------
-            */
-		    public @property bool expired(this This)()scope const{
-			    return (this.useCount == 0);
-		    }
+						assert(wx.expired == true);
+					}
+					--------------------
+			*/
+			public @property bool expired(this This)()scope const{
+				return (this.useCount == 0);
+			}
 
 
 
-            /**
-                Get pointer to managed object of `ElementType` or reference if `ElementType` is reference type (class or interface) or dynamic array
+			/**
+				Get pointer to managed object of `ElementType` or reference if `ElementType` is reference type (class or interface) or dynamic array
 
-                If weak pointer is expired then return null
+				If weak pointer is expired then return null
 
-                Doesn't increment useCount, is inherently unsafe.
+				Doesn't increment useCount, is inherently unsafe.
 
-                Examples:
-                    --------------------
-                    {
-                        auto s = SharedPtr!long.make(42);
-                        const w = s.weak;
+				Examples:
+					--------------------
+					{
+						auto s = SharedPtr!long.make(42);
+						const w = s.weak;
 
-                        assert(*w.observe == 42);
+						assert(*w.observe == 42);
 
-                        s = null;
-                        assert(w.observe is null);
-                    }
-                    {
-                        auto s = SharedPtr!long.make(42);
-                        auto w = s.weak;
+						s = null;
+						assert(w.observe is null);
+					}
+					{
+						auto s = SharedPtr!long.make(42);
+						auto w = s.weak;
 
-                        scope const p = w.observe;
+						scope const p = w.observe;
 
-                        s = null;
-                        assert(w.observe is null);
+						s = null;
+						assert(w.observe is null);
 
-                        assert(p !is null); //p is dangling pointer!
-                    }
-                    --------------------
-            */
-            public @property ElementReferenceTypeImpl!(inout ElementType) observe()
-            inout return pure nothrow @system @nogc{
-                return (cast(const)this).expired
-                    ? null
-                    : this._element;
-            }
-        }
+						assert(p !is null); //p is dangling pointer!
+					}
+					--------------------
+			*/
+			public @property ElementReferenceTypeImpl!(inout ElementType) observe()
+			inout return pure nothrow @system @nogc{
+				return (cast(const)this).expired
+					? null
+					: this._element;
+			}
+		}
 
 
 		static if(!weakPtr){
@@ -1574,7 +1577,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 					--------------------
 			*/
 			static if(referenceElementType)
-				public @property inout(ElementType) get()inout scope return pure nothrow @system @nogc{
+				public @property inout(ElementType) get()inout return pure nothrow @system @nogc{
 					return this._element;
 				}
 			else static if(is(Unqual!ElementType == void))
@@ -1583,7 +1586,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				}
 			else
 				/// ditto
-				public @property ref inout(ElementType) get()inout scope return pure nothrow @system @nogc{
+				public @property ref inout(ElementType) get()inout return pure nothrow @system @nogc{
 					return *cast(inout ElementType*)this._element;
 				}
 
@@ -3187,29 +3190,29 @@ version(unittest){
 		}
 	}
 
-    //observe:
-    pure nothrow @nogc unittest{
-        {
-            auto s = SharedPtr!long.make(42);
-            const w = s.weak;
+	//observe:
+	pure nothrow @nogc unittest{
+		{
+			auto s = SharedPtr!long.make(42);
+			const w = s.weak;
 
-            assert(*w.observe == 42);
+			assert(*w.observe == 42);
 
-            s = null;
-            assert(w.observe is null);
-        }
-        {
-            auto s = SharedPtr!long.make(42);
-            auto w = s.weak;
+			s = null;
+			assert(w.observe is null);
+		}
+		{
+			auto s = SharedPtr!long.make(42);
+			auto w = s.weak;
 
-            scope const p = w.observe;
+			scope const p = w.observe;
 
-            s = null;
-            assert(w.observe is null);
+			s = null;
+			assert(w.observe is null);
 
-            assert(p !is null); //p is dangling pointer!
-        }
-    }
+			assert(p !is null); //p is dangling pointer!
+		}
+	}
 
 	//make
 	pure nothrow @nogc unittest{

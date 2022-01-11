@@ -67,30 +67,30 @@ $('#symbolSearchPane').show();</script>
 			<section><p>If weak pointer is expired then return null
 </p>
 
-<p>                Doesn't increment useCount, is inherently unsafe.
+<p>				Doesn't increment useCount, is inherently unsafe.
 </p>
 </section>
 
 			<section><h2>Examples</h2>
 <pre class="code"><code class="lang-d"><span class="pun">{
-    </span><span class="kwd">auto </span><span class="pln">s </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
-    </span><span class="kwd">const </span><span class="pln">w </span><span class="pun">= </span><span class="pln">s<wbr/></span><span class="pun">.</span><span class="pln">weak</span><span class="pun">;
+	</span><span class="kwd">auto </span><span class="pln">s </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
+	</span><span class="kwd">const </span><span class="pln">w </span><span class="pun">= </span><span class="pln">s<wbr/></span><span class="pun">.</span><span class="pln">weak</span><span class="pun">;
 
-    </span><span class="kwd">assert</span><span class="pun">(*</span><span class="pln">w<wbr/></span><span class="pun">.</span><span class="pln">observe </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
+	</span><span class="kwd">assert</span><span class="pun">(*</span><span class="pln">w<wbr/></span><span class="pun">.</span><span class="pln">observe </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
 
-    </span><span class="pln">s </span><span class="pun">= </span><span class="kwd">null</span><span class="pun">;
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">w<wbr/></span><span class="pun">.</span><span class="pln">observe </span><span class="kwd">is null</span><span class="pun">);
+	</span><span class="pln">s </span><span class="pun">= </span><span class="kwd">null</span><span class="pun">;
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">w<wbr/></span><span class="pun">.</span><span class="pln">observe </span><span class="kwd">is null</span><span class="pun">);
 }
 {
-    </span><span class="kwd">auto </span><span class="pln">s </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
-    </span><span class="kwd">auto </span><span class="pln">w </span><span class="pun">= </span><span class="pln">s<wbr/></span><span class="pun">.</span><span class="pln">weak</span><span class="pun">;
+	</span><span class="kwd">auto </span><span class="pln">s </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
+	</span><span class="kwd">auto </span><span class="pln">w </span><span class="pun">= </span><span class="pln">s<wbr/></span><span class="pun">.</span><span class="pln">weak</span><span class="pun">;
 
-    </span><span class="kwd">scope const </span><span class="pln">p </span><span class="pun">= </span><span class="pln">w<wbr/></span><span class="pun">.</span><span class="pln">observe</span><span class="pun">;
+	</span><span class="kwd">scope const </span><span class="pln">p </span><span class="pun">= </span><span class="pln">w<wbr/></span><span class="pun">.</span><span class="pln">observe</span><span class="pun">;
 
-    </span><span class="pln">s </span><span class="pun">= </span><span class="kwd">null</span><span class="pun">;
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">w<wbr/></span><span class="pun">.</span><span class="pln">observe </span><span class="kwd">is null</span><span class="pun">);
+	</span><span class="pln">s </span><span class="pun">= </span><span class="kwd">null</span><span class="pun">;
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">w<wbr/></span><span class="pun">.</span><span class="pln">observe </span><span class="kwd">is null</span><span class="pun">);
 
-    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">p </span><span class="pun">!</span><span class="kwd">is null</span><span class="pun">); </span><span class="com">//p is dangling pointer!
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">p </span><span class="pun">!</span><span class="kwd">is null</span><span class="pun">); </span><span class="com">//p is dangling pointer!
 </span><span class="pun">}</span></code></pre>
 </section>
 

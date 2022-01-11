@@ -394,6 +394,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             @disable this(ref scope typeof(this) rhs)const shared @safe;
 
 
+        /+
+        //Not neccesary:
         static foreach(alias From; AliasSeq!(
             const typeof(this),
             immutable typeof(this),
@@ -407,6 +409,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             @disable this(ref scope From rhs)const shared @safe;
             //@disable this(ref scope From rhs)pure nothrow @safe @nogc;
         }
+        +/
 
 
 
@@ -879,7 +882,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             else static if(is(This == shared))
                 return this.lockSmartPtr!(
-                    (ref scope return self) => self.useCount()
+                    (ref scope self) => self.useCount()
                 )();
 
             else
@@ -918,7 +921,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
             else static if(is(This == shared))
                 return this.lockSharedPtr!(
-                    (ref scope return self) => self.weakCount()
+                    (ref scope self) => self.weakCount()
                 )();
             
             else
@@ -974,11 +977,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 }
                 --------------------
         */
-        public UnqualSmartPtr!This load(MemoryOrder order = MemoryOrder.seq, this This)()scope return{
+        public UnqualSmartPtr!This load(MemoryOrder order = MemoryOrder.seq, this This)()scope{
 
             static if(is(This == shared))
                 return this.lockSmartPtr!(
-                    (ref scope return self) => self.load!order()
+                    (ref scope self) => self.load!order()
                 )();
             
             else
@@ -1497,7 +1500,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     --------------------
             */
             static if(referenceElementType)
-                public @property inout(ElementType) get()inout scope return pure nothrow @system @nogc{
+                public @property inout(ElementType) get()inout return pure nothrow @system @nogc{
                     return this._element;
                 }
             else static if(is(Unqual!ElementType == void))
@@ -1506,7 +1509,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 }
             else
                 /// ditto
-                public @property ref inout(ElementType) get()inout scope return pure nothrow @system @nogc{
+                public @property ref inout(ElementType) get()inout return pure nothrow @system @nogc{
                     return *cast(inout ElementType*)this._element;
                 }
 
@@ -1529,7 +1532,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     --------------------
             */
             public @property ElementReferenceTypeImpl!(inout ElementType) element()
-            inout scope return pure nothrow @system @nogc{
+            inout return pure nothrow @system @nogc{
                 return this._element;
             }
 

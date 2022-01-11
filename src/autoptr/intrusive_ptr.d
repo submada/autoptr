@@ -383,6 +383,8 @@ public template IntrusivePtr(
             @disable this(ref scope typeof(this) rhs)const shared @safe;
 
 
+        /+
+        //Not neccesary:
         static foreach(alias From; AliasSeq!(
             const typeof(this),
             immutable typeof(this),
@@ -396,6 +398,7 @@ public template IntrusivePtr(
             @disable this(ref scope From rhs)const shared @safe;
             //@disable this(ref scope From rhs)pure nothrow @safe @nogc;
         }
+        +/
 
 
         /**
@@ -769,7 +772,7 @@ public template IntrusivePtr(
 
             static if(is(This == shared))
                 return this.lockSmartPtr!(
-                    (ref scope return self) => self.useCount()
+                    (ref scope self) => self.useCount()
                 )();
             
             else
@@ -812,7 +815,7 @@ public template IntrusivePtr(
 
             static if(is(This == shared))
                 return this.lockSharedPtr!(
-                    (ref scope return self) => self.weakCount()
+                    (ref scope self) => self.weakCount()
                 )();
             
             else
@@ -887,12 +890,12 @@ public template IntrusivePtr(
                 --------------------
         */
         public UnqualSmartPtr!This
-        load(MemoryOrder order = MemoryOrder.seq, this This)()scope return{  //TODO remove return
+        load(MemoryOrder order = MemoryOrder.seq, this This)()scope{  //TODO remove return
             static assert(isCopyConstructable!(Unshared!This, typeof(return)));
 
             static if(is(This == shared))
                 return this.lockSmartPtr!(
-                    (ref scope return self) => self.load!order()
+                    (ref scope self) => self.load!order()
                 )();
             
             else
@@ -1515,12 +1518,12 @@ public template IntrusivePtr(
                     --------------------
             */
             static if(is(ElementType == class))
-                public @property inout(ElementType) get()inout scope return pure nothrow @system @nogc{
+                public @property inout(ElementType) get()inout return pure nothrow @system @nogc{
                     return this._element;
                 }
             else static if(is(ElementType == struct))
                 /// ditto
-                public @property ref inout(ElementType) get()inout scope return pure nothrow @system @nogc{
+                public @property ref inout(ElementType) get()inout return pure nothrow @system @nogc{
                     return *cast(inout ElementType*)this._element;
                 }
             else static assert(0, "no impl");
@@ -1552,7 +1555,7 @@ public template IntrusivePtr(
                     --------------------
             */
             public @property ElementReferenceTypeImpl!(inout ElementType)
-            element()inout scope return pure nothrow @system @nogc{
+            element()inout return pure nothrow @system @nogc{
                 return this._element;
             }
 
@@ -1879,7 +1882,7 @@ public template IntrusivePtr(
         private ElementReferenceType _element;
 
 
-        package auto _control(this This)()scope return pure nothrow @trusted @nogc
+        package auto _control(this This)()scope pure nothrow @trusted @nogc
         in(this._element !is null){
             static if(is(ElementType == class))
                 auto control = intrusivControlBlock(this._element);
@@ -1887,17 +1890,10 @@ public template IntrusivePtr(
                 auto control = intrusivControlBlock(*this._element);
             else static assert(0, "no impl");
                 
-            alias ControlPtr = typeof(control);
+            //alias ControlPtr = typeof(control);
 
-            /+static if(mutableControl){
-                alias MutableControl = CopyTypeQualifiers!(
-                    Unconst!ControlPtr, 
-                    Unconst!(PointerTarget!ControlPtr)
-                );
-                return cast(MutableControl*)control;
-            }
-            else+/
-                return control;
+
+            return *&control;
         }
 
         private void _set_element(ElementReferenceType e)pure nothrow @system @nogc{

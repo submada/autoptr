@@ -842,7 +842,7 @@ package template ElementReferenceTypeImpl(Type){
 }
 
 package static auto lockSmartPtr(alias fn, Ptr, Args...)
-(auto ref scope shared Ptr ptr, auto ref scope return Args args){
+(auto ref scope shared Ptr ptr, auto ref scope Args args){
 	import std.traits : CopyConstness, CopyTypeQualifiers, Unqual;
 	import core.lifetime : forward;
 	import autoptr.internal.mutex : getMutex;
@@ -987,7 +987,7 @@ unittest{
 
 
 //std dynamic cast.
-package auto dynCastElement(To, From)(scope return From from)pure nothrow @trusted @nogc
+package auto dynCastElement(To, From)(return From from)pure nothrow @trusted @nogc
 if(isReferenceType!From && isReferenceType!To){
 	import std.traits : CopyTypeQualifiers, Unqual;
 
@@ -1776,7 +1776,7 @@ if(isIntrusive!_Type == 1){
 		private static immutable Vtable vtable;
 
 
-		private @property ref auto control()scope return pure nothrow @trusted @nogc{
+		private @property ref auto control()return pure nothrow @trusted @nogc{
 			static if(isReferenceType!_Type)
 				auto control = intrusivControlBlock(cast(_Type)this.data.ptr);
 			else 
