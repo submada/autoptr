@@ -93,8 +93,6 @@ public template IntrusivePtr(
         "ControlBlock in IntrusivePtr must have shared counter"
     );
 
-
-    import std.experimental.allocator : stateSize;
     import std.meta : AliasSeq;
     import std.range : ElementEncodingType;
     import std.traits: Unqual, Unconst, CopyTypeQualifiers, CopyConstness, PointerTarget,
@@ -649,12 +647,12 @@ public template IntrusivePtr(
         */
         static if(!weakPtr)
         public static IntrusivePtr!ElementType make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(auto ref Args args)
-        if(stateSize!AllocatorType == 0 && !isDynamicArray!ElementType){
+        if(!isDynamicArray!ElementType){
             static assert(!weakPtr);
 
             static assert(is(DestructorAllocatorType!AllocatorType : DestructorType));
 
-            auto m = typeof(return).MakeIntrusive!(AllocatorType, supportGC).make(forward!(args));
+            auto m = typeof(return).MakeIntrusive!(AllocatorType, supportGC).make(AllocatorType.init, forward!(args));
 
             return (m is null)
                 ? typeof(return).init
@@ -1888,9 +1886,8 @@ public template IntrusivePtr(
                 auto control = intrusivControlBlock(this._element);
             else static if(is(ElementType == struct))
                 auto control = intrusivControlBlock(*this._element);
-            else static assert(0, "no impl");
-                
-            //alias ControlPtr = typeof(control);
+            else
+                static assert(0, "no impl");
 
 
             return *&control;

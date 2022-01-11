@@ -102,8 +102,6 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 		"' doesn't support specified finalizer " ~ _DestructorType.stringof
 	);
 
-
-	import std.experimental.allocator : stateSize;
 	import std.meta : AliasSeq;
 	import std.range : ElementEncodingType;
 	import std.traits: Unqual, Unconst, CopyTypeQualifiers, CopyConstness,
@@ -731,7 +729,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 		*/
 		static if(!weakPtr)
 		public static auto make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(auto ref Args args)
-		if(stateSize!AllocatorType == 0 && !isDynamicArray!ElementType){
+		if(!isDynamicArray!ElementType){
 			static assert(!weakPtr);
 
 			alias ReturnType = SharedPtr!(
@@ -744,7 +742,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				ControlType
 			);
 
-			auto m = ReturnType.MakeEmplace!(AllocatorType, supportGC).make(forward!(args));
+			auto m = ReturnType.MakeEmplace!(AllocatorType, supportGC).make(AllocatorType.init, forward!(args));
 
 			return (m is null)
 				? ReturnType(null)
@@ -772,7 +770,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 		*/
 		static if(!weakPtr)
 		public static auto make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, DeleterType)(ElementReferenceType element, DeleterType deleter)
-		if(stateSize!AllocatorType == 0 && isCallable!DeleterType){
+		if(isCallable!DeleterType){
 			static assert(!weakPtr);
 
 			alias ReturnType = SharedPtr!(
@@ -786,7 +784,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				ControlType
 			);
 
-			auto m = ReturnType.MakeDeleter!(DeleterType, AllocatorType, supportGC).make(forward!(element, deleter));
+			auto m = ReturnType.MakeDeleter!(DeleterType, AllocatorType, supportGC).make(AllocatorType.init, forward!deleter, forward!element);
 
 			return (m is null)
 				? ReturnType(null)
@@ -822,7 +820,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 		*/
 		static if(!weakPtr)
 		public static auto make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(const size_t n, auto ref Args args)
-		if(stateSize!AllocatorType == 0 && isDynamicArray!ElementType){
+		if(isDynamicArray!ElementType){
 			static assert(!weakPtr);
 
 			alias ReturnType = SharedPtr!(
@@ -834,7 +832,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				),
 				ControlType
 			);
-			auto m = ReturnType.MakeDynamicArray!(AllocatorType, supportGC).make(n, forward!(args));
+			auto m = ReturnType.MakeDynamicArray!(AllocatorType, supportGC).make(AllocatorType.init, n, forward!(args));
 
 			return (m is null)
 				? ReturnType(null)
@@ -950,7 +948,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				),
 				ControlType
 			);
-			auto m = ReturnType.MakeDeleter!(DeleterType, AllocatorType, supportGC).make(forward!(element, deleter, allocator));
+			auto m = ReturnType.MakeDeleter!(DeleterType, AllocatorType, supportGC).make(forward!allocator, forward!deleter, forward!element);
 
 			return (m is null)
 				? ReturnType(null)

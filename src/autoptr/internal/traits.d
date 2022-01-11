@@ -88,26 +88,17 @@ public template PtrOrRef(T){
 public enum bool isReferenceType(T) = is(T == class) || is(T == interface);
 
 
-//alias to `AliasSeq` containing `T` if `T` has state, otherwise a empty tuple.
-public template AllocatorWithState(T){
+public template isStatelessAllocator(T){
     import std.experimental.allocator.common : stateSize;
-    import std.meta : AliasSeq;
 
-    enum bool hasStatelessAllocator = (stateSize!T == 0);
-
-    static if(stateSize!T == 0)
-        alias AllocatorWithState = AliasSeq!();
-    else
-        alias AllocatorWithState = AliasSeq!T;
+    enum isStatelessAllocator = (stateSize!T == 0);
 }
-
 
 //alias to stateless allocator instance
 public template statelessAllcoator(T){
-    import std.experimental.allocator.common : stateSize;
     import std.traits : hasStaticMember;
 
-    static assert(stateSize!T == 0);
+    static assert(isStatelessAllocator!T);
 
     static if(hasStaticMember!(T, "instance"))
         alias statelessAllcoator = T.instance;
@@ -124,3 +115,9 @@ public template instanceSize(T){
         enum size_t instanceSize = T.sizeof;
 
 }
+
+import core.lifetime : move;
+public enum bool isConstructableFromRvalue(T) = is(typeof((T x){
+    T tmp = move(x);
+    return true;
+}()));

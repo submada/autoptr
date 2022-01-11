@@ -137,8 +137,6 @@ public template DestructorAllocatorType(Allocator){
 	import std.range : ElementEncodingType;
 	import std.meta : AliasSeq;
 
-	import std.experimental.allocator.common : stateSize;
-
 	static if(isPointer!Allocator)
 		alias AllocatorType = PointerTarget!Allocator;
 	else
@@ -149,7 +147,7 @@ public template DestructorAllocatorType(Allocator){
 	static assert(hasMember!(AllocatorType, "deallocate"));
 	static assert(hasMember!(AllocatorType, "allocate"));
 
-	static if(stateSize!Allocator == 0){
+	static if(isStatelessAllocator!Allocator){
 		static assert(__traits(compiles, (){
 			const size_t size;
 			void[] data = statelessAllcoator!Allocator.allocate(size);
@@ -176,7 +174,7 @@ public template DestructorAllocatorType(Allocator){
 	alias Get(T) = T;
 
 	static void impl()(Evoid*){
-		static if(stateSize!Allocator > 0){
+		static if(!isStatelessAllocator!Allocator){
 			{
 				Allocator allocator;
 			}
@@ -184,7 +182,7 @@ public template DestructorAllocatorType(Allocator){
 		void[] data;
 		const size_t size;
 
-		static if(stateSize!Allocator == 0){
+		static if(isStatelessAllocator!Allocator){
 			enum bool safe_alloc = __traits(compiles, ()@safe{
 				const size_t size;
 				statelessAllcoator!Allocator.allocate(size);
@@ -1190,10 +1188,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
 		"doesn't support destructor attributes `" ~ _DestructorType.stringof
 	);
 
-
-	alias AllocatorWithState = .AllocatorWithState!_AllocatorType;
-
-	enum bool hasStatelessAllocator = (AllocatorWithState.length == 0);
+	enum bool hasStatelessAllocator = isStatelessAllocator!_AllocatorType;
 
 	enum bool hasWeakCounter = _ControlType.hasWeakCounter;
 
@@ -1276,7 +1271,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
 
 
 
-		public static MakeEmplace* make(Args...)(AllocatorWithState[0 .. $] a, auto ref Args args){
+		public static MakeEmplace* make(Args...)(_AllocatorType a, auto ref Args args){
 			import std.traits: hasIndirections;
 			import core.lifetime : forward, emplace;
 
@@ -1291,7 +1286,7 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
 			static if(hasStatelessAllocator)
 				void[] raw = statelessAllcoator!_AllocatorType.allocate(typeof(this).sizeof);
 			else
-				void[] raw = a[0].allocate(typeof(this).sizeof);
+				void[] raw = a.allocate(typeof(this).sizeof);
 
 			if(raw.length == 0)
 				return null;
@@ -1327,11 +1322,11 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
 				);
 			}
 
-			return emplace(result, null, forward!(a, args));
+			return emplace(result, forward!(a, args));
 		}
 
 
-		public this(this This, Args...)(typeof(null) nil, AllocatorWithState[0 .. $] a, auto ref Args args)
+		public this(this This, Args...)(_AllocatorType a, auto ref Args args)
 		if(isMutable!This){
 			version(D_BetterC){
 				if(!vtable.initialized())
@@ -1342,8 +1337,12 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
 
 			import core.lifetime : forward, emplace;
 
-			static if(!hasStatelessAllocator)
-				this.allocator = forward!(a[0]);
+			static if(!hasStatelessAllocator){
+                static if(isConstructableFromRvalue!_AllocatorType)
+                    this.allocator = forward!a;
+                else
+                    this.allocator = a;
+            }
 
 			import std.traits : isStaticArray;
 			import std.range : ElementEncodingType;
@@ -1493,10 +1492,7 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _Allocat
 		"doesn't support destructor attributes `" ~ _DestructorType.stringof
 	);
 
-
-	alias AllocatorWithState = .AllocatorWithState!_AllocatorType;
-
-	enum bool hasStatelessAllocator = (AllocatorWithState.length == 0);
+	enum bool hasStatelessAllocator = isStatelessAllocator!_AllocatorType;
 
 	enum bool hasWeakCounter = _ControlType.hasWeakCounter;
 
@@ -1577,7 +1573,7 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _Allocat
 
 
 
-		public static MakeDynamicArray* make(Args...)(AllocatorWithState[0 .. $] a, const size_t n, auto ref Args args){
+		public static MakeDynamicArray* make(Args...)(_AllocatorType a, const size_t n, auto ref Args args){
 			import std.traits: hasIndirections;
 			import core.lifetime : forward, emplace;
 
@@ -1586,7 +1582,7 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _Allocat
 			static if(hasStatelessAllocator)
 				void[] raw = statelessAllcoator!_AllocatorType.allocate(typeof(this).sizeof + arraySize);
 			else
-				void[] raw = a[0].allocate(typeof(this).sizeof + arraySize);
+				void[] raw = a.allocate(typeof(this).sizeof + arraySize);
 
 			if(raw.length == 0)
 				return null;
@@ -1626,7 +1622,7 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _Allocat
 		}
 
 
-		public this(Args...)(AllocatorWithState[0 .. $] a, const size_t n, auto ref Args args){
+		public this(Args...)(_AllocatorType a, const size_t n, auto ref Args args){
 			version(D_BetterC){
 				if(!vtable.initialized())
 					shared_static_this();
@@ -1637,8 +1633,12 @@ package template MakeDynamicArray(_Type, _DestructorType, _ControlType, _Allocat
 			this.control = _ControlType(&vtable);
 			assert(vtable.valid, "vtables are not initialized");
 
-			static if(!hasStatelessAllocator)
-				this.allocator = a[0];
+			static if(!hasStatelessAllocator){
+                static if(isConstructableFromRvalue!_AllocatorType)
+				    this.allocator = forward!a;
+                else
+                    this.allocator = a;
+            }
 
 			this.length = n;
 
@@ -1750,9 +1750,7 @@ if(isIntrusive!_Type == 1){
 
 	alias ControlType = IntrusiveControlBlock!_Type;
 
-	alias AllocatorWithState = .AllocatorWithState!_AllocatorType;
-
-	enum bool hasStatelessAllocator = (AllocatorWithState.length == 0);
+	enum bool hasStatelessAllocator = isStatelessAllocator!_AllocatorType;
 
 	enum bool hasWeakCounter = ControlType.hasWeakCounter;
 
@@ -1840,14 +1838,14 @@ if(isIntrusive!_Type == 1){
 
 
 
-		public static MakeIntrusive* make(Args...)(AllocatorWithState[0 .. $] a, auto ref Args args){
+		public static MakeIntrusive* make(Args...)(_AllocatorType a, auto ref Args args){
 			import std.traits: hasIndirections;
 			import core.lifetime : forward, emplace;
 
 			static if(hasStatelessAllocator)
 				void[] raw = statelessAllcoator!_AllocatorType.allocate(typeof(this).sizeof);
 			else
-				void[] raw = a[0].allocate(typeof(this).sizeof);
+				void[] raw = a.allocate(typeof(this).sizeof);
 
 			if(raw.length == 0)
 				return null;
@@ -1884,11 +1882,11 @@ if(isIntrusive!_Type == 1){
 				);
 			}
 
-			return emplace(result, Evoid.init, forward!(a, args));
+			return emplace(result, forward!(a, args));
 		}
 
 
-		public this(this This, Args...)(Evoid, AllocatorWithState[0 .. $] a, auto ref Args args)
+		public this(this This, Args...)(_AllocatorType a, auto ref Args args)
 		if(isMutable!This){
 			version(D_BetterC){
 				if(!vtable.initialized())
@@ -1899,8 +1897,12 @@ if(isIntrusive!_Type == 1){
 
 			import core.lifetime : forward, emplace;
 
-			static if(!hasStatelessAllocator)
-				this.allocator = forward!(a[0]);
+			static if(!hasStatelessAllocator){
+                static if(isConstructableFromRvalue!_AllocatorType)
+                    this.allocator = forward!a;
+                else
+                    this.allocator = a;
+            }
 
 			import std.traits : isStaticArray;
 			import std.range : ElementEncodingType;
@@ -2025,10 +2027,7 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
 		"' doesn't support destructor attributes " ~ _DestructorType.stringof
 	);
 
-
-	alias AllocatorWithState = .AllocatorWithState!_AllocatorType;
-
-	enum bool hasStatelessAllocator = (AllocatorWithState.length == 0);
+	enum bool hasStatelessAllocator = isStatelessAllocator!_AllocatorType;
 
 	enum bool hasWeakCounter = _ControlType.hasWeakCounter;
 
@@ -2105,10 +2104,8 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
 		public alias get = data;
 
 
-		public static MakeDeleter* make
-			(Args...)
-			(ElementReferenceType data, DeleterType deleter, AllocatorWithState[0 .. $] a)
-		{
+		public static MakeDeleter* make(Args...)
+		(_AllocatorType a, DeleterType deleter, ElementReferenceType data){
 			import std.traits: hasIndirections;
 			import core.lifetime : forward, emplace;
 
@@ -2123,7 +2120,7 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
 			static if(hasStatelessAllocator)
 				void[] raw = statelessAllcoator!_AllocatorType.allocate(typeof(this).sizeof);
 			else
-				void[] raw = a[0].allocate(typeof(this).sizeof);
+				void[] raw = a.allocate(typeof(this).sizeof);
 
 			if(raw.length == 0)
 				return null;
@@ -2182,11 +2179,11 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
 				);
 			}
 
-			return emplace(result, forward!(deleter, a, data));
+			return emplace(result, forward!(a, deleter, data));
 		}
 
 
-		public this(Args...)(DeleterType deleter, AllocatorWithState[0 .. $] a, ElementReferenceType data){
+		public this(Args...)(_AllocatorType a, DeleterType deleter, ElementReferenceType data){
 			import core.lifetime : forward, emplace;
 
 			smart_ptr_construct();
@@ -2201,8 +2198,12 @@ package template MakeDeleter(_Type, _DestructorType, _ControlType, DeleterType, 
 			this.control = _ControlType(&vtable);
 			assert(vtable.valid, "vtables are not initialized");
 
-			static if(!hasStatelessAllocator)
-				this.allocator = a[0];
+			static if(!hasStatelessAllocator){
+                static if(isConstructableFromRvalue!_AllocatorType)
+                    this.allocator = forward!a;
+                else
+                    this.allocator = a;
+            }
 
 			this.deleter = forward!deleter;
 			this.data = data;

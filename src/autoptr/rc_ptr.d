@@ -97,8 +97,6 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         "' doesn't support specified finalizer " ~ _DestructorType.stringof
     );
 
-
-    import std.experimental.allocator : stateSize;
     import std.meta : AliasSeq;
     import std.range : ElementEncodingType;
     import std.traits: Unqual, Unconst, CopyTypeQualifiers, CopyConstness,
@@ -650,7 +648,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         */
         static if(!weakPtr)
         public static auto make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(auto ref Args args)
-        if(stateSize!AllocatorType == 0 && !isDynamicArray!ElementType){
+        if(!isDynamicArray!ElementType){
             static assert(!weakPtr);
 
             alias ReturnType = RcPtr!(
@@ -663,7 +661,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 ControlType
             );
 
-            auto m = ReturnType.MakeEmplace!(AllocatorType, supportGC).make(forward!(args));
+            auto m = ReturnType.MakeEmplace!(AllocatorType, supportGC).make(AllocatorType.init, forward!(args));
 
             return (m is null)
                 ? ReturnType.init
@@ -699,7 +697,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         */
         static if(!weakPtr)
         public static auto make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(const size_t n, auto ref Args args)
-        if(stateSize!AllocatorType == 0 && isDynamicArray!ElementType){
+        if(isDynamicArray!ElementType){
             static assert(!weakPtr);
 
             alias ReturnType = RcPtr!(
@@ -712,7 +710,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 ControlType
             );
 
-            auto m = ReturnType.MakeDynamicArray!(AllocatorType, supportGC).make(n, forward!(args));
+            auto m = ReturnType.MakeDynamicArray!(AllocatorType, supportGC).make(AllocatorType.init, n, forward!(args));
 
             return (m is null)
                 ? ReturnType.init
@@ -2030,6 +2028,8 @@ nothrow unittest{
     }
 
     {
+        import autoptr.internal.traits;
+        static assert(!isConstructableFromRvalue!(typeof(allocator)));
         auto arr = RcPtr!(long[]).alloc(allocator, 10); //dynamic array with length 10
         assert(arr.length == 10);
     }

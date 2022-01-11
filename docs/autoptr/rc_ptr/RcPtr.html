@@ -650,6 +650,8 @@ $('#symbolSearchPane').show();</script>
 }
 
 {
+    </span><span class="kwd">import </span><span class="pln">autoptr<wbr/></span><span class="pun">.</span><span class="pln">internal<wbr/></span><span class="pun">.</span><span class="pln">traits</span><span class="pun">;
+    </span><span class="kwd">static assert</span><span class="pun">(!</span><span class="pln">isConstructableFromRvalue</span><span class="pun">!(</span><span class="kwd">typeof</span><span class="pun">(</span><span class="pln">allocator</span><span class="pun">)));
     </span><span class="kwd">auto </span><span class="pln">arr </span><span class="pun">= <a href="../../autoptr/rc_ptr/RcPtr.html"></span><span class="typ">RcPtr</span></a><span class="pun">!(</span><span class="typ">long</span><span class="pun">[])<wbr/>.</span><span class="pln">alloc</span><span class="pun">(</span><span class="pln">allocator</span><span class="pun">, </span><span class="lit">10</span><span class="pun">); </span><span class="com">//dynamic array with length 10
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">arr<wbr/></span><span class="pun">.</span><span class="pln">length </span><span class="pun">== </span><span class="lit">10</span><span class="pun">);
 }
