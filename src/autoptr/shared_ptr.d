@@ -10,7 +10,6 @@ import autoptr.internal.mallocator : Mallocator;
 import autoptr.internal.traits;
 
 import autoptr.common;
-//import autoptr.unique_ptr : UniquePtr;
 import autoptr.rc_ptr : RcPtr, isRcPtr;
 import autoptr.intrusive_ptr : IntrusivePtr, isIntrusivePtr;
 
@@ -22,7 +21,7 @@ import autoptr.intrusive_ptr : IntrusivePtr, isIntrusivePtr;
 public template isSharedPtr(T){
 	import std.traits : isInstanceOf;
 
-	enum bool isSharedPtr = isInstanceOf!(SharedPtr, T);    //is(Unqual!T == SharedPtr!Args, Args...);
+	enum bool isSharedPtr = isInstanceOf!(SharedPtr, T);
 }
 
 ///
@@ -2632,15 +2631,6 @@ pure nothrow @nogc unittest{
 //local traits:
 private{
 
-	/+template UnqualSmartPtr(Ptr){
-		alias UnqualSmartPtr = SharedPtr!(
-			GetElementType!Ptr,
-			Ptr.DestructorType,
-			GetControlType!Ptr,
-			Ptr.weakPtr
-		);
-	}+/
-
 	template isAliasable(From, To){
 		enum bool isAliasable = true
 			&& is(From.DestructorType : To.DestructorType)
@@ -2695,46 +2685,7 @@ private{
 }
 
 version(unittest){
-	struct TestAllocator{
-		static assert(stateSize!TestAllocator > 0);
-		private int x;
-		import std.experimental.allocator.common : platformAlignment, stateSize;
-
-		enum uint alignment = platformAlignment;
-
-		void[] allocate(size_t bytes)@trusted @nogc nothrow pure{
-			import core.memory : pureMalloc;
-			if (!bytes) return null;
-			auto p = pureMalloc(bytes);
-			return p ? p[0 .. bytes] : null;
-		}
-
-		bool deallocate(void[] b)@system @nogc nothrow pure{
-			import core.memory : pureFree;
-			pureFree(b.ptr);
-			return true;
-		}
-
-		bool reallocate(ref void[] b, size_t s)@system @nogc nothrow pure{
-			import core.memory : pureRealloc;
-			if (!s){
-				// fuzzy area in the C standard, see http://goo.gl/ZpWeSE
-				// so just deallocate and nullify the pointer
-				deallocate(b);
-				b = null;
-				return true;
-			}
-
-			auto p = cast(ubyte*) pureRealloc(b.ptr, s);
-			if (!p) return false;
-			b = p[0 .. s];
-			return true;
-		}
-
-		//static TestAllocator instance;
-
-	}
-
+	import autoptr.internal.test_allocator;
 	//this(SharedPtr, Element)
 	pure nothrow @nogc unittest{
 		{

@@ -18,7 +18,7 @@ import autoptr.common;
 public template isRcPtr(T){
     import std.traits : isInstanceOf;
 
-    enum bool isRcPtr = isInstanceOf!(RcPtr, T); //is(Unqual!T == RcPtr!Args, Args...);
+    enum bool isRcPtr = isInstanceOf!(RcPtr, T);
 }
 
 ///
@@ -1956,38 +1956,6 @@ pure nothrow @nogc unittest{
         assert(w2.expired == true);
     }
 
-    //weak references:
-    /+{
-
-        static struct Zee{
-            Foo foo;
-            this(double d)pure nothrow @safe @nogc{}
-        }
-    import std.stdio;
-        debug writeln("rcptr: start");
-        debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
-        {
-            auto x = RcPtr!Zee.make(3.14);
-            assert(x.useCount == 1);
-            assert(x.weakCount == 0);
-
-            debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
-            {
-                auto w = x.weak();  //weak pointer
-                debug writeln("x.weakCount: ", x.weakCount);
-                debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
-
-            }
-            debug writeln("x.weakCount: ", x.weakCount);
-
-            debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
-
-        }
-        debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
-        debug writeln("rcptr: end");
-
-    }+/
-
     //dynamic array
     {
         import std.algorithm : all;
@@ -2396,15 +2364,6 @@ pure nothrow @nogc unittest{
 //local traits:
 private{
 
-    /+template UnqualSmartPtr(Ptr){
-        alias UnqualSmartPtr = RcPtr!(
-            GetElementType!Ptr, //CopyTypeQualifiers!(Ptr, Ptr.ElementType),
-            Ptr.DestructorType,
-            GetControlType!Ptr, // CopyTypeQualifiers!(Ptr, Ptr.ControlType),
-            Ptr.weakPtr
-        );
-    }+/
-
     //Constructable:
     template isMoveConstructable(From, To){
         import std.traits : Unqual, CopyTypeQualifiers;
@@ -2467,45 +2426,7 @@ private{
 
 
 version(unittest){
-    struct TestAllocator{
-        static assert(stateSize!TestAllocator > 0);
-        private int x;
-        import std.experimental.allocator.common : platformAlignment, stateSize;
-
-        enum uint alignment = platformAlignment;
-
-        void[] allocate(size_t bytes)@trusted @nogc nothrow pure{
-            import core.memory : pureMalloc;
-            if (!bytes) return null;
-            auto p = pureMalloc(bytes);
-            return p ? p[0 .. bytes] : null;
-        }
-
-        bool deallocate(void[] b)@system @nogc nothrow pure{
-            import core.memory : pureFree;
-            pureFree(b.ptr);
-            return true;
-        }
-
-        bool reallocate(ref void[] b, size_t s)@system @nogc nothrow pure{
-            import core.memory : pureRealloc;
-            if (!s){
-                // fuzzy area in the C standard, see http://goo.gl/ZpWeSE
-                // so just deallocate and nullify the pointer
-                deallocate(b);
-                b = null;
-                return true;
-            }
-
-            auto p = cast(ubyte*) pureRealloc(b.ptr, s);
-            if (!p) return false;
-            b = p[0 .. s];
-            return true;
-        }
-
-        //static TestAllocator instance;
-
-    }
+    import autoptr.internal.test_allocator;
 
     //copy ctor
     pure nothrow @nogc unittest{

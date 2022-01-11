@@ -280,26 +280,6 @@ nothrow unittest{
     }
 }
 
-//
-/+unittest{
-    alias ControlType = ControlBlock!(int, void);
-
-
-    auto x = UniquePtr!(long, ControlType).make(42);
-    assert(*x == 42);
-
-    auto s = rcPtr(x.move);
-    import autoptr.rc_ptr : isRcPtr;
-
-    static assert(isRcPtr!(typeof(s)));
-    static assert(is(typeof(s).ControlType == ControlType));
-
-    auto y = rcPtr(UniquePtr!(long, ControlType).init);
-    assert(y == null);
-
-}+/
-
-
 ///
 nothrow @nogc unittest{
     {

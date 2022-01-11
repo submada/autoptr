@@ -579,39 +579,7 @@ $('#symbolSearchPane').show();</script>
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">w2<wbr/></span><span class="pun">.</span><span class="pln">expired </span><span class="pun">== </span><span class="kwd">true</span><span class="pun">);
 }
 
-</span><span class="com">//weak references:
-/+{
-
-    static struct Zee{
-        Foo foo;
-        this(double d)pure nothrow @safe @nogc{}
-    }
-import std.stdio;
-    debug writeln("rcptr: start");
-    debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
-    {
-        auto x = RcPtr!Zee.make(3.14);
-        assert(x.useCount == 1);
-        assert(x.weakCount == 0);
-
-        debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
-        {
-            auto w = x.weak();  //weak pointer
-            debug writeln("x.weakCount: ", x.weakCount);
-            debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
-
-        }
-        debug writeln("x.weakCount: ", x.weakCount);
-
-        debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
-
-    }
-    debug writeln("_conter_gc_ranges: ", _conter_gc_ranges);
-    debug writeln("rcptr: end");
-
-}+/
-
-//dynamic array
+</span><span class="com">//dynamic array
 </span><span class="pun">{
     </span><span class="kwd">import </span><span class="pln">std<wbr/></span><span class="pun">.</span><span class="pln">algorithm </span><span class="pun">: </span><span class="pln">all</span><span class="pun">;
 
