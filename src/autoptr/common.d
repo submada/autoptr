@@ -1065,52 +1065,6 @@ unittest{
 	static assert(isIntrusive!Bar == 2);
 }
 
-package enum string emplacableErrorMsg(_Type, Args...) = "cannot call constructor of type `" ~ _Type.stringof ~ "` with arguments: " ~ Args.stringof;
-
-package template isEmplacable(_Type, args...){
-	import std.traits : isStaticArray, isDynamicArray, PointerTarget;
-	import std.range : ElementEncodingType;
-	import core.lifetime : forward, emplace;
-
-	static if(is(Unqual!_Type == void)){
-		enum bool isEmplacable = true;//nothing
-	}
-	else static if(isStaticArray!_Type){
-		static if(args.length == 1 && is(typeof(args[0]) : _Type)){
-			enum bool isEmplacable = __traits(compiles, emplace(cast(_Type*)null, forward!args));
-		}
-		else{
-
-			static if(isReferenceType!(ElementEncodingType!_Type)){
-				static if(args.length == 0)
-					enum bool isEmplacable = true;
-				else static if(args.length == 1)
-					enum bool isEmplacable = __traits(compiles, _Type(args[0]));
-				else
-					enum bool isEmplacable = false;
-
-			}
-			else{
-				enum bool isEmplacable = isEmplacable!(ElementEncodingType!_Type, args);
-			}
-		}
-	}
-	else static if(isDynamicArray!_Type){
-		alias T = ElementEncodingType!_Type;
-		static if(is(T == class) || is(T == interface))
-			enum bool isEmplacable = isEmplacable!(T, args);
-		else
-			enum bool isEmplacable = isEmplacable!(ElementEncodingType!_Type, args);
-	}
-	else{
-		static if(isReferenceType!_Type)
-			enum bool isEmplacable = __traits(compiles, emplace(cast(_Type)null, forward!args));
-		else
-			enum bool isEmplacable = __traits(compiles, emplace(cast(_Type*)null, forward!args));
-	}
-
-}
-
 
 /*
 	same as core.lifetime.emplace but limited for intrusive class and struct.
@@ -1324,7 +1278,6 @@ package template MakeEmplace(_Type, _DestructorType, _ControlType, _AllocatorTyp
 
 			return emplace(result, forward!(a, args));
 		}
-
 
 		public this(this This, Args...)(_AllocatorType a, auto ref Args args)
 		if(isMutable!This){
@@ -2647,4 +2600,51 @@ package void gc_remove_range(const void* data)pure nothrow @trusted @nogc{
 			}
 		})(data);
 	}
+}
+
+
+package enum string emplacableErrorMsg(_Type, Args...) = "cannot call constructor of type `" ~ _Type.stringof ~ "` with arguments: " ~ Args.stringof;
+
+package template isEmplacable(_Type, args...){
+    import std.traits : isStaticArray, isDynamicArray, PointerTarget;
+    import std.range : ElementEncodingType;
+    import core.lifetime : forward, emplace;
+
+    static if(is(Unqual!_Type == void)){
+        enum bool isEmplacable = true;//nothing
+    }
+    else static if(isStaticArray!_Type){
+        static if(args.length == 1 && is(typeof(args[0]) : _Type)){
+            enum bool isEmplacable = __traits(compiles, emplace(cast(_Type*)null, forward!args));
+        }
+        else{
+
+            static if(isReferenceType!(ElementEncodingType!_Type)){
+                static if(args.length == 0)
+                    enum bool isEmplacable = true;
+                else static if(args.length == 1)
+                    enum bool isEmplacable = __traits(compiles, _Type(args[0]));
+                else
+                    enum bool isEmplacable = false;
+
+            }
+            else{
+                enum bool isEmplacable = isEmplacable!(ElementEncodingType!_Type, args);
+            }
+        }
+    }
+    else static if(isDynamicArray!_Type){
+        alias T = ElementEncodingType!_Type;
+        static if(is(T == class) || is(T == interface))
+            enum bool isEmplacable = isEmplacable!(T, args);
+        else
+            enum bool isEmplacable = isEmplacable!(ElementEncodingType!_Type, args);
+    }
+    else{
+        static if(isReferenceType!_Type)
+            enum bool isEmplacable = __traits(compiles, emplace(cast(_Type)null, forward!args));
+        else
+            enum bool isEmplacable = __traits(compiles, emplace(cast(_Type*)null, forward!args));
+    }
+
 }

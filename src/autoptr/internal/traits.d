@@ -121,3 +121,11 @@ public enum bool isConstructableFromRvalue(T) = is(typeof((T x){
     T tmp = move(x);
     return true;
 }()));
+
+
+
+public template isMoveCtor(T, alias arg){
+    enum bool isMoveCtor = is(T == struct)
+        && !isRef!arg
+        && is(immutable T == immutable typeof(arg));
+}

@@ -237,18 +237,42 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             control.add!weakPtr;
         }
 
-        //copy ctor
-        package this(Rhs, this This)(ref scope Rhs rhs, Evoid ctor)@trusted
-        if(true
-            && isRcPtr!Rhs
-            && isCopyConstructable!(Rhs, This)
-            && !weakLock!(Rhs, This)
+        //forward ctor:
+        package this(Rhs, this This)(auto ref scope Rhs rhs, Evoid ctor)@trusted
+        if(    isRcPtr!Rhs
+            && isConstructable!(rhs, This)
             && !is(Rhs == shared)
         ){
-            if(rhs._element is null)
-                this(null);
-            else
-                this(rhs._control, rhs._element);
+            //lock (copy):
+            static if(weakLock!(Rhs, This)){
+                if(rhs._element !is null && rhs._control.add_shared_if_exists())
+                    this._element = rhs._element;
+                /+else
+                    this._element = null;+/
+            }
+            //copy
+            else static if(isRef!rhs){
+                static assert(isCopyConstructable!(Rhs, This));
+
+                if(rhs._element is null)
+                    this(null);
+                else
+                    this(rhs._control, rhs._element);
+            }
+            //move
+            else{
+                static assert(isMoveConstructable!(Rhs, This));
+
+                this._element = rhs._element;
+
+                static if(weakPtr && !Rhs.weakPtr){
+                    if(this._element !is null)
+                        this._control.add!weakPtr;
+                }
+                else{
+                    rhs._const_reset();
+                }
+            }
         }
 
 
@@ -332,35 +356,9 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         if(    isRcPtr!Rhs
             && isConstructable!(rhs, This)
             && !is(Rhs == shared)
+            && !isMoveCtor!(This, rhs)
         ){
-            //lock (copy):
-            static if(weakLock!(Rhs, This)){
-                if(rhs._element !is null && rhs._control.add_shared_if_exists())
-                    this._element = rhs._element;
-                else
-                    this._element = null;
-            }
-            //copy
-            else static if(isRef!rhs){
-                static assert(isCopyConstructable!(Rhs, This));
-
-                this(rhs, Evoid.init);
-            }
-            //move
-            else{
-                static assert(isMoveConstructable!(Rhs, This));
-
-                this._element = rhs._element;
-
-
-                static if(weakPtr && !Rhs.weakPtr){
-                    if(this._element !is null)
-                        this._control.add!weakPtr;
-                }
-                else{
-                    rhs._const_reset();
-                }
-            }
+            this(forward!rhs, Evoid.init);
         }
 
 
@@ -1806,7 +1804,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
             return move_impl(this);
         }
 
-        private ElementReferenceType _element;
+        package ElementReferenceType _element;
 
         private void _release()scope{
             if(false){
@@ -2243,7 +2241,7 @@ if(isRcPtr!Ptr){
             "`RcPtr` has not shared/immutable `ElementType`."
         );
 
-        return typeof(return)(forward!ptr);
+        return typeof(return)(forward!ptr, Evoid.init);
     }
 }
 

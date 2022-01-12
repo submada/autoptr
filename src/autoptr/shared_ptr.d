@@ -255,20 +255,39 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 			this._element = element;
 		}
 
-		// copy ctor impl:
-		private this(Rhs, this This)(ref scope Rhs rhs, Evoid ctor)@safe pure nothrow @nogc
-		if(true
-			&& isSharedPtr!Rhs
-			&& isCopyConstructable!(Rhs, This)
-			&& !weakLock!(Rhs, This)
-			&& !is(Rhs == shared)
-		){
-			this._control = rhs._control;
-			this._element = rhs._element;
+		//forward ctor impl:
+        package this(Rhs, this This)(auto ref scope Rhs rhs, Evoid)@trusted //if rhs is rvalue then dtor is called on empty rhs
+        if(    (isSharedPtr!Rhs || isRcPtr!Rhs || isIntrusivePtr!Rhs)
+            && isConstructable!(rhs, This)
+            && !is(Rhs == shared)
+        ){
+            //lock (copy):
+            static if(weakLock!(Rhs, This)){
+                if(rhs._control !is null && rhs._control.add_shared_if_exists()){
+                    this._control = rhs._control;
+                    this._element = rhs._element;
+                }
+                /+else{
+                    this._control = null;
+                    this._element = null;
+                }+/
+            }
+            else if(rhs._element !is null){
+                this._control = rhs._control;
+                this._element = rhs._element;
 
-			if(this._control !is null)
-				rhs._control.add!weakPtr;
-		}
+                //copy or lock(copy):
+                static if(isRef!rhs || (weakPtr && !Rhs.weakPtr)){
+                    if(this._control !is null)
+                        rhs._control.add!weakPtr;
+                }
+                //move:
+                else{
+                    rhs._const_reset();
+                }
+
+            }
+        }
 
 
 		/**
@@ -320,17 +339,12 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 			this._control = rhs._control;
 			this._element = element;
 
-
-			static if(weakPtr && !Rhs.weakPtr){
-				if(this._control !is null)
-					rhs._control.add!weakPtr;
-			}
-			else static if(isRef!rhs){
+			static if(isRef!rhs || (weakPtr && !Rhs.weakPtr)){
 				if(this._control !is null)
 					rhs._control.add!weakPtr;
 			}
 			else{
-				rhs._const_set_counter(null);
+				rhs._const_reset();
 			}
 		}
 
@@ -409,67 +423,14 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				}
 				--------------------
 		*/
-		public this(Rhs, this This)(auto ref scope Rhs rhs)@trusted //if rhs is rvalue then dtor is called on empty rhs
-		if(    isSharedPtr!Rhs
-			&& isConstructable!(rhs, This)
-			&& !is(Rhs == shared)
-		){
-			//lock (copy):
-			static if(weakLock!(Rhs, This)){
-				if(rhs._control !is null && rhs._control.add_shared_if_exists()){
-					this._control = rhs._control;
-					this._element = rhs._element;
-				}
-				else{
-					this._control = null;
-					this._element = null;
-				}
-			}
-			//copy:
-			else static if(isRef!rhs){
-				this(rhs, Evoid.init);
-			}
-			//move:
-			else{
-				auto element = rhs._element;
-				this(rhs.move, element);
-			}
-		}
-
-		/// ditto
-		public this(Rhs, this This)(auto ref scope Rhs rhs)@trusted //if rhs is rvalue then dtor is called on empty rhs
-		if(    (isRcPtr!Rhs || isIntrusivePtr!Rhs)
-			&& isConstructable!(rhs, This)
-			&& !is(Rhs == shared)
-		){
-			//lock (copy):
-			static if(weakLock!(Rhs, This)){
-				if(rhs._element !is null && rhs._control.add_shared_if_exists()){
-					this._control = rhs._control;
-					this._element = rhs._element;
-				}
-				else{
-					this._control = null;
-					this._element = null;
-				}
-			}
-			//copy && move:
-			else{
-				if(rhs == null){
-					this(null);
-				}
-				else{
-					this(rhs._control, rhs.element);
-
-					//copy:
-					static if(isRef!rhs)
-						rhs._control.add!weakPtr;
-					//move:
-					else
-						rhs._const_reset();
-				}
-			}
-		}
+        public this(Rhs, this This)(auto ref scope Rhs rhs)@trusted //if rhs is rvalue then dtor is called on empty rhs
+        if(    (isSharedPtr!Rhs || isRcPtr!Rhs || isIntrusivePtr!Rhs)
+            && isConstructable!(rhs, This)
+            && !is(Rhs == shared)
+            && !isMoveCtor!(This, rhs)
+        ){
+            this(forward!rhs, Evoid.init);
+        }
 
 
 
@@ -1929,6 +1890,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 			this._set_element(null);
 		}
 
+        private void _const_reset()scope const pure nothrow @system @nogc{
+            this._const_set_counter(null);
+        }
+
 		private alias MakeEmplace(AllocatorType, bool supportGC) = .MakeEmplace!(
 			_Type,
 			_DestructorType,
@@ -2434,7 +2399,7 @@ if(!is(Ptr == shared) && (isSharedPtr!Ptr || isRcPtr!Ptr || isIntrusivePtr!Ptr))
 		Ptr.DestructorType,
 		GetControlType!Ptr,
 		Ptr.weakPtr
-	)(forward!ptr);
+	)(forward!ptr, Evoid.init);
 }
 
 ///
@@ -2524,7 +2489,7 @@ if(isSharedPtr!Ptr){
 
 		alias Result = shared(Ptr);
 
-		return Result(forward!ptr);
+		return Result(forward!ptr, Evoid.init);
 	}
 }
 
