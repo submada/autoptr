@@ -140,7 +140,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         /**
             `true` if `RcPtr` is weak ptr.
         */
-        public enum bool isWeak = _weakPtr;
+        public alias isWeak = _weakPtr;
 
 
         /**

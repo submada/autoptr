@@ -147,7 +147,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 		/**
 			`true` if `SharedPtr` is weak ptr.
 		*/
-		public enum bool isWeak = _weakPtr;
+		public alias isWeak = _weakPtr;
 
 
 		/**

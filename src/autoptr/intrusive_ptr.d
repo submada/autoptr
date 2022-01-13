@@ -139,7 +139,7 @@ public template IntrusivePtr(
         /**
             `true` if `IntrusivePtr` is weak ptr.
         */
-        public enum bool isWeak = _weakPtr;
+        public alias isWeak = _weakPtr;
 
 
         /**
