@@ -104,7 +104,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         isMutable, isAbstractClass, isDynamicArray, isStaticArray, isCallable, Select, isArray;
 
     import core.atomic : MemoryOrder;
-    import core.lifetime : forward;
+    import core.lifetime : forward, move;
 
 
     enum bool hasWeakCounter = _ControlType.hasWeakCounter;
@@ -1410,7 +1410,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     }
                     --------------------
             */
-            public @property bool expired(this This)()scope const{
+            public @property bool expired(this This)()scope const nothrow @safe @nogc{
                 return (this.useCount == 0);
             }
 
@@ -1495,19 +1495,33 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     static assert(is(typeof(y.get) == const long));
                     --------------------
             */
-            static if(referenceElementType)
-                public @property inout(ElementType) get()inout return pure nothrow @system @nogc{
+            static if(referenceElementType){
+                public @property ElementType get()return pure nothrow @system @nogc{
                     return this._element;
                 }
-            else static if(is(Unqual!ElementType == void))
+
                 /// ditto
-                public @property inout(ElementType) get()inout scope pure nothrow @system @nogc{
+                public @property const(inout(ElementType)) get()const inout return pure nothrow @safe @nogc{
+                    return this._element;
                 }
-            else
+            }
+            else static if(is(Unqual!ElementType == void)){
                 /// ditto
-                public @property ref inout(ElementType) get()inout return pure nothrow @system @nogc{
-                    return *cast(inout ElementType*)this._element;
+                public @property inout(ElementType) get()inout scope pure nothrow @safe @nogc{
                 }
+            }
+            else{
+                /// ditto
+                public @property ref ElementType get()return pure nothrow @system @nogc{
+                    return *cast(ElementType*)this._element;
+                }
+
+                /// ditto
+                public @property ref const(inout(ElementType)) get()const inout return pure nothrow @safe @nogc{
+                    return *cast(const inout ElementType*)this._element;
+                }
+
+            }
 
 
 
@@ -1527,8 +1541,12 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     static assert(is(typeof(y.ptr) == const(long)*));
                     --------------------
             */
-            public @property ElementReferenceTypeImpl!(inout ElementType) element()
-            inout return pure nothrow @system @nogc{
+            public @property ElementReferenceType element()return pure nothrow @system @nogc{
+                return this._element;
+            }
+
+            /// ditto
+            public @property ElementReferenceTypeImpl!(const inout ElementType) element()const inout return pure nothrow @safe @nogc{
                 return this._element;
             }
 
@@ -1794,15 +1812,6 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
         }
 
 
-
-        /**
-            Move `RcPtr`
-        */
-        public RcPtr move()()scope{
-            import core.lifetime : move_impl = move;
-
-            return move_impl(this);
-        }
 
         package ElementReferenceType _element;
 
@@ -2198,6 +2207,7 @@ unittest{
         RcPtr!(const Foo) foo = RcPtr!Bar.make(42, 3.14);
         assert(foo.get.i == 42);
 
+        import core.lifetime : move;
         auto bar = dynCast!Bar(foo.move);
         assert(bar != null);
         assert(bar.get.d == 3.14);
@@ -2255,6 +2265,7 @@ nothrow @nogc unittest{
         assert(x.useCount == 2);
 
 
+        import core.lifetime : move;
         shared s2 = share(x.move);
         assert(x == null);
         assert(s2.useCount == 2);
@@ -2341,6 +2352,7 @@ pure nothrow @nogc unittest{
     }
 
     //move
+    import core.lifetime : move;
     {
         auto x = RcPtr!(long[]).make(10, -1);
         assert(x.length == 10);
@@ -2744,6 +2756,7 @@ version(unittest){
             shared x = RcPtr!(shared long).make(123);
             auto y = RcPtr!(shared long).make(42);
 
+            import core.lifetime : move;
             auto z = x.exchange(y.move);
 
             assert(x.load.get == 42);
@@ -2767,6 +2780,7 @@ version(unittest){
             auto y = RcPtr!(shared long).make(42);
 
             //opAssign is same as store
+            import core.lifetime : move;
             y = x.exchange(y.move);
 
             assert(x.load.get == 42);

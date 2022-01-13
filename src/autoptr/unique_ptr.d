@@ -104,6 +104,7 @@ pure nothrow @nogc unittest{
         UniquePtr!(const Foo) foo =  UniquePtr!Foo.make(42);
         assert(foo.get.i == 42);
 
+        import core.lifetime : move;
         const UniquePtr!Foo foo2 = foo.move;
         assert(foo2.get.i == 42);
 
@@ -285,6 +286,7 @@ nothrow @nogc unittest{
     {
         auto x = UniquePtr!(shared long).make(123);
 
+        import core.lifetime : move;
         shared s = share(x.move);
         assert(x == null);
 
@@ -303,6 +305,8 @@ nothrow @nogc unittest{
 
 //
 pure nothrow @nogc unittest{
+    import core.lifetime : move;
+
     {
         auto x = UniquePtr!(long[]).make(10, -1);
         assert(x.length == 10);
@@ -385,6 +389,8 @@ unittest{
     }
 
     {
+        import core.lifetime : move;
+
         UniquePtr!(const Foo) foo = UniquePtr!Bar.make(42, 3.14);
         assert(foo.get.i == 42);
 
@@ -495,6 +501,8 @@ version(unittest){
 
     //exchange
     pure nothrow @nogc unittest{
+        import core.lifetime : move;
+
         {
             shared UniquePtr!(shared long) x = UniquePtr!(shared long).make(123);
             UniquePtr!(shared long) y = UniquePtr!(shared long).make(42);

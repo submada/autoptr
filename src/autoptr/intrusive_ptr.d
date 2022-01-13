@@ -100,7 +100,7 @@ public template IntrusivePtr(
         isMutable, isAbstractClass, isDynamicArray, isStaticArray, isCallable, Select, isArray;
 
     import core.atomic : MemoryOrder;
-    import core.lifetime : forward;
+    import core.lifetime : forward, move;
 
 
     alias _ControlType = IntrusiveControlBlock!_Type;
@@ -1395,7 +1395,7 @@ public template IntrusivePtr(
                     }
                     --------------------
             */
-            public @property bool expired(this This)()scope const{
+            public @property bool expired(this This)()scope const nothrow @safe @nogc{
                 return (this.useCount == 0);
             }
 
@@ -1508,15 +1508,27 @@ public template IntrusivePtr(
                     static assert(is(typeof(y.get) == const Foo));
                     --------------------
             */
-            static if(is(ElementType == class))
-                public @property inout(ElementType) get()inout return pure nothrow @system @nogc{
+            static if(is(ElementType == class)){
+                public @property ElementType get()return pure nothrow @system @nogc{
                     return this._element;
                 }
-            else static if(is(ElementType == struct))
+
                 /// ditto
-                public @property ref inout(ElementType) get()inout return pure nothrow @system @nogc{
-                    return *cast(inout ElementType*)this._element;
+                public @property const(inout(ElementType)) get()const inout return pure nothrow @safe @nogc{
+                    return this._element;
                 }
+            }
+            else static if(is(ElementType == struct)){
+                /// ditto
+                public @property ref ElementType get()return pure nothrow @system @nogc{
+                    return *cast(ElementType*)this._element;
+                }
+
+                /// ditto
+                public @property ref const(inout(ElementType)) get()const inout return pure nothrow @safe @nogc{
+                    return *cast(const inout ElementType*)this._element;
+                }
+            }
             else static assert(0, "no impl");
 
 
@@ -1545,8 +1557,12 @@ public template IntrusivePtr(
                     static assert(is(typeof(y.element) == const(Foo)*));
                     --------------------
             */
-            public @property ElementReferenceTypeImpl!(inout ElementType)
-            element()inout return pure nothrow @system @nogc{
+            public @property ElementReferenceType element()return pure nothrow @system @nogc{
+                return this._element;
+            }
+
+            /// ditto
+            public @property ElementReferenceTypeImpl!(const inout ElementType) element()const inout return pure nothrow @safe @nogc{
                 return this._element;
             }
 
@@ -1861,15 +1877,6 @@ public template IntrusivePtr(
 
 
 
-        /**
-            Move `IntrusivePtr`
-        */
-        public IntrusivePtr move()()scope{
-            import core.lifetime : move_impl = move;
-
-            return move_impl(this);
-        }
-
         package ElementReferenceType _element;
 
 
@@ -1969,6 +1976,7 @@ pure nothrow @nogc unittest{
         assert(foo.get.i == 42);
         assert(foo.useCount == 1);
 
+        import core.lifetime : move;
         const IntrusivePtr!Foo foo2 = foo.move;
         assert(foo2.get.i == 42);
         assert(foo2.useCount == 1);
@@ -2295,6 +2303,7 @@ nothrow @nogc unittest{
         assert(x.useCount == 2);
 
 
+        import core.lifetime : move;
         shared s2 = share(x.move);
         assert(x == null);
         assert(s2.useCount == 2);
@@ -2812,6 +2821,8 @@ version(unittest){
 
     //exchange
     nothrow @nogc unittest{
+        import core.lifetime : move;
+
         static struct Foo{
             ControlBlock!(int, int) c;
             int i;
