@@ -64,6 +64,34 @@ Constructors of smart pointers never allocate memory, only static methods `make`
     }
     ```
 
+    @safe access to managed object:
+
+    ```d
+    struct S{
+        long x;
+
+        this(long x)@safe{
+            this.x = x;
+        }
+
+        ~this()@safe{
+            this.x = -1;
+        }
+    }
+
+    void main()@safe{
+        auto p = SharedPtr!S.make(42);
+
+        p.apply!((ref S s)@safe{
+            assert(p.useCount == 2);
+            assert(s.x == 42);
+            p = null;           ///release
+            assert(s.x == 42);  ///`s` is NOT dangling reference
+
+        });
+    }
+    ```
+
 `scope` and -dip1000:
 * All smart pointers assume that managed object have global lifetime (scope can be ignored).
 * Functions for creating new managed object `make` and `alloc` have  non `scope` parameters (global lifetime).

@@ -157,7 +157,7 @@ $('#symbolSearchPane').show();</script>
 						<td>
 							<a href="../../autoptr/intrusive_ptr/IntrusivePtr.element.html" class="public property"><code>element</code></a><span class="tableEntryAnnotation">[get]</span>
 						</td>
-						<td class="typecol"><code class="prettyprint lang-d"><span class="typ">ElementReferenceTypeImpl</span>!(inout(ElementType))</code></td><td>Get pointer to managed object of <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.ElementType.html"><span class="typ">ElementType</span></a></code> or reference if <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.ElementType.html"><span class="typ">ElementType</span></a></code> is reference type (class or interface) or dynamic array
+						<td class="typecol"><code class="prettyprint lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.ElementReferenceType.html"><span class="typ">IntrusivePtr<wbr/></span><span class="pun">.<wbr/></span><span class="typ">ElementReferenceType</span></a></code></td><td>Get pointer to managed object of <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.ElementType.html"><span class="typ">ElementType</span></a></code> or reference if <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.ElementType.html"><span class="typ">ElementType</span></a></code> is reference type (class or interface) or dynamic array
 </td>
 					</tr>
 					<tr>
@@ -282,16 +282,6 @@ $('#symbolSearchPane').show();</script>
 					</tr>
 					<tr>
 						<td>
-							<a href="../../autoptr/intrusive_ptr/IntrusivePtr.move.html" class="public">
-								<code>move</code>
-							</a>
-							<span class="tableEntryAnnotation">()</span>
-						</td>
-						<td>Move <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"><span class="typ">IntrusivePtr</span></a></code>
-</td>
-					</tr>
-					<tr>
-						<td>
 							<a href="../../autoptr/intrusive_ptr/IntrusivePtr.opAssign.html" class="public">
 								<code>opAssign</code>
 							</a>
@@ -335,7 +325,7 @@ $('#symbolSearchPane').show();</script>
 							<a href="../../autoptr/intrusive_ptr/IntrusivePtr.opCmp.html" class="public">
 								<code>opCmp</code>
 							</a>
-							<span class="tableEntryAnnotation">(nil)</span>
+							<span class="tableEntryAnnotation">(elm)</span>
 						</td>
 						<td>Operators &lt;, &lt;=, &gt;, &gt;= for <code class="lang-d"><a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"><span class="typ">IntrusivePtr</span></a></code>.
 </td>
@@ -489,6 +479,7 @@ $('#symbolSearchPane').show();</script>
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
 
+    </span><span class="kwd">import </span><span class="pln">core<wbr/></span><span class="pun">.</span><span class="pln">lifetime </span><span class="pun">: </span><span class="pln">move</span><span class="pun">;
     </span><span class="kwd">const </span><span class="typ">IntrusivePtr</span><span class="pun">!</span><span class="typ">Foo </span><span class="pln">foo2 </span><span class="pun">= </span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">move</span><span class="pun">;
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo2<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo2<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);

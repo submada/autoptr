@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="UTF-8"/>
-		<title>Function RcPtr.move</title>
+		<title>Enum member SharedPtr.isWeak</title>
 		<link rel="stylesheet" type="text/css" href="../../styles/ddox.css"/>
 		<link rel="stylesheet" href="../../prettify/prettify.css" type="text/css"/>
 		<script type="text/javascript" src="../../scripts/jquery.js">/**/</script><script type="text/javascript" src="../../scripts/ddox.js">/**/</script>
@@ -36,12 +36,12 @@ $('#symbolSearchPane').show();</script>
 					</div>
 				</li>
 				<li>
-					<div class="module selected">
+					<div class="module ">
 						<a href="../../autoptr/rc_ptr.html">rc_ptr</a>
 					</div>
 				</li>
 				<li>
-					<div class="module ">
+					<div class="module selected">
 						<a href="../../autoptr/shared_ptr.html">shared_ptr</a>
 					</div>
 				</li>
@@ -55,12 +55,25 @@ $('#symbolSearchPane').show();</script>
 			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>Function RcPtr.move</h1><p>Move <code class="lang-d"><a href="../../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a></code>
+			<h1>Enum member SharedPtr.isWeak</h1><p><code class="lang-d"><span class="kwd">true</span></code> if <code class="lang-d"><a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a></code> is weak ptr.
 </p>
 			<div class="prototype">
 				<code class="lang-d">
 					<div class="single-prototype">
-			<a href="../../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a> <span class="pln">move</span><span class="pun">(</span><span class="pun">)</span><span class="pln"> </span><span class="kwd">scope</span><span class="pun">;</span>
+			<span class="kwd">struct</span> <a href="../../autoptr/shared_ptr/SharedPtr.html"><span class="typ">SharedPtr</span></a>
+			<br/>
+			<span class="pun">
+				{
+				<br/>
+			</span>
+			&nbsp;&nbsp;<span class="com">// ...</span>
+			<br/>
+			&nbsp;&nbsp;<span class="kwd">enum</span> <span class="pln">isWeak</span>
+			 <span class="pun">=</span> <span class="pln">_weakPtr</span><span class="pun">;</span>
+			<br/>
+			&nbsp;&nbsp;<span class="com">// ...</span>
+			<br/>
+			<span class="pun">}</span>
 					</div>
 				</code>
 			</div>

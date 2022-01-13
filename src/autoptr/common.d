@@ -792,8 +792,104 @@ unittest{
 }
 
 
+
+
+/**
+	Check if `T` is smart pointer of type `autoptr.shared_ptr.SharedPtr`, `autoptr.rc_ptr.RcPtr` or `autoptr.intrusive_ptr.IntrusivePtr`.
+*/
+template isSmartPtr(T){
+	import autoptr.shared_ptr : isSharedPtr;
+	import autoptr.rc_ptr : isRcPtr;
+	import autoptr.intrusive_ptr : isIntrusivePtr;
+
+	enum bool isSmartPtr = false
+		|| isSharedPtr!T
+		|| isRcPtr!T
+		|| isIntrusivePtr!T;
+}
+
+
+
+import std.meta : allSatisfy, staticMap, AliasSeq;
+import core.lifetime : forward;
+
+/**
+	Sefly dereference all `args` of types `autoptr.shared_ptr.SharedPtr`, `autoptr.rc_ptr.RcPtr` and `autoptr.intrusive_ptr.IntrusivePtr` and forward them to callable alias `fn`.
+
+	Ref args are copyied and non ref args are moved.
+
+*/
+public void apply(alias fn, Args...)(scope auto ref Args args)
+if(allSatisfy!(isSmartPtr, Args)){
+	Args params;
+
+	//`Args params = forward!args` doesnt work (bug in dmd 2.098.1 ?)
+	static foreach(enum int I, alias arg; args){
+		static assert(!typeof(arg).isWeak, I.stringof ~ ". argument is weak pointer.");
+		assert(arg != null, I.stringof ~ ". argument is null.");
+		params[I] = forward!arg;
+	}
+
+	pragma(inline, true); @property auto ref elm(alias param)()@trusted{
+        pragma(inline, true); return param.get();
+	}
+
+	fn(staticMap!(elm, params));
+
+	//dtors for `params` aren't called (bug in dmd 2.098.1 ?)
+	static foreach(alias param; params)
+		param = null;
+
+}
+
+///
+@safe pure nothrow @nogc unittest{
+	import autoptr.shared_ptr;
+	import autoptr.rc_ptr;
+	import autoptr.intrusive_ptr;
+
+	import core.lifetime : move;
+
+	static class Foo{
+		ControlBlock!(int, int) c;   //or MutableControlBlock!(ControlBlock!(int, int)) c;
+		int i;
+
+		this(int i)pure nothrow @safe @nogc{
+			this.i = i;
+		}
+
+		~this()pure nothrow @safe @nogc{
+			i = -1;
+		}
+	}
+
+	()@safe{
+		auto a = SharedPtr!long.make(42);
+		auto b = RcPtr!float.make(3.14);
+		auto c = IntrusivePtr!Foo.make(1);
+
+		assert(a.useCount == 1);
+		assert(b.useCount == 1);
+		assert(c.useCount == 1);
+
+		apply!((scope ref long x, scope ref float y, scope Foo z){
+			assert(a.useCount == 2);
+			assert(b.useCount == 2);
+
+			a = null;
+			b = null;
+			c = null;
+
+			assert(z.i != -1);
+			//x, y, z are still valid until end of the scope.
+
+		})(a, b, move(c));
+	}();
+
+}
+
 package template weakLock(From, To){
-	enum weakLock = (From.weakPtr && !To.weakPtr);
+	enum weakLock = (From.isWeak && !To.isWeak);
 }
 
 package template GetControlType(Ptr){
@@ -818,7 +914,7 @@ package template UnqualSmartPtr(Ptr){
 		GetElementType!Ptr,
 		Ptr.DestructorType,
 		GetControlType!Ptr,
-		Ptr.weakPtr
+		Ptr.isWeak
 	);
 }
 
@@ -2606,45 +2702,45 @@ package void gc_remove_range(const void* data)pure nothrow @trusted @nogc{
 package enum string emplacableErrorMsg(_Type, Args...) = "cannot call constructor of type `" ~ _Type.stringof ~ "` with arguments: " ~ Args.stringof;
 
 package template isEmplacable(_Type, args...){
-    import std.traits : isStaticArray, isDynamicArray, PointerTarget;
-    import std.range : ElementEncodingType;
-    import core.lifetime : forward, emplace;
+	import std.traits : isStaticArray, isDynamicArray, PointerTarget;
+	import std.range : ElementEncodingType;
+	import core.lifetime : forward, emplace;
 
-    static if(is(Unqual!_Type == void)){
-        enum bool isEmplacable = true;//nothing
-    }
-    else static if(isStaticArray!_Type){
-        static if(args.length == 1 && is(typeof(args[0]) : _Type)){
-            enum bool isEmplacable = __traits(compiles, emplace(cast(_Type*)null, forward!args));
-        }
-        else{
+	static if(is(Unqual!_Type == void)){
+		enum bool isEmplacable = true;//nothing
+	}
+	else static if(isStaticArray!_Type){
+		static if(args.length == 1 && is(typeof(args[0]) : _Type)){
+			enum bool isEmplacable = __traits(compiles, emplace(cast(_Type*)null, forward!args));
+		}
+		else{
 
-            static if(isReferenceType!(ElementEncodingType!_Type)){
-                static if(args.length == 0)
-                    enum bool isEmplacable = true;
-                else static if(args.length == 1)
-                    enum bool isEmplacable = __traits(compiles, _Type(args[0]));
-                else
-                    enum bool isEmplacable = false;
+			static if(isReferenceType!(ElementEncodingType!_Type)){
+				static if(args.length == 0)
+					enum bool isEmplacable = true;
+				else static if(args.length == 1)
+					enum bool isEmplacable = __traits(compiles, _Type(args[0]));
+				else
+					enum bool isEmplacable = false;
 
-            }
-            else{
-                enum bool isEmplacable = isEmplacable!(ElementEncodingType!_Type, args);
-            }
-        }
-    }
-    else static if(isDynamicArray!_Type){
-        alias T = ElementEncodingType!_Type;
-        static if(is(T == class) || is(T == interface))
-            enum bool isEmplacable = isEmplacable!(T, args);
-        else
-            enum bool isEmplacable = isEmplacable!(ElementEncodingType!_Type, args);
-    }
-    else{
-        static if(isReferenceType!_Type)
-            enum bool isEmplacable = __traits(compiles, emplace(cast(_Type)null, forward!args));
-        else
-            enum bool isEmplacable = __traits(compiles, emplace(cast(_Type*)null, forward!args));
-    }
+			}
+			else{
+				enum bool isEmplacable = isEmplacable!(ElementEncodingType!_Type, args);
+			}
+		}
+	}
+	else static if(isDynamicArray!_Type){
+		alias T = ElementEncodingType!_Type;
+		static if(is(T == class) || is(T == interface))
+			enum bool isEmplacable = isEmplacable!(T, args);
+		else
+			enum bool isEmplacable = isEmplacable!(ElementEncodingType!_Type, args);
+	}
+	else{
+		static if(isReferenceType!_Type)
+			enum bool isEmplacable = __traits(compiles, emplace(cast(_Type)null, forward!args));
+		else
+			enum bool isEmplacable = __traits(compiles, emplace(cast(_Type*)null, forward!args));
+	}
 
 }

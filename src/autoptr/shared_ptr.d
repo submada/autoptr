@@ -109,7 +109,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 		isMutable, isAbstractClass, isDynamicArray, isStaticArray, isCallable, Select, isArray;
 
 	import core.atomic : MemoryOrder;
-	import core.lifetime : forward, move;
+	import core.lifetime : forward;
 
 	enum bool hasWeakCounter = _ControlType.hasWeakCounter;
 
@@ -147,7 +147,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 		/**
 			`true` if `SharedPtr` is weak ptr.
 		*/
-		public enum bool weakPtr = _weakPtr;
+		public enum bool isWeak = _weakPtr;
 
 
 		/**
@@ -170,7 +170,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 			If such cycle is orphaned (i,e. there are no outside shared pointers into the cycle), the `SharedPtr` reference counts cannot reach zero and the memory is leaked.
 			To prevent this, one of the pointers in the cycle can be made weak.
 		*/
-		static if(hasWeakCounter && !weakPtr)
+		static if(hasWeakCounter && !isWeak)
 		public alias WeakType = SharedPtr!(
 			_Type,
 			_DestructorType,
@@ -182,7 +182,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 		/**
 			Type of non weak ptr (must have weak counter).
 		*/
-		static if(weakPtr)
+		static if(isWeak)
 		public alias SharedType = SharedPtr!(
 			_Type,
 			_DestructorType,
@@ -204,14 +204,14 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 					_Type,
 					_DestructorType,
 					Unshared!_ControlType,
-					weakPtr
+					isWeak
 				);
 			else
 				alias ThreadLocal = SharedPtr!(
 					_Type,
 					_DestructorType,
 					shared(_ControlType),
-					weakPtr
+					isWeak
 				);
 		}
 
@@ -220,7 +220,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 			CopyTypeQualifiers!(ElementType, T),
 			DestructorType,
 			ControlType,
-			weakPtr
+			isWeak
 		);
 
 		/**
@@ -257,7 +257,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 		//forward ctor impl:
         package this(Rhs, this This)(auto ref scope Rhs rhs, Evoid)@trusted //if rhs is rvalue then dtor is called on empty rhs
-        if(    (isSharedPtr!Rhs || isRcPtr!Rhs || isIntrusivePtr!Rhs)
+        if(    isSmartPtr!Rhs   //(isSharedPtr!Rhs || isRcPtr!Rhs || isIntrusivePtr!Rhs)
             && isConstructable!(rhs, This)
             && !is(Rhs == shared)
         ){
@@ -277,9 +277,9 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 this._element = rhs._element;
 
                 //copy or lock(copy):
-                static if(isRef!rhs || (weakPtr && !Rhs.weakPtr)){
+                static if(isRef!rhs || (isWeak && !Rhs.isWeak)){
                     if(this._control !is null)
-                        rhs._control.add!weakPtr;
+                        rhs._control.add!isWeak;
                 }
                 //move:
                 else{
@@ -339,9 +339,9 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 			this._control = rhs._control;
 			this._element = element;
 
-			static if(isRef!rhs || (weakPtr && !Rhs.weakPtr)){
+			static if(isRef!rhs || (isWeak && !Rhs.isWeak)){
 				if(this._control !is null)
-					rhs._control.add!weakPtr;
+					rhs._control.add!isWeak;
 			}
 			else{
 				rhs._const_reset();
@@ -424,7 +424,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				--------------------
 		*/
         public this(Rhs, this This)(auto ref scope Rhs rhs)@trusted //if rhs is rvalue then dtor is called on empty rhs
-        if(    (isSharedPtr!Rhs || isRcPtr!Rhs || isIntrusivePtr!Rhs)
+        if(    isSmartPtr!Rhs   //(isSharedPtr!Rhs || isRcPtr!Rhs || isIntrusivePtr!Rhs)
             && isConstructable!(rhs, This)
             && !is(Rhs == shared)
             && !isMoveCtor!(This, rhs)
@@ -596,7 +596,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 			}
 			// copy assign or non identity move assign:
 			else static if(isRef!desired || !is(This == Rhs)){
-				static if(isRef!desired && (This.weakPtr != Rhs.weakPtr)){
+				static if(isRef!desired && (This.isWeak != Rhs.isWeak)){
 					if((()@trusted => cast(const void*)&desired is cast(const void*)&this)())
 						return;
 				}
@@ -688,10 +688,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				}
 				--------------------
 		*/
-		static if(!weakPtr)
+		static if(!isWeak)
 		public static auto make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(auto ref Args args)
 		if(!isDynamicArray!ElementType){
-			static assert(!weakPtr);
+			static assert(!isWeak);
 
 			alias ReturnType = SharedPtr!(
 				ElementType,
@@ -729,10 +729,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				assert(deleted == 123);
 				--------------------
 		*/
-		static if(!weakPtr)
+		static if(!isWeak)
 		public static auto make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, DeleterType)(ElementReferenceType element, DeleterType deleter)
 		if(isCallable!DeleterType){
-			static assert(!weakPtr);
+			static assert(!isWeak);
 
 			alias ReturnType = SharedPtr!(
 				ElementType,
@@ -779,10 +779,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				assert(arr.get == [0, 1, 2, 3, 4, 5]);
 				--------------------
 		*/
-		static if(!weakPtr)
+		static if(!isWeak)
 		public static auto make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(const size_t n, auto ref Args args)
 		if(isDynamicArray!ElementType){
-			static assert(!weakPtr);
+			static assert(!isWeak);
 
 			alias ReturnType = SharedPtr!(
 				ElementType,
@@ -851,10 +851,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				}
 				--------------------
 		*/
-		static if(!weakPtr)
+		static if(!isWeak)
 		public static auto alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, auto ref Args args)
 		if(!isDynamicArray!ElementType){
-			static assert(!weakPtr);
+			static assert(!isWeak);
 
 			alias ReturnType = SharedPtr!(
 				ElementType,
@@ -894,10 +894,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				assert(deleted == 123);
 				--------------------
 		*/
-		static if(!weakPtr)
+		static if(!isWeak)
 		public static auto alloc(bool supportGC = platformSupportGC, AllocatorType, DeleterType)(AllocatorType allocator, ElementReferenceType element, DeleterType deleter)
 		if(isCallable!DeleterType){
-			static assert(!weakPtr);
+			static assert(!isWeak);
 
 			alias ReturnType = SharedPtr!(
 				ElementType,
@@ -945,10 +945,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				assert(arr.get == [0, 1, 2, 3, 4, 5]);
 				--------------------
 		*/
-		static if(!weakPtr)
+		static if(!isWeak)
 		public static auto alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, const size_t n, auto ref Args args)
 		if(isDynamicArray!ElementType){
-			static assert(!weakPtr);
+			static assert(!isWeak);
 
 			alias ReturnType = SharedPtr!(
 				ElementType,
@@ -1185,7 +1185,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 					shared x = SharedPtr!(shared long).make(123);
 					auto y = SharedPtr!(shared long).make(42);
 
-					auto z = x.exchange(y.move);
+                    import core.lifetime : move;
+					auto z = x.exchange(move(y));
 
 					assert(x.load.get == 42);
 					assert(y == null);
@@ -1208,7 +1209,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 					auto y = SharedPtr!(shared long).make(42);
 
 					//opAssign is same as store
-					y = x.exchange(y.move);
+                    import core.lifetime : move;
+					y = x.exchange(move(y));
 
 					assert(x.load.get == 42);
 					assert(y.get == 123);
@@ -1223,8 +1225,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 					(ref scope self) => self.exchange!order(null)
 				)();
 			else{
-                import core.lifetime : move;
-				return move(this);
+				return this._move;
 			}
 		}
 
@@ -1236,14 +1237,14 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 		){
 			static if(is(This == shared))
 				return this.lockSmartPtr!(
-					(ref scope self, Rhs x) => self.exchange!order(x.move)
-				)(ptr.move);
+					(ref scope self, Rhs x) => self.exchange!order(x._move)
+				)(ptr._move);
 			else{
-				auto result = this.move;
+				auto result = this._move;
 
 				return()@trusted{
-					this = ptr.move;
-					return result.move;
+					this = ptr._move;
+					return result._move;
 				}();
 			}
 		}
@@ -1357,14 +1358,14 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				Self* self = cast(Self*)&this;
 
 				if(*self == expected){
-					auto tmp = self.move;   //destructor is called after  mutex.unlock();
-					*self = desired.move;
+					auto tmp = self._move;   //destructor is called after  mutex.unlock();
+					*self = desired._move;
 
 					mutex.unlock();
 					return true;
 				}
 
-				auto tmp = expected.move;   //destructor is called after  mutex.unlock();
+				auto tmp = expected._move;   //destructor is called after  mutex.unlock();
 				expected = *self;
 
 				mutex.unlock();
@@ -1372,7 +1373,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 			}
 			else{
 				if(this == expected){
-					this = desired.move;
+					this = desired._move;
 
 					return true;
 				}
@@ -1388,7 +1389,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 			Creates a new non weak `SharedPtr` that shares ownership of the managed object (must be `SharedPtr.WeakType`).
 
 			If there is no managed object, i.e. this is empty or this is `expired`, then the returned `SharedPtr` is empty.
-			Method exists only if `SharedPtr` is `weakPtr`
+			Method exists only if `SharedPtr` is `isWeak`
 
 			Examples:
 				--------------------
@@ -1421,7 +1422,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				}
 				--------------------
 		*/
-		static if(weakPtr)
+		static if(isWeak)
 		public SharedType lock()()scope @safe{
 
 			static assert(weakLock!(typeof(this), typeof(return)));
@@ -1431,11 +1432,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 
 
-		static if(weakPtr){
+		static if(isWeak){
 			/**
 				Equivalent to `useCount() == 0` (must be `SharedPtr.WeakType`).
 
-				Method exists only if `SharedPtr` is `weakPtr`
+				Method exists only if `SharedPtr` is `isWeak`
 
 				Examples:
 					--------------------
@@ -1489,8 +1490,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 					}
 					--------------------
 			*/
-			public @property ElementReferenceTypeImpl!(inout ElementType) observe()
-			inout return pure nothrow @system @nogc{
+			public @property ElementReferenceTypeImpl!(inout ElementType) observe()inout return pure nothrow @system @nogc{
 				return (cast(const)this).expired
 					? null
 					: this._element;
@@ -1498,7 +1498,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 		}
 
 
-		static if(!weakPtr){
+		static if(!isWeak){
 			/**
 				Operator *, same as method 'get'.
 
@@ -1537,14 +1537,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 					--------------------
 			*/
 			static if(referenceElementType){
-				/+public @property inout(ElementType) get()inout return pure nothrow @system @nogc{
-					return this._element;
-				}+/
-                public @property ElementType get()return pure nothrow @system @nogc{
-                    return this._element;
-                }
-
-                public @property const(inout(ElementType)) get()const inout return pure nothrow @safe @nogc{
+                public @property inout(ElementType) get()inout return pure nothrow @system @nogc{
                     return this._element;
                 }
             }
@@ -1631,7 +1624,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				assert(wx.useCount == 0);
 				--------------------
 		*/
-		static if(hasWeakCounter && !weakPtr)
+		static if(hasWeakCounter && !isWeak)
 		public WeakType weak()()scope{
 			return typeof(return)(this);
 		}
@@ -1891,7 +1884,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 			import core.memory : GC;
 
 			if(this._control !is null)
-				this._control.release!weakPtr;
+				this._control.release!isWeak;
 		}
 
 		private void _reset()scope pure nothrow @system @nogc{
@@ -1901,6 +1894,15 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
         private void _const_reset()scope const pure nothrow @system @nogc{
             this._const_set_counter(null);
+            this._const_set_element(null);
+        }
+
+        private auto _move()@trusted{
+            auto e = this._element;
+            auto c = this._control;
+            this._const_reset();
+
+            return typeof(this)(c, e);
         }
 
 		private alias MakeEmplace(AllocatorType, bool supportGC) = .MakeEmplace!(
@@ -2271,7 +2273,7 @@ nothrow unittest{
 	Otherwise, the new `SharedPtr` will share ownership with the initial value of `ptr`.
 */
 public UnqualSmartPtr!Ptr.ChangeElementType!T dynCastMove(T, Ptr)(auto ref scope Ptr ptr)
-if(    isSharedPtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
+if(    isSharedPtr!Ptr && !is(Ptr == shared) && !Ptr.isWeak
 	&& isReferenceType!T && __traits(getLinkage, T) == "D"
 	&& isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){
@@ -2338,7 +2340,7 @@ unittest{
 	Otherwise, the new `SharedPtr` will share ownership with the initial value of `ptr`.
 */
 public UnqualSmartPtr!Ptr.ChangeElementType!T dynCast(T, Ptr)(auto ref scope Ptr ptr)
-if(    isSharedPtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
+if(    isSharedPtr!Ptr && !is(Ptr == shared) && !Ptr.isWeak
 	&& isReferenceType!T && __traits(getLinkage, T) == "D"
 	&& isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){
@@ -2399,7 +2401,9 @@ unittest{
 	Create `SharedPtr` from parameter `ptr` of type `SharedPtr`, `RcPtr` or `IntrusivePtr`.
 */
 auto sharedPtr(Ptr)(auto ref scope Ptr ptr)@trusted
-if(!is(Ptr == shared) && (isSharedPtr!Ptr || isRcPtr!Ptr || isIntrusivePtr!Ptr)){
+if(!is(Ptr == shared)
+    && isSmartPtr!Ptr   //(isSharedPtr!Ptr || isRcPtr!Ptr || isIntrusivePtr!Ptr)
+){
 	import core.lifetime : forward;
 	import std.traits : CopyTypeQualifiers;
 
@@ -2407,7 +2411,7 @@ if(!is(Ptr == shared) && (isSharedPtr!Ptr || isRcPtr!Ptr || isIntrusivePtr!Ptr))
 		GetElementType!Ptr,
 		Ptr.DestructorType,
 		GetControlType!Ptr,
-		Ptr.weakPtr
+		Ptr.isWeak
 	)(forward!ptr, Evoid.init);
 }
 

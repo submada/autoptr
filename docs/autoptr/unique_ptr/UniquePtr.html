@@ -125,6 +125,7 @@ $('#symbolSearchPane').show();</script>
     </span><span class="typ">UniquePtr</span><span class="pun">!(</span><span class="kwd">const </span><span class="typ">Foo</span><span class="pun">) </span><span class="pln">foo </span><span class="pun">=  </span><span class="typ">UniquePtr</span><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
 
+    </span><span class="kwd">import </span><span class="pln">core<wbr/></span><span class="pun">.</span><span class="pln">lifetime </span><span class="pun">: </span><span class="pln">move</span><span class="pun">;
     </span><span class="kwd">const </span><span class="typ">UniquePtr</span><span class="pun">!</span><span class="typ">Foo </span><span class="pln">foo2 </span><span class="pun">= </span><span class="pln">foo<wbr/></span><span class="pun">.</span><span class="pln">move</span><span class="pun">;
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">foo2<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
 
@@ -230,6 +231,7 @@ $('#symbolSearchPane').show();</script>
 <pre class="code"><code class="lang-d"><span class="pun">{
     </span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= </span><span class="typ">UniquePtr</span><span class="pun">!(</span><span class="kwd">shared </span><span class="typ">long</span><span class="pun">)<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
 
+    </span><span class="kwd">import </span><span class="pln">core<wbr/></span><span class="pun">.</span><span class="pln">lifetime </span><span class="pun">: </span><span class="pln">move</span><span class="pun">;
     </span><span class="kwd">shared </span><span class="pln">s </span><span class="pun">= <a href="../../autoptr/unique_ptr/share.html"></span><span class="pln">share</span></a><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">move</span><span class="pun">);
     </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x </span><span class="pun">== </span><span class="kwd">null</span><span class="pun">);
 

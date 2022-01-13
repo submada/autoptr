@@ -100,7 +100,7 @@ public template IntrusivePtr(
         isMutable, isAbstractClass, isDynamicArray, isStaticArray, isCallable, Select, isArray;
 
     import core.atomic : MemoryOrder;
-    import core.lifetime : forward, move;
+    import core.lifetime : forward;
 
 
     alias _ControlType = IntrusiveControlBlock!_Type;
@@ -139,7 +139,7 @@ public template IntrusivePtr(
         /**
             `true` if `IntrusivePtr` is weak ptr.
         */
-        public enum bool weakPtr = _weakPtr;
+        public enum bool isWeak = _weakPtr;
 
 
         /**
@@ -151,7 +151,7 @@ public template IntrusivePtr(
         /**/
         package alias ChangeElementType(T) = IntrusivePtr!(
             CopyTypeQualifiers!(ElementType, T),
-            weakPtr
+            isWeak
         );
 
         /**
@@ -168,7 +168,7 @@ public template IntrusivePtr(
             If such cycle is orphaned (i,e. there are no outside shared pointers into the cycle), the `IntrusivePtr` reference counts cannot reach zero and the memory is leaked.
             To prevent this, one of the pointers in the cycle can be made weak.
         */
-        static if(hasWeakCounter && !weakPtr)
+        static if(hasWeakCounter && !isWeak)
         public alias WeakType = IntrusivePtr!(
             _Type,
             true
@@ -178,7 +178,7 @@ public template IntrusivePtr(
         /**
             Type of non weak ptr (must have weak counter).
         */
-        static if(weakPtr)
+        static if(isWeak)
         public alias SharedType = IntrusivePtr!(
             _Type,
             false
@@ -238,7 +238,7 @@ public template IntrusivePtr(
                 }
                 else{
                     this(rhs._element, Evoid.init);
-                    rhs._control.add!weakPtr;
+                    rhs._control.add!isWeak;
                 }
             }
             //move:
@@ -247,9 +247,9 @@ public template IntrusivePtr(
 
                 this._element = rhs._element;
 
-                static if(weakPtr && !Rhs.weakPtr){
+                static if(isWeak && !Rhs.isWeak){
                     if(this._element !is null)
-                        this._control.add!weakPtr;
+                        this._control.add!isWeak;
                 }
                 else{
                     rhs._const_reset();
@@ -535,14 +535,14 @@ public template IntrusivePtr(
                 static if(isLockFree){
                     import core.atomic : atomicExchange;
 
-                    static if(isRef!desired && (This.weakPtr == Rhs.weakPtr)){
+                    static if(isRef!desired && (This.isWeak == Rhs.isWeak)){
                         if((()@trusted => cast(const void*)&desired is cast(const void*)&this)())
                             return;
                     }
 
                     ()@trusted{
                         UnqualSmartPtr!This tmp_desired = forward!desired;
-                        //desired._control.add!(This.weakPtr);
+                        //desired._control.add!(This.isWeak);
 
                         UnqualSmartPtr!This tmp;
                         GetElementReferenceType!This source = tmp_desired._element;    //interface/class cast
@@ -564,7 +564,7 @@ public template IntrusivePtr(
             // copy assign or non identity move assign:
             else static if(isRef!desired || !is(This == Rhs)){
 
-                static if(isRef!desired && (This.weakPtr == Rhs.weakPtr)){
+                static if(isRef!desired && (This.isWeak == Rhs.isWeak)){
                     if((()@trusted => cast(const void*)&desired is cast(const void*)&this)())
                         return;
                 }
@@ -638,10 +638,10 @@ public template IntrusivePtr(
                 }
                 --------------------
         */
-        static if(!weakPtr)
+        static if(!isWeak)
         public static IntrusivePtr!ElementType make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(auto ref Args args)
         if(!isDynamicArray!ElementType){
-            static assert(!weakPtr);
+            static assert(!isWeak);
 
             static assert(is(DestructorAllocatorType!AllocatorType : DestructorType));
 
@@ -703,9 +703,9 @@ public template IntrusivePtr(
                 }
                 --------------------
         */
-        static if(!weakPtr)
+        static if(!isWeak)
         public static IntrusivePtr!ElementType alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, auto ref Args args){
-            static assert(!weakPtr);
+            static assert(!isWeak);
 
             static assert(is(DestructorAllocatorType!AllocatorType : DestructorType));
 
@@ -981,7 +981,8 @@ public template IntrusivePtr(
                     shared x = IntrusivePtr!(shared Foo).make(123);
                     auto y = IntrusivePtr!(shared Foo).make(42);
 
-                    auto z = x.exchange(y.move);
+                    import core.lifetime : move;
+                    auto z = x.exchange(move(y));
 
                     assert(x.load.get.i == 42);
                     assert(y == null);
@@ -1004,7 +1005,8 @@ public template IntrusivePtr(
                     auto y = IntrusivePtr!(shared Foo).make(42);
 
                     //opAssign is same as store
-                    y = x.exchange(y.move);
+                    import core.lifetime : move;
+                    y = x.exchange(move(y));
 
                     assert(x.load.get.i == 42);
                     assert(y.get.i == 123);
@@ -1025,7 +1027,7 @@ public template IntrusivePtr(
                             null
                         ));
 
-                        return result.move;
+                        return result._move;
                     }();
                 }
                 else{
@@ -1035,7 +1037,7 @@ public template IntrusivePtr(
                 }
             }
             else{
-                return this.move;
+                return this._move;
             }
         }
 
@@ -1061,21 +1063,21 @@ public template IntrusivePtr(
                         ));
                         ptr._const_reset();
 
-                        return result.move;
+                        return result._move;
                     }();
                 }
                 else{
                     return this.lockSmartPtr!(
-                        (ref scope self, Rhs x) => self.exchange!order(x.move)
-                    )(ptr.move);
+                        (ref scope self, Rhs x) => self.exchange!order(x._move)
+                    )(ptr._move);
                 }
             }
             else{
-                auto result = this.move;
+                auto result = this._move;
 
                 return()@trusted{
-                    this = ptr.move;
-                    return result.move;
+                    this = ptr._move;
+                    return result._move;
                 }();
             }
         }
@@ -1178,10 +1180,10 @@ public template IntrusivePtr(
             && isIntrusivePtr!D && !is(D == shared)
             && (isMoveConstructable!(D, This) && isMutable!This)
             && (isCopyConstructable!(This, E) && isMutable!E)
-            && (This.weakPtr == D.weakPtr)
-            && (This.weakPtr == E.weakPtr)
+            && (This.isWeak == D.isWeak)
+            && (This.isWeak == E.isWeak)
         ){
-            return this.compareExchangeImpl!(false, success, failure)(expected, desired.move);
+            return this.compareExchangeImpl!(false, success, failure)(expected, desired._move);
         }
 
 
@@ -1198,10 +1200,10 @@ public template IntrusivePtr(
             && isIntrusivePtr!D && !is(D == shared)
             && (isMoveConstructable!(D, This) && isMutable!This)
             && (isCopyConstructable!(This, E) && isMutable!E)
-            && (This.weakPtr == D.weakPtr)
-            && (This.weakPtr == E.weakPtr)
+            && (This.isWeak == D.isWeak)
+            && (This.isWeak == E.isWeak)
         ){
-            return this.compareExchangeImpl!(true, success, failure)(expected, desired.move);
+            return this.compareExchangeImpl!(true, success, failure)(expected, desired._move);
         }
 
 
@@ -1215,8 +1217,8 @@ public template IntrusivePtr(
             && isIntrusivePtr!D && !is(D == shared)
             && (isMoveConstructable!(D, This) && isMutable!This)
             && (isCopyConstructable!(This, E) && isMutable!E)
-            && (This.weakPtr == D.weakPtr)
-            && (This.weakPtr == E.weakPtr)
+            && (This.isWeak == D.isWeak)
+            && (This.isWeak == E.isWeak)
         ){
             static if(is(This == shared)){
                 static if(isLockFree){
@@ -1241,7 +1243,7 @@ public template IntrusivePtr(
                         if(store_occurred){
                             desired._const_reset();
                             if(expected._element !is null)
-                                expected._control.release!(This.weakPtr);
+                                expected._control.release!(This.isWeak);
                         }
                         else{
                             expected = null;
@@ -1264,14 +1266,14 @@ public template IntrusivePtr(
                     Self* self = cast(Self*)&this;
 
                     if(*self == expected){
-                        auto tmp = self.move;   //destructor is called after  mutex.unlock();
-                        *self = desired.move;
+                        auto tmp = self._move;   //destructor is called after  mutex.unlock();
+                        *self = desired._move;
 
                         mutex.unlock();
                         return true;
                     }
 
-                    auto tmp = expected.move;   //destructor is called after  mutex.unlock();
+                    auto tmp = expected._move;   //destructor is called after  mutex.unlock();
                     expected = *self;
 
                     mutex.unlock();
@@ -1281,7 +1283,7 @@ public template IntrusivePtr(
 
             else{
                 if(this == expected){
-                    this = desired.move;
+                    this = desired._move;
                     return true;
                 }
                 expected = this;
@@ -1296,7 +1298,7 @@ public template IntrusivePtr(
             Creates a new non weak `IntrusivePtr` that shares ownership of the managed object (must be `IntrusivePtr.WeakType`).
 
             If there is no managed object, i.e. this is empty or this is `expired`, then the returned `IntrusivePtr` is empty.
-            Method exists only if `IntrusivePtr` is `weakPtr`
+            Method exists only if `IntrusivePtr` is `isWeak`
 
             Examples:
                 --------------------
@@ -1354,7 +1356,7 @@ public template IntrusivePtr(
                 }
                 --------------------
         */
-        static if(weakPtr)
+        static if(isWeak)
         public SharedType lock()()scope @safe{
             static assert(isCopyConstructable!(typeof(this), typeof(return)));
 
@@ -1365,11 +1367,11 @@ public template IntrusivePtr(
 
 
 
-        static if(weakPtr){
+        static if(isWeak){
             /**
                 Equivalent to `useCount() == 0` (must be `IntrusivePtr.WeakType`).
 
-                Method exists only if `IntrusivePtr` is `weakPtr`
+                Method exists only if `IntrusivePtr` is `isWeak`
 
                 Examples:
                     --------------------
@@ -1441,8 +1443,7 @@ public template IntrusivePtr(
                     }
                     --------------------
             */
-            public @property ElementReferenceTypeImpl!(inout ElementType) observe()
-            inout return pure nothrow @system @nogc{
+            public @property ElementReferenceTypeImpl!(inout ElementType) observe()inout return pure nothrow @system @nogc{
                 return (cast(const)this).expired
                     ? null
                     : this._element;
@@ -1451,7 +1452,7 @@ public template IntrusivePtr(
         }
 
 
-        static if(!weakPtr){
+        static if(!isWeak){
             /**
                 Operator *, same as method 'get'.
 
@@ -1509,12 +1510,7 @@ public template IntrusivePtr(
                     --------------------
             */
             static if(is(ElementType == class)){
-                public @property ElementType get()return pure nothrow @system @nogc{
-                    return this._element;
-                }
-
-                /// ditto
-                public @property const(inout(ElementType)) get()const inout return pure nothrow @safe @nogc{
+                public @property inout(ElementType) get()inout return pure nothrow @safe @nogc{
                     return this._element;
                 }
             }
@@ -1594,7 +1590,7 @@ public template IntrusivePtr(
                 assert(wx.useCount == 0);
                 --------------------
         */
-        static if(hasWeakCounter && !weakPtr)
+        static if(hasWeakCounter && !isWeak)
         public WeakType weak()()scope @safe{
             static assert(isCopyConstructable!(typeof(this), typeof(return)));
 
@@ -1927,7 +1923,7 @@ public template IntrusivePtr(
                 else
                     return cast(Unconst!ControlType*)this._control;
             }();+/
-            this._control.release!weakPtr;
+            this._control.release!isWeak;
         }
 
         private void _reset()scope pure nothrow @system @nogc{
@@ -1938,6 +1934,13 @@ public template IntrusivePtr(
             auto self = cast(Unqual!(typeof(this))*)&this;
 
             self._reset();
+        }
+
+        private auto _move()@trusted{
+            auto e = this._element;
+            this._const_reset();
+
+            return typeof(this)(e, Evoid.init);
         }
 
         private alias MakeIntrusive(AllocatorType, bool supportGC) = .MakeIntrusive!(
@@ -2156,7 +2159,7 @@ nothrow unittest{
 */
 public UnqualSmartPtr!Ptr.ChangeElementType!T dynCast(T, Ptr)(ref scope Ptr ptr)
 if(    isIntrusive!T
-    && isIntrusivePtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
+    && isIntrusivePtr!Ptr && !is(Ptr == shared) && !Ptr.isWeak
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){
@@ -2173,7 +2176,7 @@ if(    isIntrusive!T
 /// ditto
 public UnqualSmartPtr!Ptr.ChangeElementType!T dynCast(T, Ptr)(scope Ptr ptr)
 if(    isIntrusive!T
-    && isIntrusivePtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
+    && isIntrusivePtr!Ptr && !is(Ptr == shared) && !Ptr.isWeak
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){
@@ -2185,7 +2188,7 @@ if(    isIntrusive!T
 /// ditto
 public UnqualSmartPtr!Ptr.ChangeElementType!T dynCastMove(T, Ptr)(auto ref scope Ptr ptr)
 if(    isIntrusive!T
-    && isIntrusivePtr!Ptr && !is(Ptr == shared) && !Ptr.weakPtr
+    && isIntrusivePtr!Ptr && !is(Ptr == shared) && !Ptr.isWeak
     && isReferenceType!T && __traits(getLinkage, T) == "D"
     && isReferenceType!(Ptr.ElementType) && __traits(getLinkage, Ptr.ElementType) == "D"
 ){

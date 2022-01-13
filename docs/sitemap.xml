@@ -2,6 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url><loc>http://127.0.0.1/index.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/common/apply.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/ControlBlock.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/ControlBlock.hasSharedCounter.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/ControlBlock.hasWeakCounter.html</loc></url>
@@ -19,6 +20,7 @@
 <url><loc>http://127.0.0.1/autoptr/common/isControlBlock.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/isDestructorType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/isIntrusive.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/common/isSmartPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/SharedControlType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/common/UniqueControlType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr.html</loc></url>
@@ -32,6 +34,7 @@
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.ControlType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.DestructorType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.element.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.element.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.ElementReferenceType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.ElementType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.exchange.html</loc></url>
@@ -39,10 +42,10 @@
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.expired.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.get.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.isLockFree.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.isWeak.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.load.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.lock.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.make.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.move.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.observe.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.opAssign.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.opAssign.html</loc></url>
@@ -65,7 +68,6 @@
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.useCount.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.weak.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.weakCount.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.weakPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.WeakType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.html</loc></url>
@@ -88,6 +90,7 @@
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.ControlType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.DestructorType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.element.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.element.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.ElementReferenceType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.ElementType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.exchange.html</loc></url>
@@ -95,12 +98,12 @@
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.expired.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.get.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.isLockFree.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.isWeak.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.length.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.load.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.lock.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.make.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.make.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.move.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.observe.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.opAssign.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.opAssign.html</loc></url>
@@ -122,7 +125,6 @@
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.useCount.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.weak.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.weakCount.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.weakPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.WeakType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/share.html</loc></url>
@@ -142,6 +144,7 @@
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.ControlType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.DestructorType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.element.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.element.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.ElementReferenceType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.ElementType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.exchange.html</loc></url>
@@ -149,13 +152,13 @@
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.expired.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.get.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.isLockFree.html</loc></url>
+<url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.isWeak.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.length.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.load.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.lock.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.make.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.make.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.make.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.move.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.observe.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opAssign.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.opAssign.html</loc></url>
@@ -180,7 +183,6 @@
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.useCount.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.weak.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.weakCount.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.weakPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.WeakType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/sharedPtr.html</loc></url>
