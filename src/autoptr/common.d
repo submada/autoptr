@@ -819,9 +819,15 @@ import core.lifetime : forward;
 	Ref args are copyied and non ref args are moved.
 
 */
-public void apply(alias fn, Args...)(scope auto ref Args args)
+public auto apply(alias fn, Args...)(scope auto ref Args args)
 if(allSatisfy!(isSmartPtr, Args)){
 	Args params;
+
+	scope(exit){
+		//dtors for `params` aren't called (bug in dmd 2.098.1 ?)
+		static foreach(alias param; params)
+			param = null;
+	}
 
 	//`Args params = forward!args` doesnt work (bug in dmd 2.098.1 ?)
 	static foreach(enum int I, alias arg; args){
@@ -831,14 +837,11 @@ if(allSatisfy!(isSmartPtr, Args)){
 	}
 
 	pragma(inline, true); @property auto ref elm(alias param)()@trusted{
-        pragma(inline, true); return param.get();
+		pragma(inline, true); return param.get();
 	}
 
-	fn(staticMap!(elm, params));
+	return fn(staticMap!(elm, params));
 
-	//dtors for `params` aren't called (bug in dmd 2.098.1 ?)
-	static foreach(alias param; params)
-		param = null;
 
 }
 
@@ -866,13 +869,13 @@ if(allSatisfy!(isSmartPtr, Args)){
 	()@safe{
 		auto a = SharedPtr!long.make(42);
 		auto b = RcPtr!float.make(3.14);
-		auto c = IntrusivePtr!Foo.make(1);
+		auto c = IntrusivePtr!Foo.make(123);
 
 		assert(a.useCount == 1);
 		assert(b.useCount == 1);
 		assert(c.useCount == 1);
 
-		apply!((scope ref long x, scope ref float y, scope Foo z){
+		int i = apply!((scope ref long x, scope ref float y, scope Foo z){
 			assert(a.useCount == 2);
 			assert(b.useCount == 2);
 
@@ -883,7 +886,10 @@ if(allSatisfy!(isSmartPtr, Args)){
 			assert(z.i != -1);
 			//x, y, z are still valid until end of the scope.
 
+			return z.i;
 		})(a, b, move(c));
+
+		assert(i == 123);
 	}();
 
 }

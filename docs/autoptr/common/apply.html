@@ -60,7 +60,7 @@ $('#symbolSearchPane').show();</script>
 			<div class="prototype">
 				<code class="lang-d">
 					<div class="single-prototype">
-			<span class="typ">void</span> <span class="pln">apply</span>(alias fn, Args...)
+			<span class="kwd">auto</span> <span class="pln">apply</span>(alias fn, Args...)
 			<span class="pun">(</span>
 			<br/>
 			&nbsp;&nbsp;<span class="kwd">auto scope ref </span><span class="typ">Args</span> <span class="pln">args</span>
@@ -99,13 +99,13 @@ $('#symbolSearchPane').show();</script>
 ()</span><span class="kwd">@safe</span><span class="pun">{
 	</span><span class="kwd">auto </span><span class="pln">a </span><span class="pun">= </span><span class="typ">SharedPtr</span><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
 	</span><span class="kwd">auto </span><span class="pln">b </span><span class="pun">= </span><span class="typ">RcPtr</span><span class="pun">!</span><span class="typ">float<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">3.14</span><span class="pun">);
-	</span><span class="kwd">auto </span><span class="pln">c </span><span class="pun">= </span><span class="typ">IntrusivePtr</span><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">1</span><span class="pun">);
+	</span><span class="kwd">auto </span><span class="pln">c </span><span class="pun">= </span><span class="typ">IntrusivePtr</span><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
 
 	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">a<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
 	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">b<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
 	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">c<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
 
-	</span><span class="pln">apply</span><span class="pun">!((</span><span class="kwd">scope ref </span><span class="typ">long </span><span class="pln">x</span><span class="pun">, </span><span class="kwd">scope ref </span><span class="typ">float </span><span class="pln">y</span><span class="pun">, </span><span class="kwd">scope </span><span class="typ">Foo </span><span class="pln">z</span><span class="pun">){
+	</span><span class="typ">int </span><span class="pln">i </span><span class="pun">= </span><span class="pln">apply</span><span class="pun">!((</span><span class="kwd">scope ref </span><span class="typ">long </span><span class="pln">x</span><span class="pun">, </span><span class="kwd">scope ref </span><span class="typ">float </span><span class="pln">y</span><span class="pun">, </span><span class="kwd">scope </span><span class="typ">Foo </span><span class="pln">z</span><span class="pun">){
 		</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">a<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
 		</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">b<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">2</span><span class="pun">);
 
@@ -116,7 +116,10 @@ $('#symbolSearchPane').show();</script>
 		</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">z<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">!= -</span><span class="lit">1</span><span class="pun">);
 		</span><span class="com">//x, y, z are still valid until end of the scope.
 
-	</span><span class="pun">})(</span><span class="pln">a</span><span class="pun">, </span><span class="pln">b</span><span class="pun">, </span><span class="pln">move</span><span class="pun">(</span><span class="pln">c</span><span class="pun">));
+		</span><span class="kwd">return </span><span class="pln">z<wbr/></span><span class="pun">.</span><span class="pln">i</span><span class="pun">;
+	})(</span><span class="pln">a</span><span class="pun">, </span><span class="pln">b</span><span class="pun">, </span><span class="pln">move</span><span class="pun">(</span><span class="pln">c</span><span class="pun">));
+
+	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">i </span><span class="pun">== </span><span class="lit">123</span><span class="pun">);
 }();
 
 </span></code></pre>
