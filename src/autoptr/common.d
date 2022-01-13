@@ -257,7 +257,9 @@ public template DestructorType(Types...){
 			}
 			else static if(is(void function(Evoid*)pure nothrow @safe @nogc : Unqual!Type)){
 				{
-					Unqual!Type fn;
+                    static void fn_body(Evoid*)pure nothrow @safe @nogc{}
+
+					Unqual!Type fn = &fn_body;
 					fn(null);
 				}
 			}
