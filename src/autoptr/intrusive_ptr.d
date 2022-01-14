@@ -36,7 +36,9 @@ unittest{
 
 
 /**
-    `IntrusivePtr` is a smart pointer that retains shared ownership of an object through a pointer.
+    A ref counted pointer that points to an object with an embedded reference counter `autoptr.common.ControlBlock`.
+
+    `IntrusivePtr` is a ref counted pointer that retains shared ownership of an object through a pointer.
 
     Several `IntrusivePtr` objects may own the same object.
 
@@ -2327,7 +2329,9 @@ nothrow @nogc unittest{
 
 
 /**
-    Create `IntrusivePtr` from class element `Elm` or struct pointer element `Elm`.
+    Create `IntrusivePtr` instance from class reference `Elm` or struct pointer element `Elm`.
+    
+    `Elm` was created by `IntrusivePtr.make` or `IntrusivePtr.alloc`.
 */
 auto intrusivePtr(Elm)(Elm elm)
 if(is(Elm == class) && isIntrusive!Elm){
