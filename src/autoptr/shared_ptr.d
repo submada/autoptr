@@ -258,38 +258,38 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 		}
 
 		//forward ctor impl:
-        package this(Rhs, this This)(auto ref scope Rhs rhs, Evoid)@trusted //if rhs is rvalue then dtor is called on empty rhs
-        if(    isSmartPtr!Rhs   //(isSharedPtr!Rhs || isRcPtr!Rhs || isIntrusivePtr!Rhs)
-            && isConstructable!(rhs, This)
-            && !is(Rhs == shared)
-        ){
-            //lock (copy):
-            static if(weakLock!(Rhs, This)){
-                if(rhs._control !is null && rhs._control.add_shared_if_exists()){
-                    this._control = rhs._control;
-                    this._element = rhs._element;
-                }
-                /+else{
-                    this._control = null;
-                    this._element = null;
-                }+/
-            }
-            else if(rhs._element !is null){
-                this._control = rhs._control;
-                this._element = rhs._element;
+		package this(Rhs, this This)(auto ref scope Rhs rhs, Evoid)@trusted //if rhs is rvalue then dtor is called on empty rhs
+		if(    isSmartPtr!Rhs   //(isSharedPtr!Rhs || isRcPtr!Rhs || isIntrusivePtr!Rhs)
+			&& isConstructable!(rhs, This)
+			&& !is(Rhs == shared)
+		){
+			//lock (copy):
+			static if(weakLock!(Rhs, This)){
+				if(rhs._control !is null && rhs._control.add_shared_if_exists()){
+					this._control = rhs._control;
+					this._element = rhs._element;
+				}
+				/+else{
+					this._control = null;
+					this._element = null;
+				}+/
+			}
+			else if(rhs._element !is null){
+				this._control = rhs._control;
+				this._element = rhs._element;
 
-                //copy or lock(copy):
-                static if(isRef!rhs || (isWeak && !Rhs.isWeak)){
-                    if(this._control !is null)
-                        rhs._control.add!isWeak;
-                }
-                //move:
-                else{
-                    rhs._const_reset();
-                }
+				//copy or lock(copy):
+				static if(isRef!rhs || (isWeak && !Rhs.isWeak)){
+					if(this._control !is null)
+						rhs._control.add!isWeak;
+				}
+				//move:
+				else{
+					rhs._const_reset();
+				}
 
-            }
-        }
+			}
+		}
 
 
 		/**
@@ -425,14 +425,14 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				}
 				--------------------
 		*/
-        public this(Rhs, this This)(auto ref scope Rhs rhs)@trusted //if rhs is rvalue then dtor is called on empty rhs
-        if(    isSmartPtr!Rhs   //(isSharedPtr!Rhs || isRcPtr!Rhs || isIntrusivePtr!Rhs)
-            && isConstructable!(rhs, This)
-            && !is(Rhs == shared)
-            && !isMoveCtor!(This, rhs)
-        ){
-            this(forward!rhs, Evoid.init);
-        }
+		public this(Rhs, this This)(auto ref scope Rhs rhs)@trusted //if rhs is rvalue then dtor is called on empty rhs
+		if(    isSmartPtr!Rhs   //(isSharedPtr!Rhs || isRcPtr!Rhs || isIntrusivePtr!Rhs)
+			&& isConstructable!(rhs, This)
+			&& !is(Rhs == shared)
+			&& !isMoveCtor!(This, rhs)
+		){
+			this(forward!rhs, Evoid.init);
+		}
 
 
 
@@ -1539,26 +1539,26 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 					--------------------
 			*/
 			static if(referenceElementType){
-                public @property inout(ElementType) get()inout return pure nothrow @system @nogc{
-                    return this._element;
-                }
-            }
+				public @property inout(ElementType) get()inout return pure nothrow @system @nogc{
+					return this._element;
+				}
+			}
 			else static if(is(Unqual!ElementType == void)){
 				/// ditto
 				public @property inout(ElementType) get()inout scope pure nothrow @safe @nogc{
 				}
-            }
+			}
 			else{
 				/// ditto
-                public @property ref ElementType get()return pure nothrow @system @nogc{
-                    return *cast(ElementType*)this._element;
-                }
+				public @property ref ElementType get()return pure nothrow @system @nogc{
+					return *cast(ElementType*)this._element;
+				}
 
-                public @property ref const(inout(ElementType)) get()const inout return pure nothrow @safe @nogc{
-                    return *cast(const inout ElementType*)this._element;
-                }
-
-            }
+				/// ditto
+				public @property ref const(inout(ElementType)) get()const inout return pure nothrow @safe @nogc{
+					return *cast(const inout ElementType*)this._element;
+				}
+			}
 
 
 
@@ -1578,14 +1578,14 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 					static assert(is(typeof(y.ptr) == const(long)*));
 					--------------------
 			*/
-            public @property ElementReferenceType element()return pure nothrow @system @nogc{
-                return this._element;
-            }
+			public @property ElementReferenceType element()return pure nothrow @system @nogc{
+				return this._element;
+			}
 
-            /// ditto
-            public @property ElementReferenceTypeImpl!(const inout ElementType) element()const inout return pure nothrow @safe @nogc{
-                return this._element;
-            }
+			/// ditto
+			public @property ElementReferenceTypeImpl!(const inout ElementType) element()const inout return pure nothrow @safe @nogc{
+				return this._element;
+			}
 
 		}
 
@@ -1894,18 +1894,18 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 			this._set_element(null);
 		}
 
-        private void _const_reset()scope const pure nothrow @system @nogc{
-            this._const_set_counter(null);
-            this._const_set_element(null);
-        }
+		private void _const_reset()scope const pure nothrow @system @nogc{
+			this._const_set_counter(null);
+			this._const_set_element(null);
+		}
 
-        private auto _move()@trusted{
-            auto e = this._element;
-            auto c = this._control;
-            this._const_reset();
+		private auto _move()@trusted{
+			auto e = this._element;
+			auto c = this._control;
+			this._const_reset();
 
-            return typeof(this)(c, e);
-        }
+			return typeof(this)(c, e);
+		}
 
 		private alias MakeEmplace(AllocatorType, bool supportGC) = .MakeEmplace!(
 			_Type,
