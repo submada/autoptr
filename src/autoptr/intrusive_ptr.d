@@ -36,7 +36,7 @@ unittest{
 
 
 /**
-    A ref counted pointer that points to an object with an embedded reference counter `autoptr.common.ControlBlock`.
+    Implementation of a ref counted pointer that points to an object with an embedded reference counter `autoptr.common.ControlBlock`.
 
     `IntrusivePtr` is a ref counted pointer that retains shared ownership of an object through a pointer.
 
