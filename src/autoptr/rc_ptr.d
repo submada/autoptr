@@ -35,7 +35,7 @@ unittest{
 /**
     Implementation of a ref counted pointer without support for aliasing (smaller size of pointer).
 
-	`RcPtr` retains shared ownership of an object through a pointer.
+    `RcPtr` retains shared ownership of an object through a pointer.
         
     Several ref counted pointer objects may own the same object.
 
