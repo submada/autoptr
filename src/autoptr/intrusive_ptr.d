@@ -38,15 +38,15 @@ unittest{
 /**
     Implementation of a ref counted pointer that points to an object with an embedded reference counter `autoptr.common.ControlBlock`.
 
-    `IntrusivePtr` is a ref counted pointer that retains shared ownership of an object through a pointer.
+    `IntrusivePtr` retains shared ownership of an object through a pointer.
 
-    Several `IntrusivePtr` objects may own the same object.
+    Several ref counted pointer objects may own the same object.
 
     The object is destroyed and its memory deallocated when either of the following happens:
 
-        1. the last remaining `IntrusivePtr` owning the object is destroyed.
+        1. the last remaining ref counted pointer owning the object is destroyed.
 
-        2. the last remaining `IntrusivePtr` owning the object is assigned another pointer via various methods like `opAssign` and `store`.
+        2. the last remaining ref counted pointer owning the object is assigned another pointer via various methods like `opAssign` and `store`.
 
     The object is destroyed using destructor of type `_Type`.
 
