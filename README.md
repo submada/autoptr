@@ -226,10 +226,11 @@ unittest{
 ### UniquePtr:
 ```d
 unittest{
+    import core.lifetime : move;
     ///simple:
     {
         UniquePtr!long a = UniquePtr!long.make(42);
-        UniquePtr!(const long) b = a.move;
+        UniquePtr!(const long) b = move(a);
         assert(a == null);
 
         assert(*b == 42);
@@ -248,10 +249,10 @@ unittest{
         assert(bar != null);
 
         ///this doesnt work because Foo destructor attributes are more restrictive then Zee's:
-        //UniquePtr!Foo x = zee.move;
+        //UniquePtr!Foo x = move(zee);
 
         ///this does work:
-        UniquePtr!(Foo, DestructorType!(Foo, Zee)) x = zee.move;
+        UniquePtr!(Foo, DestructorType!(Foo, Zee)) x = move(zee);
         assert(zee == null);
     }
 
