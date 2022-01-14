@@ -54,7 +54,7 @@ Constructors of smart pointers never allocate memory, only static methods `make`
     void main()@safe{
         auto p = SharedPtr!S.make(42);
 
-        (ref S s)@safe{
+        (scope ref S s)@safe{
             assert(s.x == 42);
             p = null;           ///release pointer
             assert(s.x == -1);  ///`s` is dangling reference
@@ -82,7 +82,7 @@ Constructors of smart pointers never allocate memory, only static methods `make`
     void main()@safe{
         auto p = SharedPtr!S.make(42);
 
-        p.apply!((ref S s)@safe{
+        p.apply!((scope ref S s)@safe{
             assert(p.useCount == 2);
             assert(s.x == 42);
             p = null;           ///release
