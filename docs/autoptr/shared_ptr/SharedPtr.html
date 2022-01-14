@@ -69,7 +69,7 @@ $('#symbolSearchPane').show();</script>
 						</a>
 					</li>
 				</ul>
-			</nav><h2 id="0">Struct SharedPtr</h2><p><code class="lang-d"><span class="typ">SharedPtr</span></code> is a smart pointer that retains shared ownership of an object through a pointer.
+			</nav><h2 id="0">Struct SharedPtr</h2><p>Implementation of a ref counted pointer with support for aliasing.
 </p>
 			<div class="prototype">
 				<code class="lang-d">
@@ -82,7 +82,10 @@ $('#symbolSearchPane').show();</script>
 					</div>
 				</code>
 			</div>
-			<section><p>Several <code class="lang-d"><span class="typ">SharedPtr</span></code> objects may own the same object.
+			<section><p><code class="lang-d"><span class="typ">SharedPtr</span></code> retains shared ownership of an object through a pointer.
+</p>
+
+<p>	Several <code class="lang-d"><span class="typ">SharedPtr</span></code> objects may own the same object.
 </p>
 
 <p>	The object is destroyed and its memory deallocated when either of the following happens:

@@ -69,7 +69,7 @@ $('#symbolSearchPane').show();</script>
 						</a>
 					</li>
 				</ul>
-			</nav><h2 id="0">Struct RcPtr</h2><p><code class="lang-d"><span class="typ">RcPtr</span></code> is a smart pointer that retains shared ownership of an object through a pointer.
+			</nav><h2 id="0">Struct RcPtr</h2><p>Implementation of a ref counted pointer without support for aliasing (smaller size of pointer).
 </p>
 			<div class="prototype">
 				<code class="lang-d">
@@ -82,16 +82,19 @@ $('#symbolSearchPane').show();</script>
 					</div>
 				</code>
 			</div>
-			<section><p>Several <code class="lang-d"><span class="typ">RcPtr</span></code> objects may own the same object.
+			<section><p><code class="lang-d"><span class="typ">RcPtr</span></code> retains shared ownership of an object through a pointer.
+</p>
+
+<p>    Several ref counted pointer objects may own the same object.
 </p>
 
 <p>    The object is destroyed and its memory deallocated when either of the following happens:
 </p>
 
-<p>        1. the last remaining <code class="lang-d"><span class="typ">RcPtr</span></code> owning the object is destroyed.
+<p>        1. the last remaining ref counted pointer owning the object is destroyed.
 </p>
 
-<p>        2. the last remaining <code class="lang-d"><span class="typ">RcPtr</span></code> owning the object is assigned another pointer via various methods like <code class="lang-d"><a href="../../autoptr/rc_ptr/RcPtr.opAssign.html"><span class="pln">opAssign</span></a></code> and <code class="lang-d"><a href="../../autoptr/rc_ptr/RcPtr.store.html"><span class="pln">store</span></a></code>.
+<p>        2. the last remaining ref counted pointer owning the object is assigned another pointer via various methods like <code class="lang-d"><a href="../../autoptr/rc_ptr/RcPtr.opAssign.html"><span class="pln">opAssign</span></a></code> and <code class="lang-d"><a href="../../autoptr/rc_ptr/RcPtr.store.html"><span class="pln">store</span></a></code>.
 </p>
 
 <p>    The object is destroyed using destructor of type <code class="lang-d"><span class="pln">_Type</span></code>.

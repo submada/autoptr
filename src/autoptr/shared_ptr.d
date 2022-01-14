@@ -36,7 +36,7 @@ unittest{
 
 
 /**
-    	Implementation of a ref counted pointer with support for aliasing.
+		Implementation of a ref counted pointer with support for aliasing.
     
 	`SharedPtr` retains shared ownership of an object through a pointer.
 
@@ -1187,7 +1187,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 					shared x = SharedPtr!(shared long).make(123);
 					auto y = SharedPtr!(shared long).make(42);
 
-                    import core.lifetime : move;
+					import core.lifetime : move;
 					auto z = x.exchange(move(y));
 
 					assert(x.load.get == 42);
@@ -1211,7 +1211,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 					auto y = SharedPtr!(shared long).make(42);
 
 					//opAssign is same as store
-                    import core.lifetime : move;
+					import core.lifetime : move;
 					y = x.exchange(move(y));
 
 					assert(x.load.get == 42);
@@ -2404,7 +2404,7 @@ unittest{
 */
 auto sharedPtr(Ptr)(auto ref scope Ptr ptr)@trusted
 if(!is(Ptr == shared)
-    && isSmartPtr!Ptr   //(isSharedPtr!Ptr || isRcPtr!Ptr || isIntrusivePtr!Ptr)
+	&& isSmartPtr!Ptr   //(isSharedPtr!Ptr || isRcPtr!Ptr || isIntrusivePtr!Ptr)
 ){
 	import core.lifetime : forward;
 	import std.traits : CopyTypeQualifiers;
@@ -2419,7 +2419,7 @@ if(!is(Ptr == shared)
 
 ///
 pure nothrow @nogc unittest{
-    import core.lifetime : move;
+	import core.lifetime : move;
 	//RcPtr -> SharedPtr:
 	{
 		auto x = RcPtr!long.make(42);
@@ -2519,7 +2519,7 @@ nothrow @nogc unittest{
 		assert(x.useCount == 2);
 
 
-        import core.lifetime : move;
+		import core.lifetime : move;
 		shared s2 = share(x.move);
 		assert(x == null);
 		assert(s2.useCount == 2);
@@ -2591,7 +2591,7 @@ pure nothrow @nogc unittest{
 	}
 
 	//move
-    import core.lifetime : move;
+	import core.lifetime : move;
 	{
 		auto x = SharedPtr!(long[]).make(10, -1);
 		assert(x.length == 10);
@@ -3014,7 +3014,7 @@ version(unittest){
 			shared x = SharedPtr!(shared long).make(123);
 			auto y = SharedPtr!(shared long).make(42);
 
-            import core.lifetime : move;
+			import core.lifetime : move;
 			auto z = x.exchange(y.move);
 
 			assert(x.load.get == 42);
@@ -3038,7 +3038,7 @@ version(unittest){
 			auto y = SharedPtr!(shared long).make(42);
 
 			//opAssign is same as store
-            import core.lifetime : move;
+			import core.lifetime : move;
 			y = x.exchange(y.move);
 
 			assert(x.load.get == 42);
@@ -3848,13 +3848,13 @@ unittest{
 
 //@safe const get:
 @safe pure nothrow @nogc unittest{
-    {
-        const x = SharedPtr!long.make(42);
-        assert(x.get == 42);
-    }
+	{
+		const x = SharedPtr!long.make(42);
+		assert(x.get == 42);
+	}
 
-    {
-        const x = SharedPtr!void.make();
-        x.get;
-    }
+	{
+		const x = SharedPtr!void.make();
+		x.get;
+	}
 }

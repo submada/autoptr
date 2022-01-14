@@ -55,7 +55,7 @@ $('#symbolSearchPane').show();</script>
 			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>Module autoptr.rc_ptr</h1><p>Implementation of reference counted pointer <code class="lang-d"><a href="../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a></code> (similar to c++ <code class="lang-d"><span class="pln">std</span><span class="pun">::</span><span class="pln">shared_ptr</span></code> without aliasing).
+			<h1>Module autoptr.rc_ptr</h1><p>Implementation of non aliasable reference counted pointer <code class="lang-d"><a href="../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a></code> (similar to c++ <code class="lang-d"><span class="pln">std</span><span class="pun">::</span><span class="pln">shared_ptr</span></code> without aliasing).
 </p><section></section>
 
 			<section></section>
@@ -117,7 +117,7 @@ $('#symbolSearchPane').show();</script>
 								<a id="RcPtr" class="public" href="../autoptr/rc_ptr/RcPtr.html">RcPtr</a>
 							</code>
 						</td>
-						<td><code class="lang-d"><span class="typ">RcPtr</span></code> is a smart pointer that retains shared ownership of an object through a pointer.
+						<td>Implementation of a ref counted pointer without support for aliasing (smaller size of pointer).
 </td>
 					</tr>
 				</table>
