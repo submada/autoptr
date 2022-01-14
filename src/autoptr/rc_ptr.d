@@ -1,5 +1,5 @@
 /**
-    Implementation of reference counted pointer `RcPtr` (similar to c++ `std::shared_ptr` without aliasing).
+    Implementation of non aliasable reference counted pointer `RcPtr` (similar to c++ `std::shared_ptr` without aliasing).
 
     License:   $(HTTP www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
     Authors:   $(HTTP github.com/submada/basic_string, Adam Búš)
