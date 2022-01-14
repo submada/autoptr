@@ -114,6 +114,9 @@ public template IntrusivePtr(
     enum bool _isLockFree = true;
 
     struct IntrusivePtr{
+        alias SmartPtr = .SmartPtr;
+
+
         /**
             Type of element managed by `IntrusivePtr`.
         */
@@ -1555,12 +1558,7 @@ public template IntrusivePtr(
                     static assert(is(typeof(y.element) == const(Foo)*));
                     --------------------
             */
-            public @property ElementReferenceType element()return pure nothrow @system @nogc{
-                return this._element;
-            }
-
-            /// ditto
-            public @property ElementReferenceTypeImpl!(const inout ElementType) element()const inout return pure nothrow @safe @nogc{
+            public @property ElementReferenceTypeImpl!(inout ElementType) element()inout return pure nothrow @system @nogc{
                 return this._element;
             }
 

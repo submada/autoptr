@@ -61,7 +61,7 @@ $('#symbolSearchPane').show();</script>
 				<code class="lang-d">
 					<div class="single-prototype">
 			<span class="kwd">enum</span> <span class="pln">isSmartPtr</span>(T)
-			 <span class="pun">=</span> <span class="kwd">false </span><span class="pun">|| </span><span class="pln">isSharedPtr</span><span class="pun">!</span><span class="pln">T </span><span class="pun">|| </span><span class="pln">isRcPtr</span><span class="pun">!</span><span class="pln">T </span><span class="pun">|| </span><span class="pln">isIntrusivePtr</span><span class="pun">!</span><span class="pln">T</span><span class="pun">;</span>
+			 <span class="pun">=</span> <span class="kwd">is</span><span class="pun">(</span><span class="pln">T<wbr/></span><span class="pun">.</span><span class="typ">SmartPtr </span><span class="pun">: <wbr/>.</span><span class="typ">SmartPtr</span><span class="pun">)</span><span class="pun">;</span>
 					</div>
 				</code>
 			</div>

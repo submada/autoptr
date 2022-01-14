@@ -34,7 +34,6 @@
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.ControlType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.DestructorType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.element.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.element.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.ElementReferenceType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.ElementType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/intrusive_ptr/IntrusivePtr.exchange.html</loc></url>
@@ -90,7 +89,6 @@
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.ControlType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.DestructorType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.element.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.element.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.ElementReferenceType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.ElementType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/rc_ptr/RcPtr.exchange.html</loc></url>
@@ -143,7 +141,6 @@
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.compareExchangeWeak.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.ControlType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.DestructorType.html</loc></url>
-<url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.element.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.element.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.ElementReferenceType.html</loc></url>
 <url><loc>http://127.0.0.1/autoptr/shared_ptr/SharedPtr.ElementType.html</loc></url>

@@ -128,6 +128,9 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 	enum bool _isLockFree = false;
 
 	struct SharedPtr{
+		alias SmartPtr = .SmartPtr;
+
+
 		/**
 			Type of element managed by `SharedPtr`.
 		*/
@@ -259,7 +262,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 		//forward ctor impl:
 		package this(Rhs, this This)(auto ref scope Rhs rhs, Evoid)@trusted //if rhs is rvalue then dtor is called on empty rhs
-		if(    isSmartPtr!Rhs   //(isSharedPtr!Rhs || isRcPtr!Rhs || isIntrusivePtr!Rhs)
+		if(    isSmartPtr!Rhs	//(isSharedPtr!Rhs || isRcPtr!Rhs || isIntrusivePtr!Rhs)
 			&& isConstructable!(rhs, This)
 			&& !is(Rhs == shared)
 		){
@@ -331,7 +334,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				assert(foo.get == 3.14);
 				--------------------
 		*/
-		public this(Rhs, Elm, this This)(auto ref scope Rhs rhs, Elm element)@trusted   //if rhs is rvalue then dtor is called on empty rhs
+		public this(Rhs, Elm, this This)(auto ref scope Rhs rhs, Elm element)@trusted	//if rhs is rvalue then dtor is called on empty rhs
 		if(    isSharedPtr!Rhs
 			&& is(Elm : GetElementReferenceType!This)
 			&& isAliasable!(Rhs, This)
@@ -365,7 +368,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 					SharedPtr!long x = SharedPtr!long.make(123);
 					assert(x.useCount == 1);
 
-					SharedPtr!long a = x;         //lvalue copy ctor
+					SharedPtr!long a = x;	      //lvalue copy ctor
 					assert(a == x);
 
 					const SharedPtr!long b = x;   //lvalue copy ctor
@@ -1540,6 +1543,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 			*/
 			static if(referenceElementType){
 				public @property inout(ElementType) get()inout return pure nothrow @system @nogc{
+					assert((this._element is null) <= (this._control is null));
 					return this._element;
 				}
 			}
@@ -1551,11 +1555,13 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 			else{
 				/// ditto
 				public @property ref ElementType get()return pure nothrow @system @nogc{
+					assert((this._element is null) <= (this._control is null));
 					return *cast(ElementType*)this._element;
 				}
 
 				/// ditto
 				public @property ref const(inout(ElementType)) get()const inout return pure nothrow @safe @nogc{
+					assert((this._element is null) <= (this._control is null));
 					return *cast(const inout ElementType*)this._element;
 				}
 			}
@@ -1578,12 +1584,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 					static assert(is(typeof(y.ptr) == const(long)*));
 					--------------------
 			*/
-			public @property ElementReferenceType element()return pure nothrow @system @nogc{
-				return this._element;
-			}
-
-			/// ditto
-			public @property ElementReferenceTypeImpl!(const inout ElementType) element()const inout return pure nothrow @safe @nogc{
+			public @property ElementReferenceTypeImpl!(inout ElementType) element()inout return pure nothrow @system @nogc{
+				assert((this._element is null) <= (this._control is null));
 				return this._element;
 			}
 

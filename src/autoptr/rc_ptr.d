@@ -121,6 +121,10 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
     enum bool _isLockFree = !isDynamicArray!_Type;
 
     struct RcPtr{
+        alias SmartPtr = .SmartPtr;
+
+
+
         /**
             Type of element managed by `RcPtr`.
         */
@@ -1539,12 +1543,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                     static assert(is(typeof(y.ptr) == const(long)*));
                     --------------------
             */
-            public @property ElementReferenceType element()return pure nothrow @system @nogc{
-                return this._element;
-            }
-
-            /// ditto
-            public @property ElementReferenceTypeImpl!(const inout ElementType) element()const inout return pure nothrow @safe @nogc{
+            public @property ElementReferenceTypeImpl!(inout ElementType) element()inout return pure nothrow @system @nogc{
                 return this._element;
             }
 
