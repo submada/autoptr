@@ -33,7 +33,7 @@ unittest{
 
 
 /**
-    `RcPtr` is a smart pointer that retains shared ownership of an object through a pointer.
+    Implementation of a ref counted pointer without support for aliasing (smaller size of pointer).
 
     Several `RcPtr` objects may own the same object.
 
