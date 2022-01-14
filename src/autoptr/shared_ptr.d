@@ -36,7 +36,9 @@ unittest{
 
 
 /**
-	`SharedPtr` is a smart pointer that retains shared ownership of an object through a pointer.
+    	Implementation of a ref counted pointer with support for aliasing.
+    
+	`SharedPtr` retains shared ownership of an object through a pointer.
 
 	Several `SharedPtr` objects may own the same object.
 
