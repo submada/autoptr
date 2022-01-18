@@ -1549,10 +1549,12 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
                 --------------------
                 RcPtr!long x = RcPtr!long.make(123);
                 assert(x.useCount == 1);
+
                 auto wx = x.weak;   //weak pointer
                 assert(wx.expired == false);
                 assert(wx.lock.get == 123);
                 assert(wx.useCount == 1);
+
                 x = null;
                 assert(wx.expired == true);
                 assert(wx.useCount == 0);

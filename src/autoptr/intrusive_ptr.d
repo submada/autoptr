@@ -1551,10 +1551,12 @@ public template IntrusivePtr(
 
                 IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
                 assert(x.useCount == 1);
+
                 auto wx = x.weak;   //weak pointer
                 assert(wx.expired == false);
                 assert(wx.lock.get.i == 123);
                 assert(wx.useCount == 1);
+
                 x = null;
                 assert(wx.expired == true);
                 assert(wx.useCount == 0);

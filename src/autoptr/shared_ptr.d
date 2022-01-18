@@ -1591,10 +1591,12 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				--------------------
 				SharedPtr!long x = SharedPtr!long.make(123);
 				assert(x.useCount == 1);
+
 				auto wx = x.weak;   //weak pointer
 				assert(wx.expired == false);
 				assert(wx.lock.get == 123);
 				assert(wx.useCount == 1);
+
 				x = null;
 				assert(wx.expired == true);
 				assert(wx.useCount == 0);
