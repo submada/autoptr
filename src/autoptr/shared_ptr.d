@@ -1505,6 +1505,8 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 		}
 
+
+
 		/**
 			Get pointer to managed object of `ElementType` or reference if `ElementType` is reference type (class or interface) or dynamic array.
 
@@ -1598,12 +1600,12 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				assert(wx.useCount == 0);
 				--------------------
 		*/
-        public WeakType weak()()scope
-        if(isCopyConstructable!(typeof(this), WeakType)){
-            static if(hasWeakCounter){
-                return typeof(return)(this);
-            }
-        }
+		public WeakType weak()()scope
+		if(isCopyConstructable!(typeof(this), WeakType)){
+			static if(hasWeakCounter){
+				return typeof(return)(this);
+			}
+		}
 
 
 
