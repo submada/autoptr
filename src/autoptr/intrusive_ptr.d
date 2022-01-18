@@ -114,8 +114,6 @@ public template IntrusivePtr(
     enum bool _isLockFree = true;
 
     struct IntrusivePtr{
-        alias SmartPtr = .SmartPtr;
-
 
         /**
             Type of element managed by `IntrusivePtr`.
@@ -153,12 +151,6 @@ public template IntrusivePtr(
         public alias ElementReferenceType = ElementReferenceTypeImpl!ElementType;
 
 
-        /**/
-        package alias ChangeElementType(T) = IntrusivePtr!(
-            CopyTypeQualifiers!(ElementType, T),
-            isWeak
-        );
-
         /**
             Weak pointer
 
@@ -173,22 +165,22 @@ public template IntrusivePtr(
             If such cycle is orphaned (i,e. there are no outside shared pointers into the cycle), the `IntrusivePtr` reference counts cannot reach zero and the memory is leaked.
             To prevent this, one of the pointers in the cycle can be made weak.
         */
-        static if(hasWeakCounter && !isWeak)
-        public alias WeakType = IntrusivePtr!(
-            _Type,
-            true
-        );
+        static if(hasWeakCounter)
+            public alias WeakType = IntrusivePtr!(
+                _Type,
+                true
+            );
+        else
+            public alias WeakType = void;
 
 
         /**
-            Type of non weak ptr (must have weak counter).
+            Type of non weak ptr.
         */
-        static if(isWeak)
         public alias SharedType = IntrusivePtr!(
             _Type,
             false
         );
-
 
 
         /**
@@ -197,7 +189,7 @@ public template IntrusivePtr(
         public alias isLockFree = _isLockFree;
 
         static if(isLockFree)
-        static assert(ElementReferenceType.sizeof == size_t.sizeof);
+            static assert(ElementReferenceType.sizeof == size_t.sizeof);
 
 
 
@@ -213,7 +205,7 @@ public template IntrusivePtr(
 
 
         //necesary for autoptr.unique_ptr.sharedPtr
-        package this(Elm, this This)(Elm element, Evoid ctor)pure nothrow @safe @nogc
+        package this(Elm, this This)(Elm element, Forward)pure nothrow @safe @nogc
         if(true
             && is(Elm : GetElementReferenceType!This)
             && !is(Unqual!Elm == typeof(null))
@@ -221,8 +213,8 @@ public template IntrusivePtr(
             this._element = element;
         }
 
-        //forward ctor:
-        package this(Rhs, this This)(auto ref scope Rhs rhs, Evoid)@trusted
+        //forward ctor impl:
+        public this(Rhs, this This)(auto ref scope Rhs rhs, Forward)@trusted
         if(    isIntrusivePtr!Rhs
             && isConstructable!(rhs, This)
             && !is(Rhs == shared)
@@ -242,7 +234,7 @@ public template IntrusivePtr(
                     this(null);
                 }
                 else{
-                    this(rhs._element, Evoid.init);
+                    this(rhs._element, Forward.init);
                     rhs._control.add!isWeak;
                 }
             }
@@ -348,33 +340,33 @@ public template IntrusivePtr(
             && !is(Rhs == shared)
             && !isMoveCtor!(This, rhs)
         ){
-            this(forward!rhs, Evoid.init);
+            this(forward!rhs, Forward.init);
         }
 
 
         //copy ctors:
         static if(isCopyConstructable!(typeof(this), typeof(this)))
-            this(ref scope typeof(this) rhs)@safe{this(rhs, Evoid.init);}
+            this(ref scope typeof(this) rhs)@safe{this(rhs, Forward.init);}
         else
             @disable this(ref scope typeof(this) rhs)@safe;
 
         static if(isCopyConstructable!(typeof(this), const typeof(this)))
-            this(ref scope typeof(this) rhs)const @safe{this(rhs, Evoid.init);}
+            this(ref scope typeof(this) rhs)const @safe{this(rhs, Forward.init);}
         else
             @disable this(ref scope typeof(this) rhs)const @safe;
 
         static if(isCopyConstructable!(typeof(this), immutable typeof(this)))
-            this(ref scope typeof(this) rhs)immutable @safe{this(rhs, Evoid.init);}
+            this(ref scope typeof(this) rhs)immutable @safe{this(rhs, Forward.init);}
         else
             @disable this(ref scope typeof(this) rhs)immutable @safe;
 
         static if(isCopyConstructable!(typeof(this), shared typeof(this)))
-            this(ref scope typeof(this) rhs)shared @safe{this(rhs, Evoid.init);}
+            this(ref scope typeof(this) rhs)shared @safe{this(rhs, Forward.init);}
         else
             @disable this(ref scope typeof(this) rhs)shared @safe;
 
         static if(isCopyConstructable!(typeof(this), const shared typeof(this)))
-            this(ref scope typeof(this) rhs)const shared @safe{this(rhs, Evoid.init);}
+            this(ref scope typeof(this) rhs)const shared @safe{this(rhs, Forward.init);}
         else
             @disable this(ref scope typeof(this) rhs)const shared @safe;
 
@@ -643,10 +635,7 @@ public template IntrusivePtr(
                 }
                 --------------------
         */
-        static if(!isWeak)
-        public static IntrusivePtr!ElementType make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(auto ref Args args)
-        if(!isDynamicArray!ElementType){
-            static assert(!isWeak);
+        public static IntrusivePtr!ElementType make(AllocatorType = DefaultAllocator, bool supportGC = platformSupportGC, Args...)(auto ref Args args){
 
             static assert(is(DestructorAllocatorType!AllocatorType : DestructorType));
 
@@ -654,7 +643,7 @@ public template IntrusivePtr(
 
             return (m is null)
                 ? typeof(return).init
-                : typeof(return)(m.get, Evoid.init);
+                : typeof(return)(m.get, Forward.init);
         }
 
 
@@ -708,9 +697,7 @@ public template IntrusivePtr(
                 }
                 --------------------
         */
-        static if(!isWeak)
         public static IntrusivePtr!ElementType alloc(bool supportGC = platformSupportGC, AllocatorType, Args...)(AllocatorType a, auto ref Args args){
-            static assert(!isWeak);
 
             static assert(is(DestructorAllocatorType!AllocatorType : DestructorType));
 
@@ -718,7 +705,7 @@ public template IntrusivePtr(
 
             return (m is null)
                 ? typeof(return).init
-                : typeof(return)(m.get, Evoid.init);
+                : typeof(return)(m.get, Forward.init);
         }
 
 
@@ -1361,100 +1348,46 @@ public template IntrusivePtr(
                 }
                 --------------------
         */
-        static if(isWeak)
-        public SharedType lock()()scope @safe{
-            static assert(isCopyConstructable!(typeof(this), typeof(return)));
-
-            static assert(weakLock!(typeof(this), typeof(return)));
-
+        public SharedType lock()()scope
+        if(isCopyConstructable!(typeof(this), SharedType)){
             return typeof(return)(this);
         }
 
 
 
-        static if(isWeak){
-            /**
-                Equivalent to `useCount() == 0` (must be `IntrusivePtr.WeakType`).
+        /**
+            Equivalent to `useCount() == 0` (must be `IntrusivePtr.WeakType`).
 
-                Method exists only if `IntrusivePtr` is `isWeak`
+            Method exists only if `IntrusivePtr` is `isWeak`
 
-                Examples:
-                    --------------------
-                    static struct Foo{
-                        ControlBlock!(int, int) c;
-                        int i;
+            Examples:
+                --------------------
+                static struct Foo{
+                    ControlBlock!(int, int) c;
+                    int i;
 
-                        this(int i)pure nothrow @safe @nogc{
-                            this.i = i;
-                        }
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
                     }
+                }
 
-                    {
-                        IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+                {
+                    IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
 
-                        auto wx = x.weak;   //weak pointer
+                    auto wx = x.weak;   //weak pointer
 
-                        assert(wx.expired == false);
+                    assert(wx.expired == false);
 
-                        x = null;
+                    x = null;
 
-                        assert(wx.expired == true);
-                    }
-                    --------------------
-            */
-            public @property bool expired(this This)()scope const nothrow @safe @nogc{
-                return (this.useCount == 0);
-            }
-
-
-
-            /**
-                Get pointer to managed object of `ElementType` or reference if `ElementType` is reference type (class or interface) or dynamic array
-
-                If weak pointer is expired then return null
-
-                Doesn't increment useCount, is inherently unsafe.
-
-                Examples:
-                    --------------------
-                    static struct Foo{
-                        ControlBlock!(int, int) c;
-                        int i;
-
-                        this(int i)pure nothrow @safe @nogc{
-                            this.i = i;
-                        }
-                    }
-
-                    {
-                        auto s = IntrusivePtr!Foo.make(42);
-                        const w = s.weak;
-
-                        assert(*w.observe == 42);
-
-                        s = null;
-                        assert(w.observe is null);
-                    }
-                    {
-                        auto s = IntrusivePtr!Foo.make(42);
-                        auto w = s.weak;
-
-                        scope const p = w.observe;
-
-                        s = null;
-                        assert(w.observe is null);
-
-                        assert(p !is null); //p is dangling pointer!
-                    }
-                    --------------------
-            */
-            public @property ElementReferenceTypeImpl!(inout ElementType) observe()inout return pure nothrow @system @nogc{
-                return (cast(const)this).expired
-                    ? null
-                    : this._element;
-            }
-
+                    assert(wx.expired == true);
+                }
+                --------------------
+        */
+        public @property bool expired(this This)()scope const nothrow @safe @nogc{
+            return (this.useCount == 0);
         }
+
 
 
         static if(!isWeak){
@@ -1532,37 +1465,74 @@ public template IntrusivePtr(
             }
             else static assert(0, "no impl");
 
+        }
 
 
-            /**
-                Get pointer to managed object of `ElementType` or reference if `ElementType` is reference type (class or interface) or dynamic array
 
-                Examples:
-                    --------------------
-                    static struct Foo{
-                        ControlBlock!(int, int) c;
-                        int i;
+        /**
+            Get pointer to managed object of `ElementType` or reference if `ElementType` is reference type (class or interface) or dynamic array
 
-                        this(int i)pure nothrow @safe @nogc{
-                            this.i = i;
-                        }
+            If `this` is weak expired pointer then return null.
+
+            Doesn't increment useCount, is inherently unsafe.
+
+            Examples:
+                --------------------
+                static struct Foo{
+                    ControlBlock!(int, int) c;
+                    int i;
+
+                    this(int i)pure nothrow @safe @nogc{
+                        this.i = i;
                     }
+                }
 
+                {
                     IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
                     assert(x.element.i == 123);
+
                     x.get.i = 321;
                     assert(x.element.i == 321);
+
                     const y = x;
                     assert(y.element.i == 321);
                     assert(x.element.i == 321);
-                    static assert(is(typeof(y.element) == const(Foo)*));
-                    --------------------
-            */
-            public @property ElementReferenceTypeImpl!(inout ElementType) element()inout return pure nothrow @system @nogc{
-                return this._element;
-            }
 
+                    static assert(is(typeof(y.element) == const(Foo)*));
+                }
+
+                {
+                    auto s = IntrusivePtr!Foo.make(42);
+                    const w = s.weak;
+
+                    assert(w.element.i == 42);
+
+                    s = null;
+                    assert(w.element is null);
+                }
+
+                {
+                    auto s = IntrusivePtr!Foo.make(42);
+                    auto w = s.weak;
+
+                    scope const p = w.element;
+
+                    s = null;
+                    assert(w.element is null);
+
+                    assert(p !is null); //p is dangling pointer!
+                }
+                --------------------
+        */
+        public @property ElementReferenceTypeImpl!(inout ElementType) element()inout return pure nothrow @system @nogc{
+            static if(isWeak)
+                return (cast(const)this).expired
+                    ? null
+                    : this._element;
+            else
+                return this._element;
         }
+
 
 
         /**
@@ -1590,11 +1560,11 @@ public template IntrusivePtr(
                 assert(wx.useCount == 0);
                 --------------------
         */
-        static if(hasWeakCounter && !isWeak)
-        public WeakType weak()()scope @safe{
-            static assert(isCopyConstructable!(typeof(this), typeof(return)));
-
-            return typeof(return)(this);
+        public WeakType weak()()scope
+        if(isCopyConstructable!(typeof(this), WeakType)){
+            static if(hasWeakCounter){
+                return typeof(return)(this);
+            }
         }
 
 
@@ -1917,12 +1887,6 @@ public template IntrusivePtr(
             if(this._element is null)
                 return;
 
-            /+auto control = ()@trusted{
-                static if(is(ControlType == immutable))
-                    return cast(shared(Unconst!ControlType)*)this._control;
-                else
-                    return cast(Unconst!ControlType*)this._control;
-            }();+/
             this._control.release!isWeak;
         }
 
@@ -1940,7 +1904,7 @@ public template IntrusivePtr(
             auto e = this._element;
             this._const_reset();
 
-            return typeof(this)(e, Evoid.init);
+            return typeof(this)(e, Forward.init);
         }
 
         private alias MakeIntrusive(AllocatorType, bool supportGC) = .MakeIntrusive!(
@@ -1948,6 +1912,16 @@ public template IntrusivePtr(
             AllocatorType,
             supportGC
         );
+
+
+
+        /**/
+        package alias ChangeElementType(T) = IntrusivePtr!(
+            CopyTypeQualifiers!(ElementType, T),
+            isWeak
+        );
+
+        package alias SmartPtr = .SmartPtr;
     }
 
 }
@@ -2167,7 +2141,7 @@ if(    isIntrusive!T
 
     if(auto element = dynCastElement!T(ptr._element)){
         ptr._control.add!false;
-        return typeof(return)(element, Evoid.init);
+        return typeof(return)(element, Forward.init);
     }
 
     return typeof(return).init;
@@ -2198,7 +2172,7 @@ if(    isIntrusive!T
         ()@trusted{
             ptr._const_reset();
         }();
-        return typeof(return)(element, Evoid.init);
+        return typeof(return)(element, Forward.init);
     }
 
     return typeof(return).init;
@@ -2283,7 +2257,7 @@ if(isIntrusivePtr!Ptr){
             "`IntrusivePtr` has not shared/immutable `ElementType`."
         );
 
-        return typeof(return)(forward!ptr, Evoid.init);
+        return typeof(return)(forward!ptr, Forward.init);
     }
 }
 
@@ -2336,7 +2310,7 @@ if(is(Elm == class) && isIntrusive!Elm){
     import std.traits : isMutable;
     static assert(isMutable!(IntrusiveControlBlock!Elm), "control block for intrusive parameter `elm` for function `intrusivePtr` must be mutable");
 
-    auto result = IntrusivePtr!Elm(elm, Evoid.init);
+    auto result = IntrusivePtr!Elm(elm, Forward.init);
     result._control.add!false;
     return result;
 }
@@ -2347,7 +2321,7 @@ if(is(Elm == struct) && isIntrusive!Elm){
     import std.traits : isMutable;
     static assert(isMutable!(IntrusiveControlBlock!Elm), "control block for intrusive parameter `elm` for function `intrusivePtr` must be mutable");
 
-    auto result = IntrusivePtr!Elm(elm, Evoid.init);
+    auto result = IntrusivePtr!Elm(elm, Forward.init);
     result._control.add!false;
     return result;
 }
@@ -3047,39 +3021,6 @@ version(unittest){
         }
     }
 
-    //observe:
-    pure nothrow @nogc unittest{
-        static struct Foo{
-            ControlBlock!(int, int) c;
-            int i;
-
-            this(int i)pure nothrow @safe @nogc{
-                this.i = i;
-            }
-        }
-
-        {
-            auto s = IntrusivePtr!Foo.make(42);
-            const w = s.weak;
-
-            assert(w.observe.i == 42);
-
-            s = null;
-            assert(w.observe is null);
-        }
-        {
-            auto s = IntrusivePtr!Foo.make(42);
-            auto w = s.weak;
-
-            scope const p = w.observe;
-
-            s = null;
-            assert(w.observe is null);
-
-            assert(p !is null); //p is dangling pointer!
-        }
-    }
-
     //make
     pure nothrow @nogc unittest{
         static struct Foo{
@@ -3331,6 +3272,7 @@ version(unittest){
 
     //element
     pure nothrow @nogc unittest{
+
         static struct Foo{
             ControlBlock!(int, int) c;
             int i;
@@ -3340,14 +3282,41 @@ version(unittest){
             }
         }
 
-        IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
-        assert(x.element.i == 123);
-        x.get.i = 321;
-        assert(x.element.i == 321);
-        const y = x;
-        assert(y.element.i == 321);
-        assert(x.element.i == 321);
-        static assert(is(typeof(y.element) == const(Foo)*));
+        {
+            IntrusivePtr!Foo x = IntrusivePtr!Foo.make(123);
+            assert(x.element.i == 123);
+
+            x.get.i = 321;
+            assert(x.element.i == 321);
+
+            const y = x;
+            assert(y.element.i == 321);
+            assert(x.element.i == 321);
+
+            static assert(is(typeof(y.element) == const(Foo)*));
+        }
+
+        {
+            auto s = IntrusivePtr!Foo.make(42);
+            const w = s.weak;
+
+            assert(w.element.i == 42);
+
+            s = null;
+            assert(w.element is null);
+        }
+
+        {
+            auto s = IntrusivePtr!Foo.make(42);
+            auto w = s.weak;
+
+            scope const p = w.element;
+
+            s = null;
+            assert(w.element is null);
+
+            assert(p !is null); //p is dangling pointer!
+        }
     }
 
     //opCast bool

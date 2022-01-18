@@ -74,7 +74,10 @@ $('#symbolSearchPane').show();</script>
 			
 			<section><h2>Example</h2>
 
-<pre class="code"><code class="lang-d"><span class="kwd">import </span><span class="pln">core<wbr/></span><span class="pun">.</span><span class="pln">lifetime </span><span class="pun">: </span><span class="pln">move</span><span class="pun">;
+<pre class="code"><code class="lang-d"><span class="kwd">import <a href="../../autoptr/rc_ptr.html"></span><span class="pln">autoptr<wbr/></span><span class="pun">.</span><span class="pln">rc_ptr</span></a><span class="pun">;
+</span><span class="kwd">import <a href="../../autoptr/intrusive_ptr.html"></span><span class="pln">autoptr<wbr/></span><span class="pun">.</span><span class="pln">intrusive_ptr</span></a><span class="pun">;
+
+</span><span class="kwd">import </span><span class="pln">core<wbr/></span><span class="pun">.</span><span class="pln">lifetime </span><span class="pun">: </span><span class="pln">move</span><span class="pun">;
 </span><span class="com">//RcPtr -&gt; SharedPtr:
 </span><span class="pun">{
 	</span><span class="kwd">auto </span><span class="pln">x </span><span class="pun">= </span><span class="typ">RcPtr</span><span class="pun">!</span><span class="typ">long<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);

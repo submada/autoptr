@@ -20,6 +20,12 @@ public struct Evoid{
 }
 
 
+/**
+*/
+public struct Forward{
+}
+
+
 /**/
 package struct SmartPtr{}
 
@@ -813,7 +819,7 @@ template isSmartPtr(T){
 		|| isSharedPtr!T
 		|| isRcPtr!T
 		|| isIntrusivePtr!T;+/
-    enum bool isSmartPtr = is(T.SmartPtr : .SmartPtr);
+	enum bool isSmartPtr = is(T.SmartPtr : .SmartPtr);
 }
 
 

@@ -64,7 +64,12 @@ $('#symbolSearchPane').show();</script>
 					</div>
 				</code>
 			</div>
-			<section></section>
+			<section><p>If <code class="lang-d"><span class="kwd">this</span></code> is weak expired pointer then return null.
+</p>
+
+<p>            Doesn't increment useCount, is inherently unsafe.
+</p>
+</section>
 
 			<section><h2>Examples</h2>
 <pre class="code"><code class="lang-d"><span class="kwd">static struct </span><span class="typ">Foo</span><span class="pun">{
@@ -76,14 +81,41 @@ $('#symbolSearchPane').show();</script>
     }
 }
 
-<a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Foo </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
-</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">element<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">123</span><span class="pun">);
-</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">= </span><span class="lit">321</span><span class="pun">;
-</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">element<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">321</span><span class="pun">);
-</span><span class="kwd">const </span><span class="pln">y </span><span class="pun">= </span><span class="pln">x</span><span class="pun">;
-</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">y<wbr/></span><span class="pun">.</span><span class="pln">element<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">321</span><span class="pun">);
-</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">element<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">321</span><span class="pun">);
-</span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(</span><span class="kwd">typeof</span><span class="pun">(</span><span class="pln">y<wbr/></span><span class="pun">.</span><span class="pln">element</span><span class="pun">) == </span><span class="kwd">const</span><span class="pun">(</span><span class="typ">Foo</span><span class="pun">)*));</span></code></pre>
+{
+    <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Foo </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">123</span><span class="pun">);
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">element<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">123</span><span class="pun">);
+
+    </span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">get<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">= </span><span class="lit">321</span><span class="pun">;
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">element<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">321</span><span class="pun">);
+
+    </span><span class="kwd">const </span><span class="pln">y </span><span class="pun">= </span><span class="pln">x</span><span class="pun">;
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">y<wbr/></span><span class="pun">.</span><span class="pln">element<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">321</span><span class="pun">);
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">element<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">321</span><span class="pun">);
+
+    </span><span class="kwd">static assert</span><span class="pun">(</span><span class="kwd">is</span><span class="pun">(</span><span class="kwd">typeof</span><span class="pun">(</span><span class="pln">y<wbr/></span><span class="pun">.</span><span class="pln">element</span><span class="pun">) == </span><span class="kwd">const</span><span class="pun">(</span><span class="typ">Foo</span><span class="pun">)*));
+}
+
+{
+    </span><span class="kwd">auto </span><span class="pln">s </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
+    </span><span class="kwd">const </span><span class="pln">w </span><span class="pun">= </span><span class="pln">s<wbr/></span><span class="pun">.</span><span class="pln">weak</span><span class="pun">;
+
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">w<wbr/></span><span class="pun">.</span><span class="pln">element<wbr/></span><span class="pun">.</span><span class="pln">i </span><span class="pun">== </span><span class="lit">42</span><span class="pun">);
+
+    </span><span class="pln">s </span><span class="pun">= </span><span class="kwd">null</span><span class="pun">;
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">w<wbr/></span><span class="pun">.</span><span class="pln">element </span><span class="kwd">is null</span><span class="pun">);
+}
+
+{
+    </span><span class="kwd">auto </span><span class="pln">s </span><span class="pun">= <a href="../../autoptr/intrusive_ptr/IntrusivePtr.html"></span><span class="typ">IntrusivePtr</span></a><span class="pun">!</span><span class="typ">Foo<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">42</span><span class="pun">);
+    </span><span class="kwd">auto </span><span class="pln">w </span><span class="pun">= </span><span class="pln">s<wbr/></span><span class="pun">.</span><span class="pln">weak</span><span class="pun">;
+
+    </span><span class="kwd">scope const </span><span class="pln">p </span><span class="pun">= </span><span class="pln">w<wbr/></span><span class="pun">.</span><span class="pln">element</span><span class="pun">;
+
+    </span><span class="pln">s </span><span class="pun">= </span><span class="kwd">null</span><span class="pun">;
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">w<wbr/></span><span class="pun">.</span><span class="pln">element </span><span class="kwd">is null</span><span class="pun">);
+
+    </span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">p </span><span class="pun">!</span><span class="kwd">is null</span><span class="pun">); </span><span class="com">//p is dangling pointer!
+</span><span class="pun">}</span></code></pre>
 </section>
 
 			<footer>

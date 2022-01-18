@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="UTF-8"/>
-		<title>Alias RcPtr.SharedType</title>
+		<title>Struct Forward</title>
 		<link rel="stylesheet" type="text/css" href="../../styles/ddox.css"/>
 		<link rel="stylesheet" href="../../prettify/prettify.css" type="text/css"/>
 		<script type="text/javascript" src="../../scripts/jquery.js">/**/</script><script type="text/javascript" src="../../scripts/ddox.js">/**/</script>
@@ -26,7 +26,7 @@ $('#symbolSearchPane').show();</script>
 					</div>
 			<ul class="tree-view">
 				<li>
-					<div class="module ">
+					<div class="module selected">
 						<a href="../../autoptr/common.html">common</a>
 					</div>
 				</li>
@@ -36,7 +36,7 @@ $('#symbolSearchPane').show();</script>
 					</div>
 				</li>
 				<li>
-					<div class="module selected">
+					<div class="module ">
 						<a href="../../autoptr/rc_ptr.html">rc_ptr</a>
 					</div>
 				</li>
@@ -55,25 +55,12 @@ $('#symbolSearchPane').show();</script>
 			</ul>
 		</nav>
 		<div id="main-contents">
-			<h1>Alias RcPtr.SharedType</h1><p>Type of non weak ptr.
-</p>
+			<h1>Struct Forward</h1><p></p>
 			<div class="prototype">
 				<code class="lang-d">
 					<div class="single-prototype">
-			<span class="kwd">struct</span> <a href="../../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a>
-			<br/>
-			<span class="pun">
-				{
-				<br/>
-			</span>
-			&nbsp;&nbsp;<span class="com">// ...</span>
-			<br/>
-			&nbsp;&nbsp;<span class="kwd">alias</span> <span class="pln">SharedType</span>
-			 <span class="pun">=</span> <a href="../../autoptr/rc_ptr/RcPtr.html"><span class="typ">RcPtr</span></a>!(_Type,_DestructorType,_ControlType,false)<span class="pun">;</span>
-			<br/>
-			&nbsp;&nbsp;<span class="com">// ...</span>
-			<br/>
-			<span class="pun">}</span>
+			<span class="kwd">struct</span> <span class="typ">Forward</span>
+			<span class="pun">;</span>
 					</div>
 				</code>
 			</div>
