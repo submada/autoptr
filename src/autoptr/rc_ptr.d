@@ -71,7 +71,7 @@ unittest{
 public template RcPtr(
     _Type,
     _DestructorType = DestructorType!_Type,
-    _ControlType = ControlTypeDeduction!(_Type, SharedControlType),
+    _ControlType = ControlBlockDeduction!(_Type, SharedControlBlock),
     bool _weakPtr = false
 )
 if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
@@ -336,13 +336,13 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
                 {
                     import core.lifetime : move;
-                    auto u = UniquePtr!(long, SharedControlType).make(123);
+                    auto u = UniquePtr!(long, SharedControlBlock).make(123);
 
                     RcPtr!long s = move(u);        //rvalue copy ctor
                     assert(s != null);
                     assert(s.useCount == 1);
 
-                    RcPtr!long s2 = UniquePtr!(long, SharedControlType).init;
+                    RcPtr!long s2 = UniquePtr!(long, SharedControlBlock).init;
                     assert(s2 == null);
                 }
                 --------------------
@@ -2050,7 +2050,7 @@ pure nothrow @safe @nogc unittest{
     }
 
     {
-        auto s = RcPtr!(long, shared(SharedControlType)).make!(DefaultAllocator, supportGC)(42);
+        auto s = RcPtr!(long, shared(SharedControlBlock)).make!(DefaultAllocator, supportGC)(42);
     }
 
 
@@ -2066,7 +2066,7 @@ pure nothrow @safe @nogc unittest{
     }
 
     {
-        auto s = RcPtr!(long[], shared(SharedControlType)).make!(DefaultAllocator, supportGC)(10, 42);
+        auto s = RcPtr!(long[], shared(SharedControlBlock)).make!(DefaultAllocator, supportGC)(10, 42);
         assert(s.length == 10);
     }
 }
@@ -2088,7 +2088,7 @@ nothrow unittest{
     }
 
     {
-        auto s = RcPtr!(long, shared(SharedControlType)).alloc!supportGC(a, 42);
+        auto s = RcPtr!(long, shared(SharedControlBlock)).alloc!supportGC(a, 42);
     }
 
 
@@ -2104,7 +2104,7 @@ nothrow unittest{
     }
 
     {
-        auto s = RcPtr!(long[], shared(SharedControlType)).alloc!supportGC(a, 10, 42);
+        auto s = RcPtr!(long[], shared(SharedControlBlock)).alloc!supportGC(a, 10, 42);
         assert(s.length == 10);
     }
 }
@@ -2438,7 +2438,7 @@ version(unittest){
 
         import std.meta : AliasSeq;
         //alias Test = long;
-        static foreach(alias ControlType; AliasSeq!(SharedControlType, shared SharedControlType)){{
+        static foreach(alias ControlType; AliasSeq!(SharedControlBlock, shared SharedControlBlock)){{
             alias SPtr(T) = RcPtr!(T, DestructorType!T, ControlType);
 
             //mutable:
@@ -3232,13 +3232,13 @@ version(unittest){
 
         /+{
             import core.lifetime : move;
-            auto u = UniquePtr!(long, SharedControlType).make(123);
+            auto u = UniquePtr!(long, SharedControlBlock).make(123);
 
             RcPtr!long s = move(u);        //rvalue copy ctor
             assert(s != null);
             assert(s.useCount == 1);
 
-            RcPtr!long s2 = UniquePtr!(long, SharedControlType).init;
+            RcPtr!long s2 = UniquePtr!(long, SharedControlBlock).init;
             assert(s2 == null);
 
         }+/

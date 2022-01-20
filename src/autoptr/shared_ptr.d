@@ -76,7 +76,7 @@ unittest{
 public template SharedPtr(
 	_Type,
 	_DestructorType = DestructorType!_Type,
-	_ControlType = ControlTypeDeduction!(_Type, SharedControlType),
+	_ControlType = ControlBlockDeduction!(_Type, SharedControlBlock),
 	bool _weakPtr = false
 )
 if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
@@ -195,24 +195,6 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 		);
 
 
-		/**
-			Return thread local `SharedPtr` if specified:
-
-				1.  if parameter `threadLocal` is `true` then result type is thread local `SharedPtr` (!is(_ControlType == shared)).
-
-				2.  if parameter `threadLocal` is `false` then result type is not thread local `SharedPtr` (is(_ControlType == shared)).
-		*/
-		alias ThreadLocal(bool threadLocal = true) = SharedPtr!(
-			_Type,
-			_DestructorType,
-			Select!(
-				threadLocal,
-				Unshared!_ControlType,
-				shared(_ControlType)
-			),
-			isWeak
-		);
-
 
 		/**
 			`true` if shared `SharedPtr` has lock free operations `store`, `load`, `exchange`, `compareExchange`, otherwise 'false'
@@ -221,6 +203,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 		static if(isLockFree)
 			static assert(ElementReferenceType.sizeof == size_t.sizeof);
+
 
 
 		/**
@@ -389,13 +372,13 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 				{
 					import core.lifetime : move;
-					auto u = UniquePtr!(long, SharedControlType).make(123);
+					auto u = UniquePtr!(long, SharedControlBlock).make(123);
 
 					SharedPtr!long s = move(u);        //rvalue copy ctor
 					assert(s != null);
 					assert(s.useCount == 1);
 
-					SharedPtr!long s2 = UniquePtr!(long, SharedControlType).init;
+					SharedPtr!long s2 = UniquePtr!(long, SharedControlBlock).init;
 					assert(s2 == null);
 				}
 
@@ -496,7 +479,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 				}
 
 				{
-					shared SharedPtr!(long).ThreadLocal!false x = SharedPtr!(shared long).ThreadLocal!false.make(1);
+					shared SharedPtr!(long) x = SharedPtr!(shared long).make(1);
 
 					assert(x.useCount == 1);
 					x = null;
@@ -1072,7 +1055,7 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 
 			Examples:
 				--------------------
-				shared SharedPtr!(long).ThreadLocal!false x = SharedPtr!(shared long).ThreadLocal!false.make(123);
+				shared SharedPtr!(long) x = SharedPtr!(shared long).make(123);
 
 				{
 					SharedPtr!(shared long) y = x.load();
@@ -1929,10 +1912,11 @@ if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 public template SharedPtr(
 	_Type,
 	_ControlType,
-	_DestructorType = DestructorType!_Type
+	_DestructorType = DestructorType!_Type,
+	bool _weakPtr = false
 )
 if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
-	alias SharedPtr = .SharedPtr!(_Type, _DestructorType, _ControlType, false);
+	alias SharedPtr = .SharedPtr!(_Type, _DestructorType, _ControlType, _weakPtr);
 }
 
 ///
@@ -2123,7 +2107,7 @@ nothrow unittest{
 public template WeakPtr(
 	_Type,
 	_DestructorType = DestructorType!_Type,
-	_ControlType = ControlTypeDeduction!(_Type, SharedControlType),
+	_ControlType = ControlBlockDeduction!(_Type, SharedControlBlock),
 )
 if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
 	alias WeakPtr = .SharedPtr!(_Type, _DestructorType, _ControlType, true);
@@ -2155,7 +2139,7 @@ pure nothrow @nogc unittest{
 	}
 
 	{
-		auto s = SharedPtr!(long, shared(SharedControlType)).make!(DefaultAllocator, supportGC)(42);
+		auto s = SharedPtr!(long, shared(SharedControlBlock)).make!(DefaultAllocator, supportGC)(42);
 	}
 
 	// dynamic array:
@@ -2168,7 +2152,7 @@ pure nothrow @nogc unittest{
 		assert(s.length == 10);
 	}
 	{
-		auto s = SharedPtr!(long[], shared(SharedControlType)).make!(DefaultAllocator, supportGC)(10, 42);
+		auto s = SharedPtr!(long[], shared(SharedControlBlock)).make!(DefaultAllocator, supportGC)(10, 42);
 		assert(s.length == 10);
 	}
 
@@ -2190,7 +2174,7 @@ pure nothrow @nogc unittest{
 	assert(x == 44);
 
 	{
-		auto s = SharedPtr!(long, shared(SharedControlType)).make!(DefaultAllocator, supportGC)(&x, &deleter);
+		auto s = SharedPtr!(long, shared(SharedControlBlock)).make!(DefaultAllocator, supportGC)(&x, &deleter);
 	}
 	assert(x == 45);
 }
@@ -2212,7 +2196,7 @@ nothrow unittest{
 	}
 
 	{
-		auto s = SharedPtr!(long, shared(SharedControlType)).alloc!supportGC(a, 42);
+		auto s = SharedPtr!(long, shared(SharedControlBlock)).alloc!supportGC(a, 42);
 	}
 
 	// dynamic array:
@@ -2225,7 +2209,7 @@ nothrow unittest{
 		assert(s.length == 10);
 	}
 	{
-		auto s = SharedPtr!(long[], shared(SharedControlType)).alloc!supportGC(a, 10, 42);
+		auto s = SharedPtr!(long[], shared(SharedControlBlock)).alloc!supportGC(a, 10, 42);
 		assert(s.length == 10);
 	}
 
@@ -2247,7 +2231,7 @@ nothrow unittest{
 	assert(x == 44);
 
 	{
-		auto s = SharedPtr!(long, shared(SharedControlType)).alloc!supportGC(a, &x, &deleter);
+		auto s = SharedPtr!(long, shared(SharedControlBlock)).alloc!supportGC(a, &x, &deleter);
 	}
 	assert(x == 45);
 }
@@ -2702,7 +2686,7 @@ version(unittest){
 
 		import std.meta : AliasSeq;
 		//alias Test = long;
-		static foreach(alias ControlType; AliasSeq!(SharedControlType, shared SharedControlType)){{
+		static foreach(alias ControlType; AliasSeq!(SharedControlBlock, shared SharedControlBlock)){{
 			alias SPtr(T) = SharedPtr!(T, DestructorType!T, ControlType);
 
 			//mutable:
@@ -2883,7 +2867,7 @@ version(unittest){
 
 		import autoptr.internal.mutex : supportMutex;
 		static if(supportMutex){
-			shared SharedPtr!(long).ThreadLocal!false x = SharedPtr!(shared long).ThreadLocal!false.make(1);
+			shared SharedPtr!(long) x = SharedPtr!(shared long).make(1);
 
 			assert(x.useCount == 1);
 			x = null;
@@ -2973,7 +2957,7 @@ version(unittest){
 	//load:
 	nothrow @nogc unittest{
 
-		shared SharedPtr!(long).ThreadLocal!false x = SharedPtr!(shared long).ThreadLocal!false.make(123);
+		shared SharedPtr!(long) x = SharedPtr!(shared long).make(123);
 
 		import autoptr.internal.mutex : supportMutex;
 		static if(supportMutex){
@@ -3514,13 +3498,13 @@ version(unittest){
 
 		/+{
 			import core.lifetime : move;
-			auto u = UniquePtr!(long, SharedControlType).make(123);
+			auto u = UniquePtr!(long, SharedControlBlock).make(123);
 
 			SharedPtr!long s = move(u);        //rvalue copy ctor
 			assert(s != null);
 			assert(s.useCount == 1);
 
-			SharedPtr!long s2 = UniquePtr!(long, SharedControlType).init;
+			SharedPtr!long s2 = UniquePtr!(long, SharedControlBlock).init;
 			assert(s2 == null);
 
 		}+/

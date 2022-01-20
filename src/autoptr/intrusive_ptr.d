@@ -2454,8 +2454,8 @@ version(unittest){
         import std.meta : AliasSeq;
         //alias Test = long;
         static foreach(alias Test; AliasSeq!(
-            TestX!(SharedControlType),
-            //TestX!(shared SharedControlType)
+            TestX!(SharedControlBlock),
+            //TestX!(shared SharedControlBlock)
         )){{
             alias SPtr(T) = IntrusivePtr!(T);
 

@@ -34,13 +34,17 @@ package struct SmartPtr{}
 /**
 	Default `ControlBlock` for `SharedPtr` and `RcPtr`.
 */
-public alias SharedControlType = ControlBlock!(int, int);
+public alias SharedControlBlock = ControlBlock!(int, int);
+public deprecated alias SharedControlType = SharedControlBlock;
+
 
 
 /**
 	Default `ControlBlock` for `UniquePtr`.
 */
-public alias UniqueControlType = ControlBlock!void;
+public alias UniqueControlBlock = ControlBlock!void;
+public deprecated alias UniqueControlType = UniqueControlBlock;
+
 
 
 /**
@@ -327,7 +331,7 @@ unittest{
 
 	If `Type` is shared then `ControlType` is shared too (atomic counting).
 */
-public template ControlTypeDeduction(Type, ControlType){
+public template ControlBlockDeduction(Type, ControlType){
 	import std.traits : Select;
 
 	alias impl = Select!(
@@ -336,23 +340,26 @@ public template ControlTypeDeduction(Type, ControlType){
 		ControlType
 	);
 
-	alias ControlTypeDeduction = impl;
+	alias ControlBlockDeduction = impl;
 }
+deprecated alias ControlTypeDeduction = ControlBlockDeduction;
+
+
 
 ///
 unittest{
-	alias ControlType = ControlBlock!(int, int);
+	alias CB = ControlBlock!(int, int);
 
-	static assert(is(ControlTypeDeduction!(long, ControlType) == ControlType));
-	static assert(is(ControlTypeDeduction!(void, ControlType) == ControlType));
-	static assert(is(ControlTypeDeduction!(shared double, ControlType) == shared ControlType));
-	static assert(is(ControlTypeDeduction!(const int, ControlType) == ControlType));
-	static assert(is(ControlTypeDeduction!(shared const int, ControlType) == shared ControlType));
+	static assert(is(ControlBlockDeduction!(long, CB) == CB));
+	static assert(is(ControlBlockDeduction!(void, CB) == CB));
+	static assert(is(ControlBlockDeduction!(shared double, CB) == shared CB));
+	static assert(is(ControlBlockDeduction!(const int, CB) == CB));
+	static assert(is(ControlBlockDeduction!(shared const int, CB) == shared CB));
 
-	static assert(is(ControlTypeDeduction!(immutable int, ControlType) == ControlType));
+	static assert(is(ControlBlockDeduction!(immutable int, CB) == CB));
 
-	static assert(is(ControlTypeDeduction!(shared int[], ControlType) == shared ControlType));
-	static assert(is(ControlTypeDeduction!(shared(int)[], ControlType) == ControlType));
+	static assert(is(ControlBlockDeduction!(shared int[], CB) == shared CB));
+	static assert(is(ControlBlockDeduction!(shared(int)[], CB) == CB));
 }
 
 

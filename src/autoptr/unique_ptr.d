@@ -59,7 +59,7 @@ public alias share = autoptr.rc_ptr.share;
 public template UniquePtr(
     _Type,
     _DestructorType = DestructorType!_Type,
-    _ControlType = immutable(UniqueControlType),
+    _ControlType = immutable(UniqueControlBlock),
 )
 if(isControlBlock!_ControlType && isDestructorType!_DestructorType){
     static assert(is(_ControlType == immutable));
@@ -224,7 +224,7 @@ pure nothrow @safe @nogc unittest{
     }
 
     {
-        auto s = UniquePtr!(long, immutable(SharedControlType)).make!(DefaultAllocator, supportGC)(42);
+        auto s = UniquePtr!(long, immutable(SharedControlBlock)).make!(DefaultAllocator, supportGC)(42);
     }
 
     // dynamic array:
@@ -239,7 +239,7 @@ pure nothrow @safe @nogc unittest{
     }
 
     {
-        auto s = UniquePtr!(long[], immutable(SharedControlType)).make!(DefaultAllocator, supportGC)(10, 42);
+        auto s = UniquePtr!(long[], immutable(SharedControlBlock)).make!(DefaultAllocator, supportGC)(10, 42);
         assert(s.length == 10);
     }
 }
@@ -261,7 +261,7 @@ nothrow unittest{
     }
 
     {
-        auto s = UniquePtr!(long, immutable(SharedControlType)).alloc!supportGC(a, 42);
+        auto s = UniquePtr!(long, immutable(SharedControlBlock)).alloc!supportGC(a, 42);
     }
 
     // dynamic array:
@@ -276,7 +276,7 @@ nothrow unittest{
     }
 
     {
-        auto s = UniquePtr!(long[], immutable(SharedControlType)).alloc!supportGC(a, 10, 42);
+        auto s = UniquePtr!(long[], immutable(SharedControlBlock)).alloc!supportGC(a, 10, 42);
         assert(s.length == 10);
     }
 }

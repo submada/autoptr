@@ -109,7 +109,7 @@ $('#symbolSearchPane').show();</script>
 }
 
 {
-	</span><span class="kwd">shared <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!(</span><span class="typ">long</span><span class="pun">)<wbr/>.</span><span class="typ">ThreadLocal</span><span class="pun">!</span><span class="kwd">false </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!(</span><span class="kwd">shared </span><span class="typ">long</span><span class="pun">)<wbr/>.</span><span class="typ">ThreadLocal</span><span class="pun">!</span><span class="kwd">false<wbr/></span><span class="pun">.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">1</span><span class="pun">);
+	</span><span class="kwd">shared <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!(</span><span class="typ">long</span><span class="pun">) </span><span class="pln">x </span><span class="pun">= <a href="../../autoptr/shared_ptr/SharedPtr.html"></span><span class="typ">SharedPtr</span></a><span class="pun">!(</span><span class="kwd">shared </span><span class="typ">long</span><span class="pun">)<wbr/>.</span><span class="pln">make</span><span class="pun">(</span><span class="lit">1</span><span class="pun">);
 
 	</span><span class="kwd">assert</span><span class="pun">(</span><span class="pln">x<wbr/></span><span class="pun">.</span><span class="pln">useCount </span><span class="pun">== </span><span class="lit">1</span><span class="pun">);
 	</span><span class="pln">x </span><span class="pun">= </span><span class="kwd">null</span><span class="pun">;
