@@ -1,7 +1,9 @@
 # Autoptr
 
+## Content of autpotr repository was moved to [BTL](https://github.com/submada/btl) repository as subpackage btl:autoptr
+
 ## Documentation
-https://submada.github.io/autoptr
+https://submada.github.io/btl
 
 ## C++-style smart pointers for D.
 
