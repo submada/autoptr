@@ -1,6 +1,6 @@
 # Autoptr
 
-## Content of autpotr repository was moved to [BTL](https://github.com/submada/btl) repository as subpackage btl:autoptr
+## Content of autpotr repository was moved to [BTL](https://github.com/submada/btl) repository as subpackage [btl:autoptr](https://code.dlang.org/packages/btl%3Aautoptr)
 
 ## Documentation
 https://submada.github.io/btl
