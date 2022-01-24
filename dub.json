@@ -7,7 +7,7 @@
 		"Adam Búš"
 	],
 	"dependencies" : {
-		"btl:autoptr" : "*"
+		"btl:autoptr" : "~>1.0.0-rc.2"
 	},
 	"dflags" : [
 		""
